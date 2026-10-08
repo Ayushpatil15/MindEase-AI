@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+
+{% block title %}Facial Expression Check-In — MindEase AI{% endblock %}
+
+{% block content %}
+<div style="max-width: 620px; margin: 20px auto;">
+    <div class="mb-md">
+        <a href="{{ url_for('student.checkin_hub') }}" class="btn btn-secondary btn-sm">&larr; Back to Check-In Hub</a>
+    </div>
+
+    <div class="text-center mb-lg">
+        <span class="badge badge-primary mb-xs">Optional • ~30 sec • Private On-Device AI</span>
+        <h1 style="font-size: 1.85rem; font-weight: 700; margin-bottom: 6px;">Facial Expression Scan</h1>
+        <p class="text-muted" style="margin-bottom: 0; font-size: 0.95rem;">
+            Private facial expression estimation processed directly in your browser session.
+        </p>
+    </div>
+
+    <div class="card card-hover text-center">
+        <div id="missing-model-state" class="alert alert-warning mb-md" style="display: none; text-align: left;">
+            <strong>Unavailable:</strong> Facial expression analysis model has not been initialized yet.
+        </div>
+
+        <!-- Camera Preview Container -->
+        <div id="camera-container" style="background: #0f172a; border-radius: var(--border-radius-lg); overflow: hidden; position: relative; width: 100%; aspect-ratio: 4/3; margin-bottom: var(--spacing-md); border: 2px solid var(--color-border);">
+            <video id="camera-preview" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+
+            <!-- Target Alignment Overlay -->
+            <div style="position: absolute; inset: 0; pointer-events: none; display: flex; align-items: center; justify-content: center;">
+                <div style="width: 180px; height: 220px; border: 2px dashed rgba(34, 197, 94, 0.7); border-radius: 50%;"></div>
+            </div>
+
+            <!-- Privacy Indicator Overlay -->
+            <div style="position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); padding: 4px 14px; border-radius: var(--radius-pill); font-size: 0.75rem; color: #ffffff;">
+                🔒 On-device processing only • Zero video saved
+            </div>
+            
+            <div id="camera-loading" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.8); color: white; font-size: 0.9rem;">
+                Requesting camera access...
+            </div>
+            
+            <div id="camera-error" style="position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; background: var(--color-surface-subtle); color: var(--color-heading); padding: 20px;">
+                <p style="margin-bottom: 8px; font-weight: 600; font-size: 0.95rem;">Camera unavailable or permission denied.</p>
+                <p class="text-muted" style="font-size: 0.825rem; margin-bottom: 0;">Please allow camera access in your browser settings to perform a scan.</p>
+            </div>
+        </div>
+
+        <button id="capture-btn" class="btn btn-primary btn-block mb-md" disabled>
+            <span>Check Expression</span>
+            <span>&rarr;</span>
+        </button>
+
+        <div id="result-container" class="card mb-md text-center" style="background: var(--color-primary-bg); border-color: var(--color-primary-border); display: none;">
+            <span class="badge badge-primary mb-xs">Estimated Expression</span>
+            <div id="result-emotion" style="font-size: 2.2rem; font-weight: 800; color: var(--color-primary); margin-bottom: 4px;">Neutral</div>
+            <div id="result-confidence" class="text-muted" style="font-size: 0.85rem; margin-bottom: 12px;">Confidence: 85%</div>
+            
+            <div id="correlation-insight" style="font-size: 0.85rem; color: var(--color-text-body); background: #ffffff; padding: 10px 14px; border-radius: var(--border-radius-sm); border: 1px solid var(--color-primary-border);">
+                💡 <strong>Insight:</strong> Facial expressions are micro-signals. It is completely natural for internal feelings and facial expressions to differ.
+            </div>
+        </div>
+        
+        <div id="api-error" class="alert alert-danger" style="display: none; font-size: 0.85rem; text-align: left;"></div>
+        
+        <div class="mt-md" style="font-size: 0.75rem; color: var(--color-text-muted); padding-top: var(--spacing-sm); border-top: 1px solid var(--color-border); text-align: left;">
+            <p style="margin-bottom: 0;"><strong>Disclaimer:</strong> Facial expression estimates are non-diagnostic indicators and do not determine clinical emotional state.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const video = document.getElementById('camera-preview');
+    const loading = document.getElementById('camera-loading');
+    const errorState = document.getElementById('camera-error');
+    const captureBtn = document.getElementById('capture-btn');
+    
+    const missingModelState = document.getElementById('missing-model-state');
+    const apiError = document.getElementById('api-error');
+    
+    const resultContainer = document.getElementById('result-container');
+    const resultEmotion = document.getElementById('result-emotion');
+    const resultConfidence = document.getElementById('result-confidence');
+
+    const getCsrfToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+    // Initialize Camera
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
+            .then(stream => {
+                video.srcObject = stream;
+                video.onloadedmetadata = () => {
+                    video.play();
+                    loading.style.display = 'none';
+                    captureBtn.disabled = false;
+                };
+            })
+            .catch(err => {
+                console.error("Camera access error:", err);
+                loading.style.display = 'none';
+                errorState.style.display = 'flex';
+            });
+    } else {
+        loading.style.display = 'none';
+        errorState.style.display = 'flex';
+        errorState.innerHTML = '<p>Camera API not supported in this browser.</p>';
+    }
+
+    captureBtn.addEventListener('click', async () => {
+        if (captureBtn.disabled) return;
+        
+        captureBtn.disabled = true;
+        captureBtn.textContent = 'Analyzing Expression...';
+        apiError.style.display = 'none';
+        missingModelState.style.display = 'none';
+        resultContainer.style.display = 'none';
+
+        try {
+            const targetWidth = 480;
+            const targetHeight = 360;
+            const targetAspect = targetWidth / targetHeight;
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+            const ctx = canvas.getContext('2d');
+            
+            let sx = 0, sy = 0, sWidth = video.videoWidth, sHeight = video.videoHeight;
+            if (sWidth && sHeight) {
+                const srcAspect = sWidth / sHeight;
+                if (srcAspect > targetAspect) {
+                    sWidth = Math.round(sHeight * targetAspect);
+                    sx = Math.round((video.videoWidth - sWidth) / 2);
+                } else if (srcAspect < targetAspect) {
+                    sHeight = Math.round(sWidth / targetAspect);
+                    sy = Math.round((video.videoHeight - sHeight) / 2);
+                }
+                ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, targetWidth, targetHeight);
+            } else {
+                ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
+            }
+            
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+
+            // FIX: Pass X-CSRFToken header to pass Flask-WTF CSRF validation!
+            const response = await fetch('/emotion/api/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({ image: dataUrl })
+            });
+
+            const data = await response.json();
+
+            if (response.status === 503 || data.status === 'model_not_initialized') {
+                missingModelState.style.display = 'block';
+            } else if (!response.ok || data.status === 'error') {
+                apiError.textContent = data.message || data.error || 'Analysis failed. Please check frame lighting and try again.';
+                apiError.style.display = 'block';
+            } else if (data.status === 'no_face_detected') {
+                apiError.textContent = data.message || 'No face detected in target ring. Please adjust position and lighting.';
+                apiError.style.display = 'block';
+            } else if (data.status === 'success') {
+                resultEmotion.textContent = data.emotion;
+                const confPercent = Math.round(data.confidence * 100);
+                resultConfidence.textContent = `Confidence: ${confPercent}%`;
+                resultContainer.style.display = 'block';
+            } else {
+                apiError.textContent = data.message || 'Analysis could not be completed.';
+                apiError.style.display = 'block';
+            }
+
+        } catch (err) {
+            console.error("Prediction error:", err);
+            apiError.textContent = 'Connection error during analysis. Please try again.';
+            apiError.style.display = 'block';
+        } finally {
+            captureBtn.disabled = false;
+            captureBtn.textContent = 'Check Expression →';
+        }
+    });
+});
+</script>
+{% endblock %}

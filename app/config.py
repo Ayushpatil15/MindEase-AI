@@ -1,0 +1,97 @@
+"""Flask application configuration."""
+
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Base directory for resolving relative paths
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
+
+class Config:
+    """Base configuration shared by all environments."""
+
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    # Session security
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+
+    # AI provider: "none" | "gemini" | "mistral"
+    AI_PROVIDER = os.environ.get('AI_PROVIDER', 'none')
+    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+    MISTRAL_API_KEY = os.environ.get('MISTRAL_API_KEY')
+
+    # ML model backend & path configuration
+    # Authorized Phase 5.11 production switch: TFLite default with Keras baseline fallback
+    MODEL_BACKEND = os.environ.get('MODEL_BACKEND', 'tflite')
+    
+    MODEL_PATH = os.environ.get(
+        'MODEL_PATH',
+        os.path.join(BASE_DIR, 'models', 'deployment', 'challenger_fp32.tflite'),
+    )
+    
+    TFLITE_MODEL_PATH = os.environ.get(
+        'TFLITE_MODEL_PATH',
+        os.path.join(BASE_DIR, 'models', 'deployment', 'challenger_fp32.tflite'),
+    )
+    
+    KERAS_FALLBACK_MODEL_PATH = os.environ.get(
+        'KERAS_FALLBACK_MODEL_PATH',
+        os.path.join(BASE_DIR, 'models', 'fer2013_cnn.h5'),
+    )
+    
+    TFLITE_NUM_THREADS = int(os.environ.get('TFLITE_NUM_THREADS', '4'))
+
+    # Haar Cascade classifier — bundled in the repository, not machine-dependent
+    HAAR_CASCADE_PATH = os.path.join(
+        BASE_DIR, 'app', 'static', 'haar', 'haarcascade_frontalface_default.xml',
+    )
+
+    # Support resources configuration file
+    SUPPORT_RESOURCES_PATH = os.path.join(
+        BASE_DIR, 'app', 'config', 'support_resources.json',
+    )
+
+    # Admin aggregation minimum group size (privacy threshold)
+    MIN_AGGREGATION_GROUP_SIZE = int(os.environ.get('MIN_AGGREGATION_GROUP_SIZE', '5'))
+
+
+class DevelopmentConfig(Config):
+    """Development configuration."""
+
+    DEBUG = True
+    SQLALCHEMY_DATABASE_URI = os.environ.get(
+        'DATABASE_URL',
+        'sqlite:///' + os.path.join(BASE_DIR, 'instance', 'mindease.db'),
+    )
+
+
+class TestingConfig(Config):
+    """Testing configuration — in-memory SQLite, CSRF disabled."""
+
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    WTF_CSRF_ENABLED = False
+    SECRET_KEY = 'test-secret-key'
+
+
+class ProductionConfig(Config):
+    """Production configuration."""
+
+    DEBUG = False
+    SQLALCHEMY_DATABASE_URI = os.environ.get(
+        'DATABASE_URL',
+        'sqlite:///' + os.path.join(BASE_DIR, 'instance', 'mindease.db'),
+    )
+    SESSION_COOKIE_SECURE = True
+
+
+config = {
+    'development': DevelopmentConfig,
+    'testing': TestingConfig,
+    'production': ProductionConfig,
+    'default': DevelopmentConfig,
+}

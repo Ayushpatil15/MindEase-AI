@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}Support Center — MindEase AI{% endblock %}
+
+{% block content %}
+<div style="max-width: 860px; margin: 20px auto;">
+    <!-- Header Banner -->
+    <div class="row-flex flex-between mb-lg flex-wrap gap-md" style="align-items: flex-end;">
+        <div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <span class="badge badge-purple">Verified Support Services</span>
+            </div>
+            <h1 style="margin-bottom: 2px;">Support Center</h1>
+            <p class="text-muted" style="margin-bottom: 0; font-size: 0.95rem;">
+                Access verified national tele-mental health services, emergency assistance, and support resources anytime.
+            </p>
+        </div>
+        <div>
+            <a href="{{ url_for('student.dashboard') }}" class="btn btn-secondary btn-sm">&larr; Back to Today</a>
+        </div>
+    </div>
+
+    <!-- Guidance Banner -->
+    <div class="card mb-lg" style="background: var(--color-primary-bg); border-left: 4px solid var(--color-primary);">
+        <span class="badge badge-primary mb-xs">Student Wellness Support</span>
+        <h2 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 6px;">
+            Empathetic Guidance & Care
+        </h2>
+        <p class="text-muted" style="margin: 0; font-size: 0.9rem; line-height: 1.5; color: var(--color-text-body);">
+            MindEase AI check-ins are self-awareness tools. Professional support is always available whenever you want extra guidance, emotional support, or professional counseling.
+        </p>
+    </div>
+
+    <!-- Tier 1: Urgent & Crisis Support (High Priority) -->
+    <div class="mb-xl">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 2px solid var(--color-primary-border); padding-bottom: 8px;">
+            <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--color-heading); margin: 0;">
+                Verified National Crisis & Emergency Support
+            </h2>
+            <span class="badge badge-amber">24/7 Helplines</span>
+        </div>
+
+        <div class="grid grid-2" style="gap: 20px;">
+            {% for item in crisis_resources %}
+                <div class="card card-hover" style="border-left: 4px solid var(--color-error); display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div class="flex-between mb-xs" style="flex-wrap: wrap; gap: 6px;">
+                            <h3 style="font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--color-heading);">{{ item.name }}</h3>
+                            {% if item.availability %}
+                                <span class="badge badge-amber">{{ item.availability }}</span>
+                            {% endif %}
+                        </div>
+                        <p class="text-muted" style="font-size: 0.875rem; line-height: 1.45; margin-bottom: 14px;">
+                            {{ item.description }}
+                        </p>
+                    </div>
+
+                    <div style="background: var(--color-surface-subtle); padding: 12px 14px; border-radius: var(--border-radius-sm); font-size: 0.85rem; border: 1px solid var(--color-border);">
+                        {% if item.contact.phone %}
+                            <div style="margin-bottom: 4px;"><strong>Helpline:</strong> <span style="color: var(--color-primary); font-size: 1.05rem; font-weight: 700;">{{ item.contact.phone }}</span></div>
+                        {% endif %}
+                        {% if item.contact.url %}
+                            <div style="margin-bottom: 4px;"><strong>Portal:</strong> <a href="{{ item.contact.url }}" target="_blank" rel="noopener" style="color: var(--color-primary); font-weight: 600;">{{ item.contact.url }}</a></div>
+                        {% endif %}
+                        {% if item.location %}
+                            <div><strong>Access:</strong> {{ item.location }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Tier 2: Institutional Connect State -->
+    <div class="mb-xl">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid var(--color-border); padding-bottom: 8px;">
+            <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--color-heading); margin: 0;">
+                Campus & Institutional Counseling
+            </h2>
+            <span class="badge badge-muted">Institutional Connect</span>
+        </div>
+
+        {% if counseling_resources %}
+            <div class="grid grid-2" style="gap: 20px;">
+                {% for item in counseling_resources %}
+                    <div class="card card-hover" style="display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <div class="flex-between mb-xs">
+                                <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 8px;">{{ item.name }}</h3>
+                                {% if not item.is_configured %}
+                                    <span class="badge badge-muted">Configure Institutional Connection</span>
+                                {% endif %}
+                            </div>
+                            <p class="text-muted" style="font-size: 0.85rem; line-height: 1.45; margin-bottom: 14px;">
+                                {{ item.description }}
+                            </p>
+                        </div>
+                        <div style="background: var(--color-surface-subtle); padding: 12px 14px; border-radius: var(--border-radius-sm); font-size: 0.85rem;">
+                            {% if item.is_configured %}
+                                {% if item.contact.phone %}<div><strong>Phone:</strong> {{ item.contact.phone }}</div>{% endif %}
+                                {% if item.contact.email %}<div><strong>Email:</strong> {{ item.contact.email }}</div>{% endif %}
+                                {% if item.location %}<div><strong>Location:</strong> {{ item.location }}</div>{% endif %}
+                            {% else %}
+                                <div class="text-muted" style="font-size: 0.8rem;">
+                                    <em>Your institution isn't connected yet. Contact your campus administrator to configure local counseling links.</em>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Mandatory Non-Clinical Disclaimer -->
+    <div class="card" style="background: var(--color-surface-subtle); border-left: 4px solid var(--color-primary); padding: 14px 18px;">
+        <p class="text-muted" style="margin: 0; font-size: 0.85rem; line-height: 1.5;">
+            🛡️ <strong>Non-Clinical Disclaimer:</strong> MindEase AI is an educational self-management platform for students. It does not provide medical diagnosis, psychiatric care, or clinical treatment. If you or someone you know is experiencing a life-threatening emergency or crisis, please contact your local emergency services (112) or Tele-MANAS (14416) immediately.
+        </p>
+    </div>
+</div>
+{% endblock %}

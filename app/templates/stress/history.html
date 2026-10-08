@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Stress Assessment History - MindEase AI{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-lg);">
+            <h1>Stress Assessment History</h1>
+            <a href="{{ url_for('stress.take_assessment') }}" class="btn btn-primary">Take New Assessment</a>
+        </div>
+
+        {% if assessments %}
+            <div class="card" style="padding: 0; overflow: hidden;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: var(--color-surface-hover); border-bottom: 1px solid var(--color-border); text-align: left;">
+                            <th style="padding: var(--spacing-md);">Date</th>
+                            <th style="padding: var(--spacing-md);">Score</th>
+                            <th style="padding: var(--spacing-md);">Level</th>
+                            <th style="padding: var(--spacing-md); text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for assessment in assessments %}
+                        <tr style="border-bottom: 1px solid var(--color-border);">
+                            <td style="padding: var(--spacing-md);">{{ assessment.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td style="padding: var(--spacing-md); font-weight: 500;">{{ assessment.score }}</td>
+                            <td style="padding: var(--spacing-md);">
+                                {% if assessment.level == 'Low' %}
+                                    <span style="color: var(--color-success);">{{ assessment.level }}</span>
+                                {% elif assessment.level == 'Moderate' %}
+                                    <span style="color: var(--color-warning);">{{ assessment.level }}</span>
+                                {% else %}
+                                    <span style="color: var(--color-error);">{{ assessment.level }}</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: var(--spacing-md); text-align: right;">
+                                <a href="{{ url_for('stress.result', id=assessment.id) }}" class="btn btn-secondary" style="padding: 4px 12px; font-size: 0.85rem;">View Details</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="card text-center" style="padding: var(--spacing-xl);">
+                <p class="text-muted mb-md">You haven't taken any stress assessments yet.</p>
+                <a href="{{ url_for('stress.take_assessment') }}" class="btn btn-primary">Start First Assessment</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

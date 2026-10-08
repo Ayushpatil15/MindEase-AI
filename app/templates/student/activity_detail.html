@@ -1,0 +1,324 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ activity.title }} — MindEase AI{% endblock %}
+
+{% block content %}
+<div style="max-width: 820px; margin: 10px auto;">
+    <div class="mb-md">
+        <a href="{{ url_for('student.dashboard') }}" class="btn btn-secondary btn-sm">
+            &larr; Back to Today
+        </a>
+    </div>
+
+    <div class="card card-hover" style="padding: 2rem;">
+        <div class="flex-between mb-sm flex-wrap gap-xs">
+            <span class="badge badge-primary">{{ activity.category }}</span>
+            <span class="badge badge-muted">⏱ Duration: ~{{ activity.duration_minutes }} min</span>
+        </div>
+
+        <h1 style="font-size: 1.85rem; font-weight: 800; margin-bottom: 8px; color: var(--color-heading);">{{ activity.title }}</h1>
+        <p class="text-muted" style="font-size: 0.95rem; line-height: 1.6; margin-bottom: 24px; border-bottom: 1px solid var(--color-border); padding-bottom: 16px;">
+            {{ activity.short_description }}
+        </p>
+
+        <!-- Dedicated Box Breathing Interactive Component -->
+        {% if activity.id == 'box_breathing' %}
+            <div style="background: var(--color-surface-subtle); border: 1px solid var(--color-border); border-radius: var(--border-radius-lg); padding: 28px; text-align: center; margin-bottom: 28px;">
+                <span class="badge badge-primary mb-xs">Interactive Breathing Guide</span>
+                <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 16px;">
+                    4 Seconds Inhale &bull; 4 Seconds Hold &bull; 4 Seconds Exhale &bull; 4 Seconds Hold
+                </p>
+
+                <div class="breathing-circle-container">
+                    <div id="breathing-circle" class="breathing-circle">
+                        <span id="breathing-phase-text">Ready</span>
+                    </div>
+                </div>
+
+                <div id="timer-display" style="font-size: 2.5rem; font-weight: 800; font-family: monospace; color: var(--color-primary); line-height: 1; margin: 12px 0 20px 0;">
+                    01:00
+                </div>
+
+                <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+                    <button id="btn-timer-start" class="btn btn-primary">Start Breathing Reset</button>
+                    <button id="btn-timer-pause" class="btn btn-secondary" disabled>Pause</button>
+                    <button id="btn-timer-reset" class="btn btn-secondary">Reset</button>
+                </div>
+            </div>
+
+        <!-- Generic Timer Component for other timed exercises -->
+        {% elif activity.has_timer and activity.timer_seconds %}
+            <div style="background: var(--color-surface-subtle); border: 1px solid var(--color-border); border-radius: var(--border-radius-lg); padding: 24px; text-align: center; margin-bottom: 28px;">
+                <div class="badge badge-muted mb-xs">Interactive Exercise Timer</div>
+                <div id="timer-display" style="font-size: 3.5rem; font-weight: 800; font-family: monospace; color: var(--color-primary); line-height: 1; margin: 12px 0 20px 0;">
+                    00:00
+                </div>
+                <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+                    <button id="btn-timer-start" class="btn btn-primary">Start Timer</button>
+                    <button id="btn-timer-pause" class="btn btn-secondary" disabled>Pause</button>
+                    <button id="btn-timer-reset" class="btn btn-secondary">Reset</button>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Step-by-Step Instructions -->
+        <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 16px;">Guided Steps</h2>
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 28px;">
+            {% for step in activity.steps %}
+                <div style="display: flex; gap: 14px; align-items: flex-start; background: var(--color-surface-subtle); border: 1px solid var(--color-border); padding: 14px 18px; border-radius: var(--border-radius-sm);">
+                    <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--color-primary); color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem; flex-shrink: 0;">
+                        {{ step.step_number }}
+                    </div>
+                    <div>
+                        <h3 style="font-size: 1rem; font-weight: 700; margin: 0 0 4px 0; color: var(--color-primary);">
+                            {{ step.heading }}
+                        </h3>
+                        <p class="text-muted" style="margin: 0; font-size: 0.9rem; line-height: 1.5; color: var(--color-text-body);">
+                            {{ step.instruction }}
+                        </p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Reflective Guidance Callout -->
+        {% if activity.completion_guidance %}
+            <div style="background: var(--color-accent-purple-bg); border-left: 4px solid var(--color-accent-purple); padding: 14px 18px; border-radius: var(--border-radius-sm); margin-bottom: 28px;">
+                <span class="badge badge-purple mb-xs">Reflective Guidance</span>
+                <p class="text-muted" style="margin: 0; font-size: 0.9rem; line-height: 1.5; color: var(--color-text-body);">{{ activity.completion_guidance }}</p>
+            </div>
+        {% endif %}
+
+        <!-- Activity Action Box -->
+        <div id="action-box" class="text-center" style="border-top: 1px solid var(--color-border); padding-top: 24px;">
+            {% if active_task %}
+                <div class="mb-sm">
+                    <span class="badge badge-purple" style="font-size: 0.85rem; padding: 6px 16px;">
+                        Session Active
+                    </span>
+                </div>
+                <button id="btn-complete-activity" class="btn btn-primary btn-lg">
+                    Complete Session &check;
+                </button>
+                <div id="complete-status-msg" style="margin-top: 10px; font-size: 0.85rem;"></div>
+            {% else %}
+                <button id="btn-start-activity" class="btn btn-primary btn-lg">
+                    Begin Activity Session &rarr;
+                </button>
+                <div id="start-status-msg" style="margin-top: 10px; font-size: 0.85rem;"></div>
+            {% endif %}
+        </div>
+
+        {% if activity.safety_note %}
+            <div class="mt-lg text-center text-muted" style="font-size: 0.8rem;">
+                ℹ️ {{ activity.safety_note }}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const activityId = "{{ activity.id }}";
+    const initialSeconds = parseInt("{{ activity.timer_seconds or 0 }}", 10);
+    const getCsrfToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    
+    // Timer & Box Breathing Logic
+    if (initialSeconds > 0) {
+        let timerSeconds = initialSeconds;
+        let timerInterval = null;
+        let breathingInterval = null;
+
+        const display = document.getElementById('timer-display');
+        const btnStart = document.getElementById('btn-timer-start');
+        const btnPause = document.getElementById('btn-timer-pause');
+        const btnReset = document.getElementById('btn-timer-reset');
+
+        const circle = document.getElementById('breathing-circle');
+        const phaseText = document.getElementById('breathing-phase-text');
+
+        function updateDisplay() {
+            const m = Math.floor(timerSeconds / 60).toString().padStart(2, '0');
+            const s = (timerSeconds % 60).toString().padStart(2, '0');
+            if (display) display.textContent = `${m}:${s}`;
+        }
+
+        updateDisplay();
+
+        function startBreathingCycle() {
+            if (!circle || !phaseText) return;
+
+            let phaseIndex = 0;
+            const phases = [
+                { name: 'Inhale', class: 'inhale', duration: 4000 },
+                { name: 'Hold', class: 'hold', duration: 4000 },
+                { name: 'Exhale', class: 'exhale', duration: 4000 },
+                { name: 'Hold', class: 'hold', duration: 4000 }
+            ];
+
+            function runPhase() {
+                const p = phases[phaseIndex];
+                phaseText.textContent = p.name;
+                circle.className = `breathing-circle ${p.class}`;
+                phaseIndex = (phaseIndex + 1) % phases.length;
+            }
+
+            runPhase();
+            breathingInterval = setInterval(runPhase, 4000);
+        }
+
+        function stopBreathingCycle() {
+            if (breathingInterval) {
+                clearInterval(breathingInterval);
+                breathingInterval = null;
+            }
+            if (circle) circle.className = 'breathing-circle';
+            if (phaseText) phaseText.textContent = 'Ready';
+        }
+
+        if (btnStart) {
+            btnStart.addEventListener('click', function() {
+                if (timerInterval) return;
+                btnStart.disabled = true;
+                btnPause.disabled = false;
+
+                if (activityId === 'box_breathing') {
+                    startBreathingCycle();
+                }
+                
+                const startTime = Date.now();
+                const startRemaining = timerSeconds;
+
+                timerInterval = setInterval(function() {
+                    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                    timerSeconds = Math.max(0, startRemaining - elapsed);
+                    updateDisplay();
+
+                    if (timerSeconds <= 0) {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                        stopBreathingCycle();
+                        btnStart.disabled = false;
+                        btnPause.disabled = true;
+                        if (phaseText) phaseText.textContent = 'Complete';
+                    }
+                }, 500);
+            });
+        }
+
+        if (btnPause) {
+            btnPause.addEventListener('click', function() {
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+                stopBreathingCycle();
+                if (phaseText) phaseText.textContent = 'Paused';
+                btnStart.disabled = false;
+                btnPause.disabled = true;
+            });
+        }
+
+        if (btnReset) {
+            btnReset.addEventListener('click', function() {
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+                stopBreathingCycle();
+                timerSeconds = initialSeconds;
+                updateDisplay();
+                btnStart.disabled = false;
+                btnPause.disabled = true;
+            });
+        }
+    }
+
+    // Start Activity Action
+    const btnStartAct = document.getElementById('btn-start-activity');
+    const startMsg = document.getElementById('start-status-msg');
+
+    if (btnStartAct) {
+        btnStartAct.addEventListener('click', function() {
+            btnStartAct.disabled = true;
+            if (startMsg) startMsg.textContent = 'Starting session...';
+
+            fetch(`/api/activities/${activityId}/start`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    window.location.reload();
+                } else {
+                    btnStartAct.disabled = false;
+                    if (startMsg) {
+                        startMsg.style.color = '#dc2626';
+                        startMsg.textContent = data.message || 'Error starting activity.';
+                    }
+                }
+            })
+            .catch(err => {
+                btnStartAct.disabled = false;
+                if (startMsg) {
+                    startMsg.style.color = '#dc2626';
+                    startMsg.textContent = 'Network or server error.';
+                }
+            });
+        });
+    }
+
+    // Complete Activity Action
+    const btnComplete = document.getElementById('btn-complete-activity');
+    const completeMsg = document.getElementById('complete-status-msg');
+
+    if (btnComplete) {
+        btnComplete.addEventListener('click', function() {
+            btnComplete.disabled = true;
+            if (completeMsg) completeMsg.textContent = 'Recording completion...';
+
+            fetch(`/api/activities/${activityId}/complete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const box = document.getElementById('action-box');
+                    if (box) {
+                        box.innerHTML = `
+                            <div class="alert alert-success" style="display: inline-flex; font-weight: 600; margin-bottom: 16px;">
+                                ✓ Activity Completed
+                            </div>
+                            <div>
+                                <a href="{{ url_for('student.dashboard') }}" class="btn btn-secondary">Return to Today</a>
+                            </div>
+                        `;
+                    }
+                } else {
+                    btnComplete.disabled = false;
+                    if (completeMsg) {
+                        completeMsg.style.color = '#dc2626';
+                        completeMsg.textContent = data.message || 'Error recording completion.';
+                    }
+                }
+            })
+            .catch(err => {
+                btnComplete.disabled = false;
+                if (completeMsg) {
+                    completeMsg.style.color = '#dc2626';
+                    completeMsg.textContent = 'Network or server error.';
+                }
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

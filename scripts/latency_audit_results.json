@@ -1,0 +1,112 @@
+{
+  "tf_version": "2.16.1",
+  "python_version": "3.12.10",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "cpu_name": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+  "benchmark_results": {
+    "Baseline": {
+      "mean_ms": 42.24770249980793,
+      "median_ms": 41.79950000252575,
+      "p95_ms": 48.01202999005909,
+      "min_ms": 34.568200004287064,
+      "max_ms": 64.26030000147875,
+      "std_ms": 3.963133993153248,
+      "arch": {
+        "file_size_mb": 7.177520751953125,
+        "total_params": 620421,
+        "trainable_params": 619461,
+        "total_layers": 17,
+        "conv_ops": 3,
+        "layer_breakdown": {
+          "Conv2D": 3,
+          "BatchNormalization": 4,
+          "MaxPooling2D": 3,
+          "Dropout": 4,
+          "Flatten": 1,
+          "Dense": 2
+        }
+      }
+    },
+    "Challenger": {
+      "mean_ms": 124.64248050004244,
+      "median_ms": 148.1082999962382,
+      "p95_ms": 199.35288500710152,
+      "min_ms": 35.74269999808166,
+      "max_ms": 450.10570000158623,
+      "std_ms": 67.49911064807748,
+      "arch": {
+        "file_size_mb": 14.963462829589844,
+        "total_params": 1286757,
+        "trainable_params": 1283621,
+        "total_layers": 70,
+        "conv_ops": 12,
+        "layer_breakdown": {
+          "InputLayer": 1,
+          "Conv2D": 12,
+          "BatchNormalization": 13,
+          "Activation": 9,
+          "GlobalAveragePooling2D": 5,
+          "Reshape": 4,
+          "Dense": 10,
+          "Multiply": 4,
+          "Add": 4,
+          "MaxPooling2D": 3,
+          "Dropout": 5
+        }
+      }
+    },
+    "Low-Latency": {
+      "mean_ms": 16.723835000157123,
+      "median_ms": 15.035550000902731,
+      "p95_ms": 24.91757500174571,
+      "min_ms": 13.011000002734363,
+      "max_ms": 38.10649999650195,
+      "std_ms": 4.099515668942499,
+      "arch": {
+        "file_size_mb": 0.587890625,
+        "total_params": 40997,
+        "trainable_params": 40101,
+        "total_layers": 28,
+        "conv_ops": 5,
+        "layer_breakdown": {
+          "InputLayer": 1,
+          "Conv2D": 1,
+          "BatchNormalization": 6,
+          "Activation": 5,
+          "SeparableConv2D": 4,
+          "MaxPooling2D": 3,
+          "Dropout": 5,
+          "GlobalAveragePooling2D": 1,
+          "Dense": 2
+        }
+      }
+    },
+    "Hybrid": {
+      "mean_ms": 31.25581499967666,
+      "median_ms": 30.49210000608582,
+      "p95_ms": 36.52952000484218,
+      "min_ms": 27.076599988504313,
+      "max_ms": 46.78389999025967,
+      "std_ms": 3.113182308868942,
+      "arch": {
+        "file_size_mb": 0.6994552612304688,
+        "total_params": 43605,
+        "trainable_params": 41717,
+        "total_layers": 51,
+        "conv_ops": 13,
+        "layer_breakdown": {
+          "InputLayer": 1,
+          "Conv2D": 9,
+          "BatchNormalization": 14,
+          "Activation": 9,
+          "DepthwiseConv2D": 4,
+          "Add": 3,
+          "MaxPooling2D": 3,
+          "Dropout": 5,
+          "GlobalAveragePooling2D": 1,
+          "Dense": 2
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Check In — MindEase AI{% endblock %}
+
+{% block content %}
+<div class="mb-lg">
+    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+        <span class="badge badge-primary">Coherent Check-In Hub</span>
+    </div>
+    <h1 style="margin-bottom: 4px;">Choose Your Check-In</h1>
+    <p class="text-muted" style="margin-bottom: 0;">
+        Take a moment to pause and reflect. Select the check-in method that feels best right now.
+    </p>
+</div>
+
+<div class="grid grid-3" style="gap: 20px;">
+    <!-- Mood Check-In -->
+    <div class="card card-hover" style="display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+            <div class="flex-between mb-sm">
+                <span class="badge badge-purple">Self-Reported</span>
+                <span class="badge badge-muted">⚡ 1 min</span>
+            </div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 8px;">Quick Mood Log</h2>
+            <p class="text-muted" style="font-size: 0.9rem; line-height: 1.5; margin-bottom: 16px;">
+                Record your current emotional state, mood spectrum, and optional journal note.
+            </p>
+        </div>
+        <div>
+            <a href="{{ url_for('mood.checkin') }}" class="btn btn-primary btn-block">
+                <span>Start Mood Log</span>
+                <span>&rarr;</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Stress Assessment -->
+    <div class="card card-hover" style="display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+            <div class="flex-between mb-sm">
+                <span class="badge badge-amber">11-Question PSS</span>
+                <span class="badge badge-muted">📋 3 min</span>
+            </div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 8px;">Stress Assessment</h2>
+            <p class="text-muted" style="font-size: 0.9rem; line-height: 1.5; margin-bottom: 16px;">
+                Reflect on your academic workload using an 11-question PSS-based stress assessment.
+            </p>
+
+        </div>
+        <div>
+            <a href="{{ url_for('stress.take_assessment') }}" class="btn btn-secondary btn-block">
+                <span>Take Assessment</span>
+                <span>&rarr;</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Facial Expression Check-In -->
+    <div class="card card-hover" style="display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+            <div class="flex-between mb-sm">
+                <span class="badge badge-blue">On-Device AI</span>
+                <span class="badge badge-muted">📷 1 min</span>
+            </div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 8px;">Facial Expression Scan</h2>
+            <p class="text-muted" style="font-size: 0.9rem; line-height: 1.5; margin-bottom: 16px;">
+                Private, camera-assisted expression detection powered by secure on-device AI.
+            </p>
+        </div>
+        <div>
+            <a href="{{ url_for('emotion.checkin') }}" class="btn btn-outline btn-block">
+                <span>Start Expression Scan</span>
+                <span>&rarr;</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-xl" style="background: var(--color-surface-subtle); border-left: 4px solid var(--color-primary);">
+    <p class="text-muted" style="margin: 0; font-size: 0.875rem;">
+        🔒 <strong>Privacy Assured:</strong> All check-in entries are encrypted and private to your personal student account. Camera streams are never uploaded or recorded.
+    </p>
+</div>
+{% endblock %}

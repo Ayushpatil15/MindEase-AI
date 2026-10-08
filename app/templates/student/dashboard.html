@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+
+{% block title %}Today — Student Dashboard — MindEase AI{% endblock %}
+
+
+{% block content %}
+<!-- 1. Header & Timezone Greeting -->
+<div class="row-flex flex-between mb-lg flex-wrap gap-md">
+    <div>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+            <span class="badge badge-primary">Today</span>
+            <span class="text-muted" style="font-size: 0.85rem;">
+                {{ data.daily_plan.date if data.daily_plan else '' }}
+            </span>
+        </div>
+        <h1 style="margin-bottom: 2px;">Welcome back, {{ data.user.username }}</h1>
+        <p class="text-muted" style="margin-bottom: 0; font-size: 0.95rem;">
+            Here is your daily wellness baseline and primary focus for today.
+        </p>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px;">
+        {% if data.wellness_score and data.wellness_score.status == 'available' %}
+            <div class="badge badge-primary" style="padding: 8px 16px; font-size: 0.9rem;">
+                Wellness Score: <strong>{{ data.wellness_score.score }}/100</strong>
+            </div>
+        {% else %}
+            <div class="badge badge-muted" style="padding: 8px 16px; font-size: 0.85rem;">
+                Score Calculating
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 2. Primary Intent Focus (Hero Card) -->
+{% if data.daily_plan and data.daily_plan.focus %}
+    <div class="card mb-xl" style="border-left: 4px solid var(--color-primary); background: var(--color-primary-bg);">
+        <div class="flex-between flex-wrap gap-md">
+            <div style="max-width: 680px;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                    <span class="badge badge-primary">{{ data.daily_plan.focus.category }}</span>
+                    <span class="text-muted" style="font-size: 0.8rem; font-weight: 600;">RECOMMENDED DAILY FOCUS</span>
+                </div>
+                <h2 style="font-size: 1.35rem; margin-bottom: 6px; color: var(--color-heading);">
+                    {{ data.daily_plan.focus.title }}
+                </h2>
+                <p style="margin-bottom: 0; font-size: 0.95rem; color: var(--color-text-body);">
+                    {{ data.daily_plan.focus.reason }}
+                </p>
+            </div>
+            <div>
+                <a href="{{ url_for('student.activity_detail', activity_id=data.daily_plan.focus.activity_id) }}" class="btn btn-primary btn-lg">
+                    {% if data.daily_plan.focus.is_active_task %}Resume Focus Activity{% else %}Start Recommended Focus{% endif %} &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="card mb-xl" style="border-left: 4px solid var(--color-primary); background: var(--color-surface-subtle);">
+        <div class="flex-between flex-wrap gap-md">
+            <div>
+                <span class="badge badge-primary mb-xs">Daily Action</span>
+                <h2 style="font-size: 1.25rem; margin-bottom: 4px;">Record Your Daily Check-In</h2>
+                <p class="text-muted" style="margin-bottom: 0; font-size: 0.9rem;">
+                    Log your mood or take a 3-minute stress assessment to generate today's personalized focus.
+                </p>
+            </div>
+            <div>
+                <a href="{{ url_for('student.checkin_hub') }}" class="btn btn-primary">
+                    Start Check-In &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<!-- 3. Lightweight Status Summary Modules Strip -->
+<div class="card mb-xl" style="padding: 16px 20px; background: var(--color-surface-subtle);">
+    <div class="flex-between flex-wrap gap-md">
+        <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+            <!-- Mood Module -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="text-muted" style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">Mood:</span>
+                {% if data.latest_mood %}
+                    <span class="badge badge-purple">{{ data.latest_mood.mood }} (Valence {{ data.latest_mood.valence }})</span>
+                {% else %}
+                    <span class="badge badge-muted">Not Logged</span>
+                {% endif %}
+            </div>
+
+            <div style="height: 16px; width: 1px; background: var(--color-border);"></div>
+
+            <!-- Stress Module -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="text-muted" style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">Stress:</span>
+                {% if data.latest_stress %}
+                    <span class="badge badge-amber">{{ data.latest_stress.level }} (PSS {{ data.latest_stress.score }}/44)</span>
+                {% else %}
+                    <span class="badge badge-muted">Not Assessed</span>
+                {% endif %}
+            </div>
+
+            <div style="height: 16px; width: 1px; background: var(--color-border);"></div>
+
+            <!-- Expression Scan Module -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="text-muted" style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">Scan:</span>
+                {% if data.latest_emotion %}
+                    <span class="badge badge-primary">{{ data.latest_emotion.emotion }}</span>
+                {% else %}
+                    <span class="badge badge-muted">Optional</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div>
+            <a href="{{ url_for('student.checkin_hub') }}" class="btn btn-secondary btn-sm">
+                Check-In Station &rarr;
+            </a>
+        </div>
+    </div>
+</div>
+
+
+<!-- 4. Secondary Context Below the Fold (Tasks, Recommendations, History) -->
+<div class="grid grid-2 mb-xl" style="gap: 20px;">
+    <!-- Tasks & Plan Context -->
+    <div class="card">
+        <div class="flex-between mb-md">
+            <div>
+                <h3 style="font-size: 1.15rem; margin-bottom: 2px;">Wellness Tasks</h3>
+                <span class="text-muted" style="font-size: 0.8rem;">Personal & Recommended Tasks</span>
+            </div>
+            <span class="badge badge-primary">
+                {{ data.tasks.completed_7d_count }} Completed (7d)
+            </span>
+        </div>
+
+
+
+        <div id="tasks-list-container" style="display: flex; flex-direction: column; gap: 8px;">
+            {% if data.tasks.pending|length > 0 %}
+                {% for task in data.tasks.pending %}
+                    <div id="task-item-{{ task.id }}" class="row-flex flex-between" style="padding: 8px 12px; background: var(--color-surface-subtle); border-radius: var(--border-radius-sm);">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" class="task-checkbox" data-task-id="{{ task.id }}" style="cursor: pointer; width: 16px; height: 16px; accent-color: var(--color-primary);">
+                            <span style="font-size: 0.875rem; color: var(--color-heading); font-weight: 500;">{{ task.title }}</span>
+                        </div>
+                        <span class="badge badge-muted" style="font-size: 0.7rem;">Pending</span>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div id="no-tasks-msg" class="empty-state" style="padding: 16px 0; font-size: 0.85rem;">
+                    No pending wellness tasks at the moment.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Contextual Recommendations Area -->
+    <div class="card">
+        <div class="flex-between mb-md">
+            <div>
+                <h3 style="font-size: 1.15rem; margin-bottom: 2px;">What Might Help Right Now?</h3>
+                <span class="text-muted" style="font-size: 0.8rem;">Contextual suggestion based on your recent check-in data</span>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            {% for rec in data.recommendations[:2] %}
+                <div style="padding: 12px; background: var(--color-surface-subtle); border-radius: var(--border-radius-sm); border-left: 3px solid var(--color-accent-blue);">
+                    <div class="flex-between mb-xs">
+                        <span class="badge badge-blue">{{ rec.category }}</span>
+                    </div>
+                    <strong style="display: block; font-size: 0.95rem; color: var(--color-heading); margin-bottom: 2px;">{{ rec.title }}</strong>
+                    <p class="text-muted" style="font-size: 0.825rem; margin-bottom: 8px; line-height: 1.4;">{{ rec.description }}</p>
+                    {% if rec.activity_id %}
+                        <a href="{{ url_for('student.activity_detail', activity_id=rec.activity_id) }}" class="btn btn-secondary btn-sm" style="font-size: 0.775rem;">
+                            Start Activity &rarr;
+                        </a>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Non-Clinical Footnote -->
+<div class="card" style="background: var(--color-surface-subtle); border-left: 4px solid var(--color-primary); padding: 12px 16px;">
+    <p class="text-muted" style="margin: 0; font-size: 0.825rem;">
+        🔒 <strong>Non-Clinical Note:</strong> MindEase AI indicators display self-reported reflections and are for personal awareness only. If you need institutional guidance, visit the <a href="{{ url_for('student.support_center') }}" style="color: var(--color-primary); text-decoration: underline;">Support Center</a> anytime.
+    </p>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const getCsrfToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+    // Task Checkbox Toggle
+    document.querySelectorAll('.task-checkbox').forEach(chk => {
+        chk.addEventListener('change', async (e) => {
+            const taskId = e.target.getAttribute('data-task-id');
+            if (!taskId) return;
+
+            try {
+                const response = await fetch(`/api/tasks/${taskId}/complete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    }
+                });
+                const resData = await response.json();
+                if (resData.status === 'success') {
+                    const itemEl = document.getElementById(`task-item-${taskId}`);
+                    if (itemEl) itemEl.remove();
+                }
+            } catch (err) {
+                console.error("Failed to complete task:", err);
+            }
+        });
+    });
+
+
+});
+</script>
+{% endblock %}
+

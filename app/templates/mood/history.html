@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}Mood History - MindEase AI{% endblock %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-lg);">
+            <h1>Mood History</h1>
+            <a href="{{ url_for('mood.checkin') }}" class="btn btn-primary">Log Mood</a>
+        </div>
+
+        <div class="row">
+            <!-- 7-Day Trend Chart -->
+            <div class="col-md-12 mb-xl">
+                <div class="card">
+                    <h2 style="font-size: 1.25rem; margin-bottom: var(--spacing-md);">7-Day Trend</h2>
+                    <div style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="moodChart"></canvas>
+                        
+                        <div id="emptyChartState" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.9);">
+                            <p class="text-muted mb-sm">No mood check-ins yet.</p>
+                            <p class="text-muted" style="font-size: 0.9rem;">Log your first check-in to start seeing your mood pattern.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History List -->
+            <div class="col-md-12">
+                {% if entries %}
+                    <div style="display: flex; flex-direction: column; gap: var(--spacing-md);">
+                        {% for entry in entries %}
+                            <div class="card" style="padding: var(--spacing-md);">
+                                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--spacing-sm);">
+                                    <div style="font-weight: 600; font-size: 1.1rem; color: var(--color-primary);">{{ entry.mood }}</div>
+                                    <div class="text-muted" style="font-size: 0.85rem;">{{ entry.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                                </div>
+                                {% if entry.journal_note %}
+                                    <div style="background: var(--color-surface-hover); padding: var(--spacing-sm); border-radius: var(--border-radius-sm); border-left: 3px solid var(--color-primary); margin-top: var(--spacing-sm);">
+                                        <p style="white-space: pre-wrap; margin: 0; font-size: 0.95rem; color: var(--color-text-muted);">{{ entry.journal_note }}</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="card text-center" style="padding: var(--spacing-xl);">
+                        <p class="text-muted mb-md">You haven't logged any moods.</p>
+                        <a href="{{ url_for('mood.checkin') }}" class="btn btn-primary">Start First Check-In</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const trendData = {{ trend_json | safe }};
+        const ctx = document.getElementById('moodChart').getContext('2d');
+        const emptyState = document.getElementById('emptyChartState');
+        
+        if (trendData.length === 0) {
+            emptyState.style.display = 'flex';
+        } else {
+            emptyState.style.display = 'none';
+            
+            const labels = trendData.map(d => d.date);
+            const dataPoints = trendData.map(d => d.valence);
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Mood Valence',
+                        data: dataPoints,
+                        borderColor: '#8b5cf6', // Lavender primary
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#8b5cf6',
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            min: -2,
+                            max: 2,
+                            ticks: {
+                                stepSize: 1,
+                                callback: function(value) {
+                                    if(value === 2) return 'Very good';
+                                    if(value === 1) return 'Good';
+                                    if(value === 0) return 'Okay';
+                                    if(value === -1) return 'Low';
+                                    if(value === -2) return 'Very low';
+                                    return '';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return trendData[context.dataIndex].mood;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

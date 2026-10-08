@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MindEase AI{% endblock %}</title>
+    <meta name="description" content="MindEase AI — Modern Student Mental Wellness Platform.">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <header class="navbar" role="banner">
+        <div class="container">
+            <a href="{{ url_for('student.dashboard') }}" class="navbar-brand" aria-label="MindEase AI Home">
+                🌱 <span class="brand-accent">MindEase</span> AI
+            </a>
+            <nav role="navigation" aria-label="Primary Navigation">
+                <ul class="navbar-nav">
+                    {% if current_user.is_authenticated %}
+                        {% if current_user.role == 'admin' %}
+                            <li>
+                                <a href="{{ url_for('admin.dashboard') }}" class="nav-link {% if request.endpoint and request.endpoint.startswith('admin.') %}active{% endif %}">
+                                    Admin
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        <li>
+                            <a href="{{ url_for('student.dashboard') }}" class="nav-link {% if request.endpoint == 'student.dashboard' %}active{% endif %}">
+                                Today
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('student.checkin_hub') }}" class="nav-link {% if request.endpoint in ['student.checkin_hub', 'mood.checkin', 'stress.take_assessment', 'emotion.checkin'] %}active{% endif %}">
+                                Check In
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('student.history') }}" class="nav-link {% if request.endpoint == 'student.history' %}active{% endif %}">
+                                Reflect
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('student.support_center') }}" class="nav-link {% if request.endpoint == 'student.support_center' %}active{% endif %}">
+                                Support
+                            </a>
+                        </li>
+
+                        <li style="margin-left: 12px; padding-left: 12px; border-left: 1px solid var(--color-border); display: flex; align-items: center; gap: 8px;">
+                            <span class="badge badge-muted" style="font-weight: 500; font-size: 0.75rem;">
+                                🌐 {{ current_user.preferences.timezone if current_user.preferences and current_user.preferences.timezone else 'UTC' }}
+                            </span>
+                            <form method="POST" action="{{ url_for('auth.logout') }}" style="display:inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 0.75rem;">Log Out</button>
+                            </form>
+                        </li>
+                    {% else %}
+                        <li><a href="{{ url_for('auth.login') }}" class="nav-link">Log In</a></li>
+                        <li><a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">Sign Up</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="content-wrapper" role="main">
+        <div class="container">
+            {# Flash Messages #}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages" aria-live="polite">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
+

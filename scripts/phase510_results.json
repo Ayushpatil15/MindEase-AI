@@ -1,0 +1,29 @@
+{
+  "tflite_direct_model": {
+    "mean_ms": 15.065360500258976,
+    "p95_ms": 29.08908500685355,
+    "min_ms": 2.396199997747317,
+    "max_ms": 280.34779999870807,
+    "gate4_pass": false
+  },
+  "component_breakdown": {
+    "haar_detection_mean_ms": 11.90384599918616,
+    "preprocessing_mean_ms": 5.798467000422534,
+    "tflite_inference_mean_ms": 15.065360500258976,
+    "total_predictor_mean_ms": 4.8777320006047376,
+    "total_predictor_p95_ms": 6.253149999247398
+  },
+  "e2e_scenarios": {
+    "Scenario_A_Valid_Frame": "PASS",
+    "Scenario_B_No_Face": "PASS",
+    "Scenario_C_Multi_Face": "PASS",
+    "Scenario_D_Malformed_Payload": "PASS",
+    "Scenario_E_Missing_Artifact_Fallback": "PASS",
+    "Scenario_F_Init_Failure_Fallback": "PASS",
+    "Scenario_G_H_Keras_Fallback_Inference": "PASS",
+    "Scenario_I_K_Student_Scan_Persistence": "PASS",
+    "Scenario_J_Cross_User_Isolation": "PASS",
+    "Scenario_L_Zero_Raw_Image_Persistence": "PASS"
+  },
+  "rollback_verification": "PASS"
+}

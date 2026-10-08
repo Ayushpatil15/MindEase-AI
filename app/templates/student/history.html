@@ -1,0 +1,332 @@
+{% extends 'base.html' %}
+
+{% block title %}Reflect — MindEase AI{% endblock %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Header & Timeframe Filters -->
+<div class="row-flex flex-between mb-lg flex-wrap gap-md" style="align-items: flex-end;">
+    <div>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+            <span class="badge badge-purple">Reflect & Understand</span>
+        </div>
+        <h1 style="margin-bottom: 2px;">Wellness History & Insights</h1>
+        <p class="text-muted" style="margin-bottom: 0; font-size: 0.95rem;">
+            Private, non-diagnostic overview of your check-in history, activity habits, and personal patterns over time.
+        </p>
+    </div>
+    <div style="display: flex; gap: 6px; background: var(--color-surface-subtle); padding: 4px; border-radius: var(--radius-pill); border: 1px solid var(--color-border);">
+        <a href="{{ url_for('student.history', range='7d') }}" 
+           class="nav-link {% if history.timeframe.range == '7d' %}active{% endif %}" style="padding: 6px 12px; font-size: 0.8rem;">
+            7 Days
+        </a>
+        <a href="{{ url_for('student.history', range='30d') }}" 
+           class="nav-link {% if history.timeframe.range == '30d' %}active{% endif %}" style="padding: 6px 12px; font-size: 0.8rem;">
+            30 Days
+        </a>
+        <a href="{{ url_for('student.history', range='90d') }}" 
+           class="nav-link {% if history.timeframe.range == '90d' %}active{% endif %}" style="padding: 6px 12px; font-size: 0.8rem;">
+            90 Days
+        </a>
+    </div>
+</div>
+
+<!-- 4 Key Summary Stat Cards -->
+<div class="grid grid-4 mb-lg" style="gap: 16px;">
+    <div class="card card-hover text-center" style="padding: 16px;">
+        <div class="text-muted" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Consistency</div>
+        <div style="font-size: 1.75rem; font-weight: 800; color: var(--color-primary); margin: 4px 0;">
+            {{ history.consistency.active_days }} / {{ history.consistency.total_days }} days
+        </div>
+        <span class="badge badge-primary">{{ history.consistency.percentage }}% Active</span>
+    </div>
+
+    <div class="card card-hover text-center" style="padding: 16px;">
+        <div class="text-muted" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Mood Check-Ins</div>
+        <div style="font-size: 1.75rem; font-weight: 800; color: var(--color-accent-purple); margin: 4px 0;">
+            {{ history.mood.count }}
+        </div>
+        <span class="badge badge-purple">Logs Recorded</span>
+    </div>
+
+    <div class="card card-hover text-center" style="padding: 16px;">
+        <div class="text-muted" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Stress Assessments</div>
+        <div style="font-size: 1.75rem; font-weight: 800; color: var(--color-accent-amber); margin: 4px 0;">
+            {{ history.stress.count }}
+        </div>
+        <span class="badge badge-amber">PSS Assessments</span>
+    </div>
+
+    <div class="card card-hover text-center" style="padding: 16px;">
+        <div class="text-muted" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Activities Completed</div>
+        <div style="font-size: 1.75rem; font-weight: 800; color: var(--color-accent-blue); margin: 4px 0;">
+            {{ history.activities.completed_count }}
+        </div>
+        <span class="badge badge-blue">Sessions Finished</span>
+    </div>
+</div>
+
+<!-- Key Observations / Deterministic Insights -->
+<div class="card card-hover mb-lg" style="border-left: 4px solid var(--color-primary); background: var(--color-primary-bg);">
+    <div class="flex-between mb-xs">
+        <span class="badge badge-primary">Pattern Observations</span>
+        <span class="text-muted" style="font-size: 0.75rem;">Personal Mood & Stress Insights</span>
+    </div>
+    <h2 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 8px;">
+        💡 Key Progress Observations & Insights
+    </h2>
+
+    <ul style="margin: 0; padding-left: 20px; color: var(--color-text-body); font-size: 0.9rem; line-height: 1.6;">
+        {% for insight in history.insights %}
+            <li style="margin-bottom: 4px;">{{ insight }}</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<!-- Single Focused Visualization Section with View Switcher Tabs -->
+<div class="card mb-lg">
+    <div class="flex-between mb-md flex-wrap gap-sm" style="border-bottom: 1px solid var(--color-border); padding-bottom: 12px;">
+        <h2 style="font-size: 1.2rem; margin: 0;">Interactive Trend Visualization</h2>
+        <div style="display: flex; gap: 4px;" role="tablist">
+            <button class="btn btn-secondary btn-sm chart-tab active" data-target="chart-mood-panel">Mood Valence</button>
+            <button class="btn btn-secondary btn-sm chart-tab" data-target="chart-stress-panel">Stress Timeline</button>
+            <button class="btn btn-secondary btn-sm chart-tab" data-target="chart-emotion-panel">Facial Expressions</button>
+            <button class="btn btn-secondary btn-sm chart-tab" data-target="chart-activity-panel">Guided Activities</button>
+        </div>
+    </div>
+
+    <!-- Chart Panels -->
+    <div id="chart-mood-panel" class="chart-panel" style="display: block;">
+        <div class="flex-between mb-sm">
+            <span class="text-muted" style="font-size: 0.85rem;">Mood Valence Trend (-2 Very Low to +2 Very Good)</span>
+            <span class="badge badge-purple">Valence Scale</span>
+        </div>
+        <div style="position: relative; height: 300px; width: 100%;">
+            <canvas id="moodHistoryChart"></canvas>
+            <div id="emptyMoodState" class="empty-state" style="display: none; position: absolute; inset: 0; flex-direction: column; align-items: center; justify-content: center; background: var(--color-surface); border-radius: var(--border-radius);">
+                <p class="text-muted" style="margin-bottom: 12px; font-size: 0.9rem;">No mood check-ins recorded in this timeframe.</p>
+                <a href="{{ url_for('mood.checkin') }}" class="btn btn-primary btn-sm">Log Mood Check-In &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="chart-stress-panel" class="chart-panel" style="display: none;">
+        <div class="flex-between mb-sm">
+            <span class="text-muted" style="font-size: 0.85rem;">Perceived Stress Score Timeline (PSS Scale 0 to 44)</span>
+            <span class="badge badge-amber">PSS Assessment</span>
+        </div>
+        <div style="position: relative; height: 300px; width: 100%;">
+            <canvas id="stressHistoryChart"></canvas>
+            <div id="emptyStressState" class="empty-state" style="display: none; position: absolute; inset: 0; flex-direction: column; align-items: center; justify-content: center; background: var(--color-surface); border-radius: var(--border-radius);">
+                <p class="text-muted" style="margin-bottom: 12px; font-size: 0.9rem;">No stress assessments recorded in this timeframe.</p>
+                <a href="{{ url_for('stress.take_assessment') }}" class="btn btn-primary btn-sm">Take Stress Assessment &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="chart-emotion-panel" class="chart-panel" style="display: none;">
+        <div class="flex-between mb-sm">
+            <span class="text-muted" style="font-size: 0.85rem;">Facial Expression Scan Distribution</span>
+            <span class="badge badge-primary">Private AI</span>
+        </div>
+        <div style="position: relative; height: 300px; width: 100%;">
+            <canvas id="emotionDistributionChart"></canvas>
+            <div id="emptyEmotionState" class="empty-state" style="display: none; position: absolute; inset: 0; flex-direction: column; align-items: center; justify-content: center; background: var(--color-surface); border-radius: var(--border-radius);">
+                <p class="text-muted" style="margin-bottom: 12px; font-size: 0.9rem;">No expression scans in this timeframe.</p>
+                <a href="{{ url_for('emotion.checkin') }}" class="btn btn-primary btn-sm">Start Expression Scan &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="chart-activity-panel" class="chart-panel" style="display: none;">
+        <div class="flex-between mb-sm">
+            <span class="text-muted" style="font-size: 0.85rem;">Completed Guided Exercises</span>
+            <span class="badge badge-blue">Activities</span>
+        </div>
+        <div style="position: relative; height: 300px; width: 100%;">
+            <canvas id="activityProgressChart"></canvas>
+            <div id="emptyActivityState" class="empty-state" style="display: none; position: absolute; inset: 0; flex-direction: column; align-items: center; justify-content: center; background: var(--color-surface); border-radius: var(--border-radius);">
+                <p class="text-muted" style="margin-bottom: 12px; font-size: 0.9rem;">No completed micro-actions in this timeframe.</p>
+                <a href="{{ url_for('student.checkin_hub') }}" class="btn btn-primary btn-sm">Complete a Check-In &rarr;</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Non-Clinical Footnote -->
+<div class="card" style="background: var(--color-surface-subtle); border-left: 4px solid var(--color-primary); padding: 14px 18px;">
+    <p class="text-muted" style="margin: 0; font-size: 0.85rem; line-height: 1.5;">
+        🔒 <strong>Privacy & Wellness Notice:</strong> All reflection records are private and visible exclusively to you. MindEase AI trends display self-reported and camera-assisted check-in records for self-awareness. They do not constitute medical or psychological diagnoses. Visit our <a href="{{ url_for('student.support_center') }}" style="color: var(--color-primary); text-decoration: underline;">Support Center</a> anytime for institutional resources.
+    </p>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const history = {{ history_json | safe }};
+
+    // Tab Switcher Handler
+    const tabs = document.querySelectorAll('.chart-tab');
+    const panels = document.querySelectorAll('.chart-panel');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => {
+                t.classList.remove('active');
+                t.style.backgroundColor = 'var(--color-surface-subtle)';
+                t.style.color = 'var(--color-heading)';
+            });
+            panels.forEach(p => p.style.display = 'none');
+
+            tab.classList.add('active');
+            tab.style.backgroundColor = 'var(--color-primary)';
+            tab.style.color = '#ffffff';
+
+            const targetId = tab.getAttribute('data-target');
+            document.getElementById(targetId).style.display = 'block';
+        });
+    });
+
+    // Style active initial tab
+    const initialActive = document.querySelector('.chart-tab.active');
+    if (initialActive) {
+        initialActive.style.backgroundColor = 'var(--color-primary)';
+        initialActive.style.color = '#ffffff';
+    }
+
+    // 1. Mood History Chart
+    const moodData = history.mood.trend || [];
+    const emptyMood = document.getElementById('emptyMoodState');
+    if (moodData.length === 0) {
+        emptyMood.style.display = 'flex';
+    } else {
+        emptyMood.style.display = 'none';
+        new Chart(document.getElementById('moodHistoryChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: moodData.map(d => d.date),
+                datasets: [{
+                    label: 'Valence',
+                    data: moodData.map(d => d.valence),
+                    borderColor: '#7c3aed',
+                    backgroundColor: 'rgba(124, 58, 237, 0.12)',
+                    borderWidth: 2,
+                    pointRadius: 4,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        min: -2, max: 2,
+                        ticks: {
+                            stepSize: 1,
+                            callback: function(v) {
+                                const map = {2: 'Very Good', 1: 'Good', 0: 'Okay', '-1': 'Low', '-2': 'Very Low'};
+                                return map[v] || '';
+                            }
+                        }
+                    }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+
+    // 2. Stress History Chart
+    const stressData = history.stress.assessments || [];
+    const emptyStress = document.getElementById('emptyStressState');
+    if (stressData.length === 0) {
+        emptyStress.style.display = 'flex';
+    } else {
+        emptyStress.style.display = 'none';
+        new Chart(document.getElementById('stressHistoryChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: stressData.map(d => d.date),
+                datasets: [{
+                    label: 'Stress Score (0-44)',
+                    data: stressData.map(d => d.score),
+                    backgroundColor: stressData.map(d => {
+                        if (d.score <= 14) return '#15803d';
+                        if (d.score <= 28) return '#d97706';
+                        return '#dc2626';
+                    }),
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { min: 0, max: 44, ticks: { stepSize: 10 } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+
+    // 3. Emotion Distribution Chart
+    const emotionDist = history.emotion.distribution || {};
+    const emotionLabels = Object.keys(emotionDist);
+    const emptyEmotion = document.getElementById('emptyEmotionState');
+    if (emotionLabels.length === 0) {
+        emptyEmotion.style.display = 'flex';
+    } else {
+        emptyEmotion.style.display = 'none';
+        new Chart(document.getElementById('emotionDistributionChart').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: emotionLabels,
+                datasets: [{
+                    data: Object.values(emotionDist),
+                    backgroundColor: ['#15803d', '#0284c7', '#d97706', '#dc2626', '#7c3aed']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'right' } }
+            }
+        });
+    }
+
+    // 4. Activity Progress Chart
+    const activities = history.activities.completions || [];
+    const emptyActivity = document.getElementById('emptyActivityState');
+    if (activities.length === 0) {
+        emptyActivity.style.display = 'flex';
+    } else {
+        emptyActivity.style.display = 'none';
+        const actCounts = {};
+        activities.forEach(a => {
+            const title = a.title || 'Wellness Task';
+            actCounts[title] = (actCounts[title] || 0) + 1;
+        });
+
+        new Chart(document.getElementById('activityProgressChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(actCounts),
+                datasets: [{
+                    label: 'Completions',
+                    data: Object.values(actCounts),
+                    backgroundColor: '#0284c7',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { ticks: { precision: 0 } } },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+

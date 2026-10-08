@@ -1,0 +1,81 @@
+{
+    "_schema_version": "1.0",
+    "_description": "MindEase AI — Universal India-First Support Resources Configuration.",
+    "resources": [
+        {
+            "id": "tele_manas",
+            "name": "Tele-MANAS (National Mental Health Program)",
+            "category": "crisis",
+            "description": "24/7 free, confidential, and professional tele-counseling support offered by the Ministry of Health & Family Welfare.",
+            "contact": {
+                "phone": "14416 / 1800-89-14416",
+                "email": null,
+                "url": "https://telemanas.mohfw.gov.in"
+            },
+            "location": "All India (Toll-Free)",
+            "availability": "24/7 / 365 Days",
+            "is_emergency": true,
+            "is_configured": true
+        },
+        {
+            "id": "national_emergency",
+            "name": "National Emergency Services",
+            "category": "crisis",
+            "description": "Immediate emergency response for any life-threatening situation or medical emergency.",
+            "contact": {
+                "phone": "112",
+                "email": null,
+                "url": "https://112.gov.in"
+            },
+            "location": "All India (Toll-Free)",
+            "availability": "24/7 Emergency Dispatch",
+            "is_emergency": true,
+            "is_configured": true
+        },
+        {
+            "id": "campus_counseling",
+            "name": "Campus Student Counseling Center",
+            "category": "counseling",
+            "description": "Confidential individual counseling, stress management workshops, and student mental health services.",
+            "contact": {
+                "phone": "[Configure Campus Counseling Phone]",
+                "email": "[Configure Campus Counseling Email]",
+                "url": "[Configure Campus Counseling URL]"
+            },
+            "location": "[Configure Campus Location]",
+            "availability": "[Configure Hours]",
+            "is_emergency": false,
+            "is_configured": false
+        },
+        {
+            "id": "peer_wellness",
+            "name": "Student Wellness & Peer Mentoring",
+            "category": "wellness",
+            "description": "Peer-led wellness coaching, study group matching, and relaxation drop-in sessions.",
+            "contact": {
+                "phone": "[Configure Peer Support Phone]",
+                "email": "[Configure Peer Support Email]",
+                "url": "[Configure Peer Support URL]"
+            },
+            "location": "[Configure Campus Location]",
+            "availability": "[Configure Hours]",
+            "is_emergency": false,
+            "is_configured": false
+        },
+        {
+            "id": "academic_advising",
+            "name": "Academic Success & Learning Center",
+            "category": "professional",
+            "description": "Time management coaching, academic accommodations, and study strategy guidance.",
+            "contact": {
+                "phone": "[Configure Academic Success Phone]",
+                "email": "[Configure Academic Success Email]",
+                "url": "[Configure Academic Success URL]"
+            },
+            "location": "[Configure Campus Location]",
+            "availability": "[Configure Hours]",
+            "is_emergency": false,
+            "is_configured": false
+        }
+    ]
+}

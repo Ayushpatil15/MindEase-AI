@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Log Mood Check-In — MindEase AI{% endblock %}
+
+{% block content %}
+<div style="max-width: 540px; margin: 20px auto;">
+    <div class="mb-md">
+        <a href="{{ url_for('student.checkin_hub') }}" class="btn btn-secondary btn-sm">&larr; Back to Check-In Hub</a>
+    </div>
+
+    <div class="text-center mb-lg">
+        <span class="badge badge-purple mb-xs">Fast Check-In • ~1 min</span>
+        <h1 style="font-size: 1.85rem; font-weight: 700; margin-bottom: 6px;">How are you feeling right now?</h1>
+        <p class="text-muted" style="margin-bottom: 0; font-size: 0.95rem;">
+            Select your current emotional state to track your mood baseline over time.
+        </p>
+    </div>
+
+    <form method="POST" action="{{ url_for('mood.checkin') }}" class="card card-hover">
+        {{ form.csrf_token }}
+
+        <div class="form-group mb-lg">
+            <label class="form-label" style="margin-bottom: 12px;">Select Primary Feeling</label>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                {% for subfield in form.mood %}
+                    <label class="selectable-card" tabindex="0">
+                        {{ subfield(style="display: none;", class="mood-radio") }}
+                        <span style="font-weight: 600; color: var(--color-heading); font-size: 0.95rem;">
+                            {{ subfield.label.text }}
+                        </span>
+                        <span class="badge badge-muted">Select</span>
+                    </label>
+                {% endfor %}
+            </div>
+            {% if form.mood.errors %}
+                <div class="form-error mt-sm">
+                    {% for error in form.mood.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="form-group mb-lg">
+            <label class="form-label" for="journal_note">
+                🔒 Private Journal Note (Optional)
+            </label>
+            <small class="text-muted" style="display: block; margin-bottom: 8px;">
+                {{ form.journal_note.description or 'Optional reflection. Encrypted and visible only to you.' }}
+            </small>
+            {{ form.journal_note(class="form-control", rows="3", placeholder="Reflect on what is influencing your mood today...") }}
+            {% if form.journal_note.errors %}
+                <div class="form-error mt-xs">
+                    {% for error in form.journal_note.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="mt-lg">
+            {{ form.submit(class="btn btn-primary btn-block") }}
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Interactive card selection
+    document.querySelectorAll('.selectable-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const radio = card.querySelector('.mood-radio');
+            if (radio) {
+                radio.checked = true;
+                document.querySelectorAll('.selectable-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+            }
+        });
+
+        card.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                card.click();
+            }
+        });
+    });
+
+    // Initial selected state
+    document.querySelectorAll('.mood-radio:checked').forEach(radio => {
+        const card = radio.closest('.selectable-card');
+        if (card) card.classList.add('selected');
+    });
+});
+</script>
+{% endblock %}
