@@ -8,8 +8,8 @@ ACTIVITIES = {
     'box_breathing': {
         'id': 'box_breathing',
         'category': 'Mindfulness',
-        'title': 'Box Breathing & Grounding Exercise',
-        'short_description': 'Practice 4-7-8 deep breathing for 5 minutes to lower physiological arousal.',
+        'title': 'Box Breathing',
+        'short_description': 'Practice box breathing (inhale 4, hold 4, exhale 4, hold 4) for 5 minutes to lower physiological arousal.',
         'duration_minutes': 5,
         'has_timer': True,
         'timer_seconds': 300,
@@ -27,17 +27,22 @@ ACTIVITIES = {
             {
                 'step_number': 3,
                 'heading': 'Hold',
-                'instruction': 'Hold your breath comfortably for 7 counts without straining.',
+                'instruction': 'Hold your breath comfortably for 4 counts without straining.',
             },
             {
                 'step_number': 4,
                 'heading': 'Exhale',
-                'instruction': 'Exhale slowly through your mouth for 8 counts, releasing all body tension.',
+                'instruction': 'Exhale slowly through your mouth for 4 counts, releasing all body tension.',
             },
             {
                 'step_number': 5,
+                'heading': 'Hold',
+                'instruction': 'Hold your breath empty for 4 counts before the next cycle.',
+            },
+            {
+                'step_number': 6,
                 'heading': 'Repeat',
-                'instruction': 'Continue this 4-7-8 breathing pattern until the 5-minute timer completes.',
+                'instruction': 'Continue this box breathing pattern (inhale 4, hold 4, exhale 4, hold 4) until the 5-minute timer completes.',
             },
         ],
         'completion_guidance': 'Notice if your heart rate has slowed or if your muscle tension feels reduced.',

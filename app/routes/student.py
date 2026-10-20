@@ -37,6 +37,15 @@ def history():
 
 
 
+@student_bp.route('/activities')
+@login_required
+@student_required
+def activities():
+    """Guided Wellness Activities catalog view."""
+    all_activities = get_all_activities()
+    return render_template('student/activities.html', activities=all_activities)
+
+
 @student_bp.route('/activities/<activity_id>')
 @login_required
 @student_required

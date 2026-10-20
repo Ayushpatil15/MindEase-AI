@@ -6,6 +6,7 @@ from flask_login import login_required, current_user
 
 from app.forms.mood import MoodCheckinForm
 from app.services.mood_service import record_checkin, get_7day_trend, get_history
+from app.services.recommendation_service import refresh_recommendations
 from app.utils.validators import validate_mood_submission
 from app.utils.decorators import student_required
 
@@ -36,6 +37,7 @@ def checkin():
             mood=mood_choice,
             journal_note=safe_note
         )
+        refresh_recommendations(current_user.id)
 
         flash('Mood check-in saved successfully.', 'success')
         return redirect(url_for('student.dashboard'))

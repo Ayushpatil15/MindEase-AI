@@ -32,7 +32,7 @@ def test_get_activity_by_id():
     """Verify lookup by activity ID."""
     box = get_activity_by_id('box_breathing')
     assert box is not None
-    assert box['title'] == 'Box Breathing & Grounding Exercise'
+    assert box['title'] == 'Box Breathing'
     assert box['has_timer'] is True
     assert box['timer_seconds'] == 300
 

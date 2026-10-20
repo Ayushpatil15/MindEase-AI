@@ -14,6 +14,7 @@ from werkzeug.exceptions import RequestEntityTooLarge
 
 from app.utils.decorators import student_required
 from app.services.emotion_service import save_emotion_scan
+from app.services.recommendation_service import refresh_recommendations
 from app.ml.predictor import predict
 
 logger = logging.getLogger(__name__)
@@ -102,6 +103,7 @@ def api_predict():
                 emotion=result['emotion'],
                 confidence=result['confidence']
             )
+            refresh_recommendations(current_user.id)
             return jsonify({
                 'status': 'success',
                 'emotion': result['emotion'],

@@ -1,8 +1,10 @@
 """Phase 0 tests — verify scaffolding, app factory, models, and CLI."""
 
 import pytest
+from unittest.mock import patch
 
 from app import create_app
+from app.config import ProductionConfig, DevelopmentConfig
 from app.extensions import db as _db
 from app.models import (
     User, UserPreferences, StressAssessment, MoodEntry,
@@ -37,6 +39,27 @@ class TestAppFactory:
         assert response.status_code == 200
         data = response.get_json()
         assert data['status'] == 'ok'
+
+    def test_production_config_missing_secret_key_raises(self):
+        from flask import Flask
+        with patch.dict('os.environ', {}, clear=True):
+            test_app = Flask('dummy')
+            with pytest.raises(RuntimeError, match="SECRET_KEY environment variable is required in production"):
+                test_app.config.from_object(ProductionConfig)
+
+    def test_production_config_with_secret_key_succeeds(self):
+        from flask import Flask
+        with patch.dict('os.environ', {'SECRET_KEY': 'prod-secret-test-key'}):
+            test_app = Flask('dummy')
+            test_app.config.from_object(ProductionConfig)
+            assert test_app.config['SECRET_KEY'] == 'prod-secret-test-key'
+
+    def test_development_config_fallback_secret_key(self):
+        from flask import Flask
+        with patch.dict('os.environ', {}, clear=True):
+            test_app = Flask('dummy')
+            test_app.config.from_object(DevelopmentConfig)
+            assert test_app.config['SECRET_KEY'] == 'dev-secret-key-change-in-production'
 
 
 class TestUserModel:

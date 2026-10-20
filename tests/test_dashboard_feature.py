@@ -86,7 +86,7 @@ def test_recommendations_high_stress_rule(app, db):
         recs = recommendation_service.generate_recommendations(user.id)
         titles = [r.title for r in recs]
 
-        assert "Box Breathing & Grounding Exercise" in titles
+        assert "Box Breathing" in titles
 
 
 def test_recommendations_low_mood_rule(app, db):
@@ -198,6 +198,34 @@ def test_api_csrf_protection_validation(client, app, db):
 
     finally:
         app.config['WTF_CSRF_ENABLED'] = False
+
+
+def test_high_stress_updates_stale_recommendations(client, app, db):
+    """Verify that submitting a High stress assessment refreshes stale recommendations."""
+    with app.app_context():
+        user = create_test_student(db, username="stress_refresh_user", email="stress_refresh@test.com", password="password123")
+        # 1. Initial dashboard call generates default welcome recommendation
+        initial_data = dashboard_service.get_student_dashboard_data(user.id)
+        initial_titles = [r['title'] for r in initial_data['recommendations']]
+        assert 'Welcome to MindEase AI' in initial_titles
+        assert not any('Box Breathing' in t for t in initial_titles)
+
+    # 2. Login and submit high stress assessment (score = 44 -> High)
+    client.post('/auth/login', data={'email': 'stress_refresh@test.com', 'password': 'password123'})
+    high_stress_data = {
+        'q1': 4, 'q2': 4, 'q3': 4, 'q4': 0, 'q5': 0,
+        'q6': 4, 'q7': 0, 'q8': 0, 'q9': 4, 'q10': 4, 'q11': 4
+    }
+    res = client.post('/stress/', data=high_stress_data, follow_redirects=True)
+    assert res.status_code == 200
+
+    # 3. Recommendations should have been refreshed from new state
+    with app.app_context():
+        updated_data = dashboard_service.get_student_dashboard_data(user.id)
+        updated_titles = [r['title'] for r in updated_data['recommendations']]
+        assert 'Welcome to MindEase AI' not in updated_titles
+        assert any('Box Breathing' in t for t in updated_titles)
+
 
 
 

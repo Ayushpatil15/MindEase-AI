@@ -13,6 +13,7 @@ from app.models import Recommendation
 
 # Deterministic mapping from recommendation title to activity slug
 RECOMMENDATION_ACTIVITY_MAP = {
+    'Box Breathing': 'box_breathing',
     'Box Breathing & Grounding Exercise': 'box_breathing',
     'Self-Compassion & Reflection': 'self_compassion',
     'Physical Stretch & Tension Release': 'tension_release',
@@ -65,8 +66,8 @@ def generate_recommendations(user_id):
     if latest_stress and latest_stress.level == 'High':
         candidates.append({
             'category': 'MINDFULNESS',
-            'title': 'Box Breathing & Grounding Exercise',
-            'description': 'Practice 4-7-8 deep breathing for 5 minutes to lower physiological arousal.',
+            'title': 'Box Breathing',
+            'description': 'Practice box breathing (inhale 4, hold 4, exhale 4, hold 4) for 5 minutes to lower physiological arousal.',
             'reason': 'Triggered because your latest stress assessment indicated high stress level.',
             'activity_id': 'box_breathing',
         })
@@ -175,4 +176,19 @@ def get_recent(user_id, limit=5):
         .limit(limit)
         .all()
     )
+
+
+def refresh_recommendations(user_id):
+    """Delete existing recommendations for the user and regenerate them from current state.
+
+    Args:
+        user_id (int): User identifier.
+
+    Returns:
+        list[Recommendation]: Newly generated recommendations.
+    """
+    Recommendation.query.filter_by(user_id=user_id).delete()
+    db.session.commit()
+    return generate_recommendations(user_id)
+
 

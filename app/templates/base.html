@@ -42,6 +42,11 @@
                             </a>
                         </li>
                         <li>
+                            <a href="{{ url_for('student.activities') }}" class="nav-link {% if request.endpoint in ['student.activities', 'student.activity_detail'] %}active{% endif %}">
+                                Activities
+                            </a>
+                        </li>
+                        <li>
                             <a href="{{ url_for('student.history') }}" class="nav-link {% if request.endpoint == 'student.history' %}active{% endif %}">
                                 Reflect
                             </a>

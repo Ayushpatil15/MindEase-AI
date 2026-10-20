@@ -101,6 +101,33 @@ class TestLoginLogout:
         })
         assert b'Invalid email or password' in response.data
 
+    def test_login_redirect_valid_next(self, client, db):
+        create_test_student(db, email='login_valid_next@test.com', password='mypassword123')
+        response = client.post('/auth/login?next=/history', data={
+            'email': 'login_valid_next@test.com',
+            'password': 'mypassword123'
+        }, follow_redirects=False)
+        assert response.status_code == 302
+        assert response.headers['Location'] == '/history'
+
+    def test_login_redirect_open_redirect_double_slash(self, client, db):
+        create_test_student(db, email='login_evil1@test.com', password='mypassword123')
+        response = client.post('/auth/login?next=//evil.com', data={
+            'email': 'login_evil1@test.com',
+            'password': 'mypassword123'
+        }, follow_redirects=False)
+        assert response.status_code == 302
+        assert response.headers['Location'] == '/'
+
+    def test_login_redirect_open_redirect_backslash(self, client, db):
+        create_test_student(db, email='login_evil2@test.com', password='mypassword123')
+        response = client.post('/auth/login?next=/\\evil.com', data={
+            'email': 'login_evil2@test.com',
+            'password': 'mypassword123'
+        }, follow_redirects=False)
+        assert response.status_code == 302
+        assert response.headers['Location'] == '/'
+
     def test_logout(self, client, db):
         # Login first
         create_test_student(db, email='logout@test.com', password='mypassword123')
@@ -241,3 +268,27 @@ def test_csrf_actually_protects(app, db):
     assert b'The CSRF token is missing.' in response.data
     
     app.config['WTF_CSRF_ENABLED'] = False
+
+
+def test_rate_limiting_login_blocks_brute_force(app, db):
+    """Verify that enabling rate limiting returns 429 after exceeding limit."""
+    from app.extensions import limiter
+    app.config['RATELIMIT_ENABLED'] = True
+    limiter.enabled = True
+    limiter.reset()
+    try:
+        client = app.test_client()
+        # Limit is 5/minute on POST /auth/login
+        for _ in range(5):
+            res = client.post('/auth/login', data={'email': 'rate@test.com', 'password': 'wrong'})
+            assert res.status_code != 429
+        # GET should not be rate limited
+        res_get = client.get('/auth/login')
+        assert res_get.status_code == 200
+        # 6th attempt must trigger 429 Too Many Requests
+        res = client.post('/auth/login', data={'email': 'rate@test.com', 'password': 'wrong'})
+        assert res.status_code == 429
+    finally:
+        app.config['RATELIMIT_ENABLED'] = False
+        limiter.enabled = False
+        limiter.reset()

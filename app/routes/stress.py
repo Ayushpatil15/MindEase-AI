@@ -7,6 +7,7 @@ from werkzeug.exceptions import abort
 from app.extensions import db
 from app.forms.stress import StressAssessmentForm
 from app.services.stress_service import save_assessment, get_history
+from app.services.recommendation_service import refresh_recommendations
 from app.models.stress import StressAssessment
 from app.utils.validators import validate_stress_responses, validate_journal_note
 from app.utils.decorators import student_required
@@ -46,6 +47,7 @@ def take_assessment():
             responses=validated_responses,
             reflection=validated_reflection
         )
+        refresh_recommendations(current_user.id)
 
         flash('Stress assessment submitted successfully.', 'success')
         return redirect(url_for('stress.result', id=assessment.id))

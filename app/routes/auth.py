@@ -3,19 +3,23 @@
 Implements secure session handling, CSRF protection, and duplicate prevention.
 """
 
+from urllib.parse import urlparse
+
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 
-from app.extensions import db
+from app.extensions import db, limiter
 from app.models.user import User
 from app.models.user_preferences import UserPreferences
 from app.forms.auth import RegistrationForm, LoginForm, LogoutForm, OnboardingForm
+from app.services.recommendation_service import refresh_recommendations
 from app.utils.validators import validate_username, validate_email, validate_password, validate_timezone
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
+@limiter.limit("10/hour", methods=["POST"])
 def register():
     """Registration page and handler."""
     if current_user.is_authenticated:
@@ -61,6 +65,7 @@ def register():
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
+@limiter.limit("5/minute", methods=["POST"])
 def login():
     """Login page and handler."""
     if current_user.is_authenticated:
@@ -79,8 +84,10 @@ def login():
         flash('Logged in successfully.', 'success')
         
         next_page = request.args.get('next')
-        if next_page and next_page.startswith('/'):
-            return redirect(next_page)
+        if next_page and '\\' not in next_page:
+            parsed = urlparse(next_page)
+            if not parsed.netloc and not parsed.scheme and parsed.path.startswith('/') and not parsed.path.startswith('//'):
+                return redirect(next_page)
             
         if user.role == 'admin':
             return redirect(url_for('admin.dashboard'))
@@ -136,6 +143,7 @@ def onboarding():
             flash('Preferences saved. Welcome aboard!', 'success')
             
         db.session.commit()
+        refresh_recommendations(current_user.id)
         return redirect(url_for('student.dashboard'))
 
     return render_template('auth/onboarding.html', form=form)

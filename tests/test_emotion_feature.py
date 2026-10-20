@@ -4,6 +4,9 @@ import os
 import json
 import base64
 import pytest
+
+pytest.importorskip("tensorflow")
+
 import numpy as np
 from unittest.mock import patch, MagicMock
 

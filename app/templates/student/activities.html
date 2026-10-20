@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Guided Wellness Activities — MindEase AI{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto; padding: 1rem 0;">
+    <div style="margin-bottom: 2rem;">
+        <span class="badge badge-primary mb-xs">Self-Care Catalog</span>
+        <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 8px; color: var(--color-heading);">
+            Guided Wellness Activities
+        </h1>
+        <p class="text-muted" style="font-size: 1rem; line-height: 1.6; max-width: 650px;">
+            Evidence-informed mindfulness, stress reduction, and focus exercises to support your wellbeing and daily routine.
+        </p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+        {% for activity in activities %}
+            <div class="card card-hover" style="display: flex; flex-direction: column; justify-content: space-between; padding: 1.5rem; border-radius: var(--border-radius-md, 8px);">
+                <div>
+                    <div class="flex-between mb-sm" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <span class="badge badge-primary">{{ activity.category }}</span>
+                        <span class="badge badge-muted">⏱ {{ activity.duration_minutes }} min</span>
+                    </div>
+                    <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 8px; color: var(--color-heading);">
+                        {{ activity.title }}
+                    </h2>
+                    <p class="text-muted" style="font-size: 0.9rem; line-height: 1.5; margin-bottom: 1.25rem;">
+                        {{ activity.short_description }}
+                    </p>
+                </div>
+                <div style="margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--color-border);">
+                    <a href="{{ url_for('student.activity_detail', activity_id=activity.id) }}" class="btn btn-primary" style="width: 100%; text-align: center; display: block;">
+                        Start Activity &rarr;
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

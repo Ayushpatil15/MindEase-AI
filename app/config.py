@@ -12,7 +12,7 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 class Config:
     """Base configuration shared by all environments."""
 
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+    SECRET_KEY = os.environ.get('SECRET_KEY')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Session security
@@ -58,8 +58,17 @@ class Config:
     # Admin aggregation minimum group size (privacy threshold)
     MIN_AGGREGATION_GROUP_SIZE = int(os.environ.get('MIN_AGGREGATION_GROUP_SIZE', '5'))
 
+    # Rate limiting
+    RATELIMIT_STORAGE_URI = 'memory://'
 
-class DevelopmentConfig(Config):
+
+class _DevelopmentConfigMeta(type):
+    @property
+    def SECRET_KEY(cls):
+        return os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+
+
+class DevelopmentConfig(Config, metaclass=_DevelopmentConfigMeta):
     """Development configuration."""
 
     DEBUG = True
@@ -67,6 +76,10 @@ class DevelopmentConfig(Config):
         'DATABASE_URL',
         'sqlite:///' + os.path.join(BASE_DIR, 'instance', 'mindease.db'),
     )
+
+    @property
+    def SECRET_KEY(self):
+        return os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 
 
 class TestingConfig(Config):
@@ -76,9 +89,19 @@ class TestingConfig(Config):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
     WTF_CSRF_ENABLED = False
     SECRET_KEY = 'test-secret-key'
+    RATELIMIT_ENABLED = False
 
 
-class ProductionConfig(Config):
+class _ProductionConfigMeta(type):
+    @property
+    def SECRET_KEY(cls):
+        secret = os.environ.get('SECRET_KEY')
+        if not secret:
+            raise RuntimeError("SECRET_KEY environment variable is required in production")
+        return secret
+
+
+class ProductionConfig(Config, metaclass=_ProductionConfigMeta):
     """Production configuration."""
 
     DEBUG = False
@@ -87,6 +110,13 @@ class ProductionConfig(Config):
         'sqlite:///' + os.path.join(BASE_DIR, 'instance', 'mindease.db'),
     )
     SESSION_COOKIE_SECURE = True
+
+    @property
+    def SECRET_KEY(self):
+        secret = os.environ.get('SECRET_KEY')
+        if not secret:
+            raise RuntimeError("SECRET_KEY environment variable is required in production")
+        return secret
 
 
 config = {

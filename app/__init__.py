@@ -16,7 +16,7 @@ import click
 from flask import Flask, render_template
 
 from app.config import config
-from app.extensions import db, login_manager, migrate, csrf
+from app.extensions import db, login_manager, migrate, csrf, limiter
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +42,12 @@ def create_app(config_name=None):
     login_manager.init_app(app)
     migrate.init_app(app, db)
     csrf.init_app(app)
+    
+    ratelimit_enabled = app.config.get('RATELIMIT_ENABLED', True)
+    app.config['RATELIMIT_ENABLED'] = True
+    limiter.init_app(app)
+    app.config['RATELIMIT_ENABLED'] = ratelimit_enabled
+    limiter.enabled = ratelimit_enabled
 
     # ── User Loader (Flask-Login) ─────────────────────────────────
     from app.models import User
