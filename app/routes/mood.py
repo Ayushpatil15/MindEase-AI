@@ -54,11 +54,9 @@ def history():
     trend_data = get_7day_trend(current_user.id)
     history_entries = get_history(current_user.id)
     
-    # Serialize trend data for Chart.js
-    trend_json = json.dumps(trend_data)
-    
     return render_template(
         'mood/history.html', 
         entries=history_entries,
-        trend_json=trend_json
+        trend_json=trend_data,
+        trend_data=trend_data,
     )

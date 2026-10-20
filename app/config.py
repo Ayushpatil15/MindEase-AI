@@ -19,11 +19,6 @@ class Config:
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
 
-    # AI provider: "none" | "gemini" | "mistral"
-    AI_PROVIDER = os.environ.get('AI_PROVIDER', 'none')
-    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
-    MISTRAL_API_KEY = os.environ.get('MISTRAL_API_KEY')
-
     # ML model backend & path configuration
     # Authorized Phase 5.11 production switch: TFLite default with Keras baseline fallback
     MODEL_BACKEND = os.environ.get('MODEL_BACKEND', 'tflite')
@@ -52,7 +47,7 @@ class Config:
 
     # Support resources configuration file
     SUPPORT_RESOURCES_PATH = os.path.join(
-        BASE_DIR, 'app', 'config', 'support_resources.json',
+        BASE_DIR, 'app', 'content', 'support_resources.json',
     )
 
     # Admin aggregation minimum group size (privacy threshold)

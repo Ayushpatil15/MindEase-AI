@@ -494,7 +494,7 @@ def run_phase59_experiment():
             master_table.append(row)
 
     # Save complete JSON summary
-    summary_path = "scripts/phase59_results.json"
+    summary_path = os.path.join(os.path.dirname(__file__), "phase59_results.json")
     with open(summary_path, "w") as f:
         json.dump({
             'environment': {

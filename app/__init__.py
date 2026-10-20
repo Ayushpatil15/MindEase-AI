@@ -26,13 +26,13 @@ def create_app(config_name=None):
 
     Args:
         config_name: One of 'development', 'testing', 'production', or 'default'.
-                     Falls back to FLASK_ENV env var, then 'default'.
+                     Falls back to APP_ENV / FLASK_ENV env var, then 'default'.
 
     Returns:
         Configured Flask application instance.
     """
     if config_name is None:
-        config_name = os.environ.get('FLASK_ENV', 'default')
+        config_name = os.environ.get('APP_ENV', os.environ.get('FLASK_ENV', 'default'))
 
     app = Flask(__name__)
     app.config.from_object(config.get(config_name, config['default']))

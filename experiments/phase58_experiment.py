@@ -338,7 +338,7 @@ def run_experiment():
         }
     }
 
-    report_path = "scripts/phase58_results.json"
+    report_path = os.path.join(os.path.dirname(__file__), "phase58_results.json")
     with open(report_path, "w") as f:
         json.dump(report, f, indent=2)
     print(f"\nDetailed report written to: {report_path}")

@@ -30,7 +30,7 @@ def history():
     return render_template(
         'student/history.html',
         history=history_data,
-        history_json=json.dumps(history_data),
+        history_json=history_data,
     )
 
 
@@ -65,10 +65,12 @@ def activity_detail(activity_id):
 @student_required
 def support_center():
     """Support Center page displaying institution-configured support resources."""
-    config_path = os.path.join(current_app.root_path, 'config', 'support_resources.json')
+    resource_path = current_app.config.get('SUPPORT_RESOURCES_PATH') or os.path.join(
+        current_app.root_path, 'content', 'support_resources.json'
+    )
     resources = []
-    if os.path.exists(config_path):
-        with open(config_path, 'r', encoding='utf-8') as f:
+    if os.path.exists(resource_path):
+        with open(resource_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
             resources = data.get('resources', [])
 

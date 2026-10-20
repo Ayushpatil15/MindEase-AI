@@ -1,8 +1,13 @@
 # Environment
 .env
+.env.*
+!.env.example
 venv/
+venv
 .venv/
+.venv
 env/
+env
 
 # Python
 __pycache__/
@@ -21,8 +26,11 @@ build/
 
 # Instance (SQLite database)
 instance/
+instance/*.db
+*.db
+*.sqlite3
 
-# ML Models (too large for git)
+# ML Models (only intermediate/training models ignored; shipped TFLite model is tracked)
 models/*.h5
 models/*.keras
 
@@ -34,10 +42,13 @@ data/
 .DS_Store
 Thumbs.db
 
-# Testing
+# Testing & Coverage
 .pytest_cache/
 htmlcov/
 .coverage
+.coverage.*
+coverage.xml
+*.cover
 
 # Logs
 *.log

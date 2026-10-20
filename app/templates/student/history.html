@@ -3,7 +3,7 @@
 {% block title %}Reflect — MindEase AI{% endblock %}
 
 {% block content %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}"></script>
 
 <!-- Header & Timeframe Filters -->
 <div class="row-flex flex-between mb-lg flex-wrap gap-md" style="align-items: flex-end;">
@@ -163,7 +163,7 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    const history = {{ history_json | safe }};
+    const history = {{ history | tojson }};
 
     // Tab Switcher Handler
     const tabs = document.querySelectorAll('.chart-tab');

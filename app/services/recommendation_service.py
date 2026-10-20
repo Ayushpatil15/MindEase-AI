@@ -2,9 +2,6 @@
 
 Generates personalized recommendations based on actual user state.
 All rules are deterministic, explainable, and testable.
-The optional AI provider may enhance wording but never invents new rules.
-
-Full implementation in Phase 6.
 """
 
 from app.extensions import db

@@ -8,10 +8,10 @@ from tests.conftest import create_test_student
 
 def test_support_resources_json_config(app):
     """Verify support_resources.json file exists and adheres to deployment-safe schema."""
-    config_path = os.path.join(app.root_path, 'config', 'support_resources.json')
-    assert os.path.exists(config_path)
+    content_path = os.path.join(app.root_path, 'content', 'support_resources.json')
+    assert os.path.exists(content_path)
 
-    with open(config_path, 'r', encoding='utf-8') as f:
+    with open(content_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
     assert 'resources' in data
