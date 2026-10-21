@@ -563,12 +563,179 @@ p {
   box-shadow: 0 0 15px rgba(34, 197, 94, 0.2);
 }
 
-/* Guided Stepper & Interactive Activities Component Styles */
+/* ==========================================================================
+   Guided Wellness Activities Design System & Interactive Components
+   ========================================================================== */
+
+/* Activity Catalog Grid & Filtering */
+.activity-catalog-header {
+  margin-bottom: var(--spacing-xl);
+}
+
+.activity-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.filter-tab-btn {
+  min-height: 44px;
+  padding: 8px 18px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-body);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-tab-btn:hover {
+  background: var(--color-surface-subtle);
+  border-color: var(--color-primary-border);
+  color: var(--color-primary);
+}
+
+.filter-tab-btn.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
+  box-shadow: var(--shadow-sm);
+}
+
+.filter-tab-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.activity-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.activity-catalog-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+  position: relative;
+}
+
+.activity-catalog-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-primary-border);
+}
+
+.activity-catalog-card:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.12);
+}
+
+.activity-card-icon-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-md);
+}
+
+.activity-card-icon-badge {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform var(--transition-fast);
+}
+
+.activity-catalog-card:hover .activity-card-icon-badge {
+  transform: scale(1.05);
+}
+
+.icon-badge-mindfulness {
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary-border);
+}
+
+.icon-badge-academic {
+  background: var(--color-accent-blue-bg);
+  color: var(--color-accent-blue);
+  border: 1px solid var(--color-accent-blue-border);
+}
+
+.icon-badge-reflection {
+  background: var(--color-accent-purple-bg);
+  color: var(--color-accent-purple);
+  border: 1px solid var(--color-accent-purple-border);
+}
+
+.icon-badge-physical {
+  background: var(--color-accent-amber-bg);
+  color: var(--color-accent-amber);
+  border: 1px solid var(--color-accent-amber-border);
+}
+
+.activity-card-badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.activity-card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-heading);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.activity-card-desc {
+  font-size: var(--font-size-sm);
+  line-height: 1.55;
+  color: var(--color-text-body);
+  margin-bottom: var(--spacing-md);
+  flex-grow: 1;
+}
+
+.activity-card-benefit {
+  background: var(--color-surface-subtle);
+  border-radius: var(--border-radius-sm);
+  padding: 6px 12px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: var(--spacing-md);
+}
+
+.activity-card-footer {
+  margin-top: auto;
+  padding-top: var(--spacing-sm);
+}
+
+/* Stepper Card & Frame */
 .guided-stepper-card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-lg);
-  padding: var(--spacing-xl);
+  padding: clamp(1.25rem, 3vw, 2.25rem);
   box-shadow: var(--shadow-sm);
   margin-bottom: var(--spacing-lg);
 }
@@ -590,11 +757,28 @@ p {
   letter-spacing: 0.05em;
 }
 
+.stepper-progress-bg {
+  width: 100%;
+  height: 8px;
+  background-color: var(--color-surface-subtle);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.stepper-progress-bar {
+  height: 100%;
+  background: var(--color-primary);
+  width: 0%;
+  transition: width 250ms ease;
+  border-radius: var(--radius-pill);
+}
+
 .stepper-step-panel {
   opacity: 1;
   transform: translateY(0);
   transition: opacity 200ms ease, transform 200ms ease;
-  min-height: 240px;
+  min-height: 260px;
   display: flex;
   flex-direction: column;
 }
@@ -617,29 +801,75 @@ p {
 }
 
 .stepper-btn {
-  min-height: 44px;
-  min-width: 110px;
-  padding: 10px 20px;
+  min-height: 46px;
+  min-width: 120px;
+  padding: 10px 22px;
+  font-size: var(--font-size-base);
   font-weight: 600;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  border-radius: var(--border-radius-sm);
   transition: all var(--transition-fast);
 }
 
-/* Grounding 5-4-3-2-1 Interactive Ticks */
-.grounding-ticks-grid {
+.stepper-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.stepper-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* 1. Grounding 5-4-3-2-1 Sensory Cards */
+.grounding-banner {
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.grounding-banner-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.grounding-counter-badge {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary-bg);
+  color: var(--color-primary-hover);
+  border: 1px solid var(--color-primary-border);
+}
+
+.grounding-ticks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: var(--spacing-sm);
-  margin: var(--spacing-lg) 0;
+  margin: var(--spacing-md) 0;
 }
 
 .grounding-tick-item {
-  min-height: 48px;
+  min-height: 54px;
   padding: 12px 18px;
-  background: var(--color-surface-subtle);
+  background: var(--color-surface);
   border: 2px solid var(--color-border);
   border-radius: var(--border-radius);
   display: flex;
@@ -649,24 +879,32 @@ p {
   transition: all var(--transition-fast);
   user-select: none;
   font-size: var(--font-size-base);
-  color: var(--color-text);
+  color: var(--color-text-body);
+  text-align: left;
 }
 
 .grounding-tick-item:hover {
   border-color: var(--color-primary);
   background: var(--color-primary-bg);
+  transform: translateY(-1px);
 }
 
 .grounding-tick-item.ticked {
   border-color: var(--color-primary);
   background: var(--color-primary-bg);
-  color: var(--color-primary-hover);
+  color: var(--color-heading);
   font-weight: 600;
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.grounding-tick-item:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .grounding-tick-icon {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: var(--radius-pill);
   border: 2px solid var(--color-text-muted);
   display: flex;
@@ -680,10 +918,30 @@ p {
 .grounding-tick-item.ticked .grounding-tick-icon {
   background: var(--color-primary);
   border-color: var(--color-primary);
-  color: var(--color-surface);
+  color: #ffffff;
 }
 
-/* Pomodoro Interactive Circular Display */
+.grounding-hint-box {
+  background: var(--color-surface-subtle);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--border-radius-sm);
+  padding: 10px 16px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: var(--spacing-sm);
+}
+
+.grounding-hint-box.complete {
+  background: var(--color-primary-bg);
+  border-color: var(--color-primary-border);
+  color: var(--color-primary-hover);
+  font-weight: 600;
+}
+
+/* 2. Pomodoro Focus Dial & Display */
 .pomodoro-container {
   display: flex;
   flex-direction: column;
@@ -693,31 +951,54 @@ p {
   padding: var(--spacing-lg) 0;
 }
 
+.pomodoro-phase-pill {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.03em;
+  display: inline-block;
+  margin-bottom: var(--spacing-md);
+  transition: all var(--transition-fast);
+}
+
+.pomodoro-phase-pill.focus-mode {
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary-border);
+}
+
+.pomodoro-phase-pill.break-mode {
+  background: var(--color-accent-blue-bg);
+  color: var(--color-accent-blue);
+  border: 1px solid var(--color-accent-blue-border);
+}
+
 .pomodoro-ring-wrap {
   position: relative;
-  width: 220px;
-  height: 220px;
-  margin: 0 auto var(--spacing-md) auto;
+  width: 260px;
+  height: 260px;
+  margin: 0 auto var(--spacing-lg) auto;
 }
 
 .pomodoro-ring-svg {
-  width: 220px;
-  height: 220px;
+  width: 260px;
+  height: 260px;
   transform: rotate(-90deg);
 }
 
 .pomodoro-ring-bg {
   fill: none;
   stroke: var(--color-surface-subtle);
-  stroke-width: 12;
+  stroke-width: 14;
 }
 
 .pomodoro-ring-progress {
   fill: none;
   stroke: var(--color-primary);
-  stroke-width: 12;
+  stroke-width: 14;
   stroke-linecap: round;
-  transition: stroke-dashoffset 0.5s ease, stroke var(--transition-fast);
+  transition: stroke-dashoffset 0.4s ease, stroke var(--transition-fast);
 }
 
 .pomodoro-ring-progress.break-mode {
@@ -737,11 +1018,19 @@ p {
 }
 
 .pomodoro-time {
-  font-size: var(--font-size-display);
+  font-size: 3.25rem;
   font-weight: 800;
   font-family: monospace;
-  color: var(--color-primary);
+  color: var(--color-heading);
   line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.pomodoro-subtext {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin-top: 8px;
+  font-weight: 500;
 }
 
 .pomodoro-controls {
@@ -752,14 +1041,164 @@ p {
   margin-top: var(--spacing-md);
 }
 
-/* Timed Stretch Step Countdown Display */
+/* 3. Task Chunking Cards & Milestone Feedback */
+.chunk-context-banner {
+  background: var(--color-primary-bg);
+  border: 1px solid var(--color-primary-border);
+  border-radius: var(--border-radius-sm);
+  padding: 10px 14px;
+  font-size: var(--font-size-sm);
+  color: var(--color-primary-hover);
+  margin-bottom: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chunk-card {
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  margin: var(--spacing-sm) 0;
+}
+
+.chunk-input-wrap {
+  margin-top: var(--spacing-sm);
+}
+
+.chunk-input-wrap input {
+  min-height: 48px;
+  width: 100%;
+  padding: 10px 16px;
+  font-size: var(--font-size-base);
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  background: var(--color-surface);
+  color: var(--color-heading);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.chunk-input-wrap input:focus {
+  border-color: var(--color-primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.12);
+}
+
+.chunk-review-step-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: 14px 18px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.chunk-review-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: var(--font-size-xs);
+  flex-shrink: 0;
+}
+
+/* 4. Self-Compassion Mindful Atmosphere */
+.compassion-prompt-card {
+  background: var(--color-accent-purple-bg);
+  border: 1px solid var(--color-accent-purple-border);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
+  position: relative;
+}
+
+.compassion-prompt-text {
+  font-size: 1.15rem;
+  line-height: 1.65;
+  color: var(--color-heading);
+  margin: 0;
+  font-weight: 500;
+}
+
+.compassion-journal-area {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  margin-top: var(--spacing-md);
+}
+
+.sc-memory-box {
+  min-height: 110px;
+  width: 100%;
+  padding: 12px 16px;
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  background: var(--color-surface-subtle);
+  color: var(--color-heading);
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.sc-memory-box:focus {
+  outline: none;
+  background: var(--color-surface);
+  border-color: var(--color-accent-purple);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+}
+
+/* 5. Stretch Reset Step Cards & Eye Rest Highlight */
+.stretch-stage-card {
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl) var(--spacing-lg);
+  text-align: center;
+  margin: var(--spacing-md) 0;
+}
+
+.stretch-eye-rest-highlight {
+  background: var(--color-accent-blue-bg);
+  border-color: var(--color-accent-blue-border);
+}
+
+.stretch-icon-container {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--spacing-md) auto;
+  color: var(--color-primary);
+}
+
+.stretch-eye-rest-highlight .stretch-icon-container {
+  background: #ffffff;
+  color: var(--color-accent-blue);
+  border-color: var(--color-accent-blue-border);
+}
+
 .stretch-timer-display {
-  font-size: var(--font-size-display);
+  font-size: 3rem;
   font-weight: 800;
   font-family: monospace;
-  color: var(--color-primary);
+  color: var(--color-heading);
   line-height: 1;
-  margin: var(--spacing-sm) 0;
+  margin: var(--spacing-md) 0;
 }
 
 /* Warm Finish Screen */
@@ -769,13 +1208,13 @@ p {
 }
 
 .activity-finish-icon {
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
   border-radius: var(--radius-pill);
   background: var(--color-primary-bg);
   border: 2px solid var(--color-primary-border);
   color: var(--color-primary);
-  font-size: 2rem;
+  font-size: 2.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -791,11 +1230,43 @@ p {
   .stepper-progress-bar,
   .pomodoro-ring-progress,
   .grounding-tick-item,
-  .grounding-tick-icon {
+  .grounding-tick-icon,
+  .activity-catalog-card,
+  .activity-card-icon-badge {
     transition: none !important;
+    transform: none !important;
     animation: none !important;
   }
 }
+
+/* Mobile Responsive Optimization (360px) */
+@media (max-width: 480px) {
+  .guided-stepper-card {
+    padding: var(--spacing-md);
+  }
+  .stepper-nav-bar {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+  .stepper-nav-bar .stepper-btn {
+    width: 100%;
+  }
+  .pomodoro-ring-wrap {
+    width: 220px;
+    height: 220px;
+  }
+  .pomodoro-ring-svg {
+    width: 220px;
+    height: 220px;
+  }
+  .pomodoro-time {
+    font-size: 2.5rem;
+  }
+  .grounding-ticks-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 
 
 
