@@ -172,6 +172,27 @@ def get_daily_plan_endpoint():
     }), 200
 
 
+@api_bp.route('/activities/task_chunking/chunk', methods=['POST'])
+@login_required
+@student_required
+def chunk_task_endpoint():
+    """Create 3 WellnessTasks from task chunking activity (CSRF protected).
+
+    Atomically creates 3 micro-steps, runs crisis screening, and enforces duplicate guard.
+    """
+    payload = request.get_json(silent=True) or {}
+    big_task = payload.get('big_task', '')
+    micro_steps = payload.get('micro_steps', [])
+
+    response_data, status_code = task_service.create_chunked_tasks(
+        user_id=current_user.id,
+        big_task=big_task,
+        micro_steps=micro_steps,
+    )
+    return jsonify(response_data), status_code
+
+
+
 
 
 
