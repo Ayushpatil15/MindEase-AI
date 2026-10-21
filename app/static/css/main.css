@@ -563,4 +563,239 @@ p {
   box-shadow: 0 0 15px rgba(34, 197, 94, 0.2);
 }
 
+/* Guided Stepper & Interactive Activities Component Styles */
+.guided-stepper-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.stepper-header-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.stepper-step-indicator {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stepper-step-panel {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 200ms ease, transform 200ms ease;
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+}
+
+.stepper-step-panel[hidden] {
+  display: none !important;
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.stepper-nav-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+}
+
+.stepper-btn {
+  min-height: 44px;
+  min-width: 110px;
+  padding: 10px 20px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+/* Grounding 5-4-3-2-1 Interactive Ticks */
+.grounding-ticks-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin: var(--spacing-lg) 0;
+}
+
+.grounding-tick-item {
+  min-height: 48px;
+  padding: 12px 18px;
+  background: var(--color-surface-subtle);
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+}
+
+.grounding-tick-item:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-bg);
+}
+
+.grounding-tick-item.ticked {
+  border-color: var(--color-primary);
+  background: var(--color-primary-bg);
+  color: var(--color-primary-hover);
+  font-weight: 600;
+}
+
+.grounding-tick-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: var(--font-size-xs);
+  transition: all var(--transition-fast);
+}
+
+.grounding-tick-item.ticked .grounding-tick-icon {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-surface);
+}
+
+/* Pomodoro Interactive Circular Display */
+.pomodoro-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--spacing-lg) 0;
+}
+
+.pomodoro-ring-wrap {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  margin: 0 auto var(--spacing-md) auto;
+}
+
+.pomodoro-ring-svg {
+  width: 220px;
+  height: 220px;
+  transform: rotate(-90deg);
+}
+
+.pomodoro-ring-bg {
+  fill: none;
+  stroke: var(--color-surface-subtle);
+  stroke-width: 12;
+}
+
+.pomodoro-ring-progress {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 12;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.5s ease, stroke var(--transition-fast);
+}
+
+.pomodoro-ring-progress.break-mode {
+  stroke: var(--color-accent-blue);
+}
+
+.pomodoro-inner-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.pomodoro-time {
+  font-size: var(--font-size-display);
+  font-weight: 800;
+  font-family: monospace;
+  color: var(--color-primary);
+  line-height: 1;
+}
+
+.pomodoro-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+/* Timed Stretch Step Countdown Display */
+.stretch-timer-display {
+  font-size: var(--font-size-display);
+  font-weight: 800;
+  font-family: monospace;
+  color: var(--color-primary);
+  line-height: 1;
+  margin: var(--spacing-sm) 0;
+}
+
+/* Warm Finish Screen */
+.activity-finish-card {
+  text-align: center;
+  padding: var(--spacing-xl) var(--spacing-md);
+}
+
+.activity-finish-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary-bg);
+  border: 2px solid var(--color-primary-border);
+  color: var(--color-primary);
+  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--spacing-md) auto;
+}
+
+/* Accessibility: Prefers Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .stepper-step-panel {
+    transition: none !important;
+    transform: none !important;
+  }
+  .stepper-progress-bar,
+  .pomodoro-ring-progress,
+  .grounding-tick-item,
+  .grounding-tick-icon {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+
 

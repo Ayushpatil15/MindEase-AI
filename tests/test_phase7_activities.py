@@ -246,3 +246,59 @@ def test_old_tasks_with_retired_activities_render_everywhere(client, db):
         res = client.get(f'/activities/{retired_id}')
         assert res.status_code == 200, f"Expected 200 for retired activity {retired_id}, got {res.status_code}"
 
+
+def test_all_six_activities_render_interactive_elements(client, db):
+    """Verify that all 6 activities render with their required interactive controls."""
+    user = create_test_student(db, username="interactive_tester", email="tester@test.com", password="pass")
+    client.post('/auth/login', data={'email': user.email, 'password': 'pass'})
+
+    # 1. box_breathing: breathing circle, phase text, timer display
+    res_bb = client.get('/activities/box_breathing')
+    assert res_bb.status_code == 200
+    html_bb = res_bb.get_data(as_text=True)
+    assert 'breathing-circle' in html_bb
+    assert 'breathing-phase-text' in html_bb
+    assert 'btn-timer-start' in html_bb
+
+    # 2. grounding_54321: 5 sense steps with tap-to-tick items
+    res_gr = client.get('/activities/grounding_54321')
+    assert res_gr.status_code == 200
+    html_gr = res_gr.get_data(as_text=True)
+    assert 'grounding-ticks-grid' in html_gr
+    assert 'grounding-tick-item' in html_gr
+    assert 'grounding-group-0' in html_gr
+
+    # 3. pomodoro_focus: progress ring and controls
+    res_pf = client.get('/activities/pomodoro_focus')
+    assert res_pf.status_code == 200
+    html_pf = res_pf.get_data(as_text=True)
+    assert 'pomodoro-ring-circle' in html_pf
+    assert 'btn-pomodoro-start' in html_pf
+
+    # 4. task_chunking: big task input, micro step inputs, review button
+    res_tc = client.get('/activities/task_chunking')
+    assert res_tc.status_code == 200
+    html_tc = res_tc.get_data(as_text=True)
+    assert 'input-big-task' in html_tc
+    assert 'input-micro-1' in html_tc
+    assert 'input-micro-2' in html_tc
+    assert 'input-micro-3' in html_tc
+    assert 'btn-create-chunked-tasks' in html_tc
+
+    # 5. self_compassion: guided prompts and private browser-only reflection space
+    res_sc = client.get('/activities/self_compassion')
+    assert res_sc.status_code == 200
+    html_sc = res_sc.get_data(as_text=True)
+    assert 'sc-memory-box' in html_sc
+    assert 'Stays in your browser memory only' in html_sc
+
+    # 6. stretch_reset: timed step displays and countdown controls
+    res_sr = client.get('/activities/stretch_reset')
+    assert res_sr.status_code == 200
+    html_sr = res_sr.get_data(as_text=True)
+    assert 'stretch-timer-display' in html_sr
+    assert 'btn-stretch-start' in html_sr
+    assert 'btn-stretch-pause' in html_sr
+    assert 'btn-stretch-done' in html_sr
+
+
