@@ -74,9 +74,18 @@ def support_center():
             data = json.load(f)
             resources = data.get('resources', [])
 
-    counseling = [r for r in resources if r.get('category') in ('counseling', 'wellness')]
-    professional = [r for r in resources if r.get('category') == 'professional']
-    crisis = [r for r in resources if r.get('category') == 'crisis' or r.get('is_emergency')]
+    counseling = [
+        r for r in resources
+        if r.get('category') in ('counseling', 'wellness') and r.get('is_configured') is True
+    ]
+    professional = [
+        r for r in resources
+        if r.get('category') == 'professional' and r.get('is_configured') is True
+    ]
+    crisis = [
+        r for r in resources
+        if r.get('category') == 'crisis' or r.get('is_emergency')
+    ]
 
     return render_template(
         'student/support.html',

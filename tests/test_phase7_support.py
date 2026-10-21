@@ -1,4 +1,4 @@
-"""Tests for Phase 7 — Support Center & Safety Disclaimers."""
+"""Tests for Phase 7 / Phase 3 — Support Center & Safety Disclaimers."""
 
 import json
 import os
@@ -34,13 +34,68 @@ def test_support_center_unauthenticated(client):
     assert '/auth/login' in res.location
 
 
-def test_support_center_authenticated(client, db):
-    """Authenticated student can view the Support Center."""
+def test_support_center_authenticated_hides_unconfigured(client, db):
+    """Authenticated student views Support Center with unconfigured items hidden."""
     create_test_student(db, username="support_student", email="sup@test.com", password="testpass123")
     client.post('/auth/login', data={'email': 'sup@test.com', 'password': 'testpass123'})
 
     res = client.get('/support')
     assert res.status_code == 200
-    assert b"Support Center" in res.data
-    assert b"Non-Clinical Disclaimer" in res.data
-    assert b"Administrator Setup Required" in res.data or b"Configure" in res.data
+    html = res.get_data(as_text=True)
+
+    # Tele-MANAS and 112 are always shown
+    assert "Tele-MANAS" in html
+    assert "14416" in html
+    assert "112" in html
+    assert "Non-Clinical Disclaimer" in html
+
+    # Unconfigured resources are hidden
+    assert "Configure Institutional Connection" not in html
+    assert "[Configure" not in html
+
+    # Short note is displayed because default JSON has no campus resource configured
+    assert "No campus counseling resources have been configured" in html
+
+
+def test_support_center_shows_configured_campus_resource(client, db, tmp_path, monkeypatch, app):
+    """When a campus resource is configured (is_configured=true), it is displayed."""
+    create_test_student(db, username="campus_sup_student", email="campussup@test.com", password="testpass123")
+    client.post('/auth/login', data={'email': 'campussup@test.com', 'password': 'testpass123'})
+
+    custom_json = {
+        "resources": [
+            {
+                "id": "tele_manas",
+                "name": "Tele-MANAS",
+                "category": "crisis",
+                "is_emergency": True,
+                "is_configured": True,
+                "contact": {"phone": "14416"}
+            },
+            {
+                "id": "campus_counselor_abc",
+                "name": "Campus Wellness Center (Main Hall)",
+                "category": "counseling",
+                "is_emergency": False,
+                "is_configured": True,
+                "contact": {"phone": "011-23456789", "email": "counselor@campus.edu"},
+                "location": "Building A, Room 101"
+            }
+        ]
+    }
+    custom_path = str(tmp_path / "custom_support.json")
+    with open(custom_path, 'w', encoding='utf-8') as f:
+        json.dump(custom_json, f)
+
+    app.config['SUPPORT_RESOURCES_PATH'] = custom_path
+    try:
+        res = client.get('/support')
+        assert res.status_code == 200
+        html = res.get_data(as_text=True)
+
+        assert "Campus Wellness Center (Main Hall)" in html
+        assert "011-23456789" in html
+        assert "Building A, Room 101" in html
+        assert "No campus counseling resources have been configured" not in html
+    finally:
+        app.config['SUPPORT_RESOURCES_PATH'] = os.path.join(app.root_path, 'content', 'support_resources.json')

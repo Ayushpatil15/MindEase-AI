@@ -87,27 +87,24 @@
                         <div>
                             <div class="flex-between mb-xs">
                                 <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 8px;">{{ item.name }}</h3>
-                                {% if not item.is_configured %}
-                                    <span class="badge badge-muted">Configure Institutional Connection</span>
-                                {% endif %}
                             </div>
                             <p class="text-muted" style="font-size: 0.85rem; line-height: 1.45; margin-bottom: 14px;">
                                 {{ item.description }}
                             </p>
                         </div>
                         <div style="background: var(--color-surface-subtle); padding: 12px 14px; border-radius: var(--border-radius-sm); font-size: 0.85rem;">
-                            {% if item.is_configured %}
-                                {% if item.contact.phone %}<div><strong>Phone:</strong> {{ item.contact.phone }}</div>{% endif %}
-                                {% if item.contact.email %}<div><strong>Email:</strong> {{ item.contact.email }}</div>{% endif %}
-                                {% if item.location %}<div><strong>Location:</strong> {{ item.location }}</div>{% endif %}
-                            {% else %}
-                                <div class="text-muted" style="font-size: 0.8rem;">
-                                    <em>Your institution isn't connected yet. Contact your campus administrator to configure local counseling links.</em>
-                                </div>
-                            {% endif %}
+                            {% if item.contact.phone %}<div><strong>Phone:</strong> {{ item.contact.phone }}</div>{% endif %}
+                            {% if item.contact.email %}<div><strong>Email:</strong> {{ item.contact.email }}</div>{% endif %}
+                            {% if item.location %}<div><strong>Location:</strong> {{ item.location }}</div>{% endif %}
                         </div>
                     </div>
                 {% endfor %}
+            </div>
+        {% else %}
+            <div class="card" style="background: var(--color-surface-subtle); padding: 18px 22px; border-left: 3px solid var(--color-primary-border);">
+                <p class="text-muted" style="margin: 0; font-size: 0.95rem; line-height: 1.5;">
+                    No campus counseling resources have been configured by your institution yet. For immediate, confidential guidance and compassionate listening, please connect directly with the verified 24/7 national helplines listed above.
+                </p>
             </div>
         {% endif %}
     </div>
