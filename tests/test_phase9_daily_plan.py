@@ -96,11 +96,13 @@ def test_daily_plan_focus_priority_low_mood(app, db, student_user):
 
 
 def test_daily_plan_focus_priority_facial_tension(app, db, student_user):
-    """Priority 4: Facial expression tension prioritizes Stretch & Tension Release."""
+    """Emotion scans do not alter daily plan focus priority (experimental feature)."""
     emotion_service.save_emotion_scan(student_user.id, emotion='Angry', confidence=0.85)
 
     plan = get_daily_plan(student_user.id)
-    assert plan['focus']['activity_id'] == 'tension_release'
+    # Facial tension is no longer prioritized; falls back to default fallback grounding
+    assert plan['focus']['activity_id'] != 'tension_release'
+    assert plan['focus']['activity_id'] == 'grounding_54321'
     assert plan['focus']['is_active_task'] is False
 
 

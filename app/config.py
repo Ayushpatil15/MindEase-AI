@@ -40,6 +40,9 @@ class Config:
     # Admin aggregation minimum group size (privacy threshold)
     MIN_AGGREGATION_GROUP_SIZE = int(os.environ.get('MIN_AGGREGATION_GROUP_SIZE', '5'))
 
+    # Minimum confidence threshold for facial emotion scans (experimental)
+    EMOTION_MIN_CONFIDENCE = float(os.environ.get('EMOTION_MIN_CONFIDENCE', '0.5'))
+
     # Rate limiting
     RATELIMIT_STORAGE_URI = 'memory://'
 

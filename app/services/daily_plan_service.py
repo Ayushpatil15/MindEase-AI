@@ -163,20 +163,7 @@ def get_daily_plan(user_id, context=None):
                 'is_active_task': False,
             }
 
-    # Priority 4: Facial Expression Tension
-    if not focus and latest_emotion and latest_emotion.emotion in ('Sad', 'Fear', 'Angry'):
-        act = get_activity_by_id('tension_release')
-        if act:
-            focus = {
-                'title': act['title'],
-                'category': act['category'],
-                'description': act['short_description'],
-                'reason': f"Recommended because your recent facial check-in detected {latest_emotion.emotion.lower()} expression.",
-                'activity_id': act['id'],
-                'is_active_task': False,
-            }
-
-    # Priority 5: Goal-Based Selections
+    # Priority 4: Goal-Based Selections
     if not focus and 'study_productivity' in goals:
         act = get_activity_by_id('pomodoro_focus')
         if act:
@@ -213,7 +200,7 @@ def get_daily_plan(user_id, context=None):
                 'is_active_task': False,
             }
 
-    # Priority 6: Default Fallback Focus
+    # Priority 5: Default Fallback Focus
     if not focus:
         act = get_activity_by_id('grounding_54321')
         focus = {

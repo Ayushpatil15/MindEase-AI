@@ -14,7 +14,6 @@ from werkzeug.exceptions import RequestEntityTooLarge
 
 from app.utils.decorators import student_required
 from app.services.emotion_service import save_emotion_scan
-from app.services.recommendation_service import refresh_recommendations
 from app.ml.predictor import predict
 
 logger = logging.getLogger(__name__)
@@ -89,13 +88,20 @@ def api_predict():
     
     # 5. Handle Results and Persist
     if result['status'] == 'success':
+        min_conf = current_app.config.get('EMOTION_MIN_CONFIDENCE', 0.5)
+        if result['confidence'] < min_conf:
+            return jsonify({
+                'status': 'low_confidence',
+                'emotion': 'Not sure',
+                'confidence': result['confidence']
+            })
+
         try:
             save_emotion_scan(
                 user_id=current_user.id,
                 emotion=result['emotion'],
                 confidence=result['confidence']
             )
-            refresh_recommendations(current_user.id)
             return jsonify({
                 'status': 'success',
                 'emotion': result['emotion'],

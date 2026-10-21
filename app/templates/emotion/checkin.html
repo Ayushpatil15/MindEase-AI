@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Facial Expression Check-In — MindEase AI{% endblock %}
+{% block title %}Facial Expression Check-In (Experimental) — MindEase AI{% endblock %}
 
 {% block content %}
 <div style="max-width: 620px; margin: 20px auto;">
@@ -9,8 +9,10 @@
     </div>
 
     <div class="text-center mb-lg">
-        <span class="badge badge-primary mb-xs">Optional • ~30 sec • Private On-Device AI</span>
-        <h1 style="font-size: 1.85rem; font-weight: 700; margin-bottom: 6px;">Facial Expression Scan</h1>
+        <span class="badge badge-warning mb-xs" style="background-color: #f59e0b; color: #ffffff;">Experimental Feature</span>
+        <h1 style="font-size: 1.85rem; font-weight: 700; margin-bottom: 6px;">
+            Facial Expression Scan <span class="badge badge-warning" style="font-size: 0.75rem; vertical-align: middle; background-color: #f59e0b; color: #ffffff;">Experimental</span>
+        </h1>
         <p class="text-muted" style="margin-bottom: 0; font-size: 0.95rem;">
             Private facial expression estimation processed directly in your browser session.
         </p>
@@ -21,8 +23,36 @@
             <strong>Unavailable:</strong> Facial expression analysis model has not been initialized yet.
         </div>
 
-        <!-- Camera Preview Container -->
-        <div id="camera-container" style="background: #0f172a; border-radius: var(--border-radius-lg); overflow: hidden; position: relative; width: 100%; aspect-ratio: 4/3; margin-bottom: var(--spacing-md); border: 2px solid var(--color-border);">
+        <!-- Consent Container (Displayed before camera permission is requested) -->
+        <div id="consent-container" class="card text-left mb-md" style="background: #f8fafc; border: 1px solid var(--color-border); padding: 20px;">
+            <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 12px; color: var(--color-heading);">
+                Camera Consent & Privacy Notice
+            </h3>
+            <p style="font-size: 0.875rem; color: var(--color-text-body); margin-bottom: 10px;">
+                Before enabling your camera, please review how this experimental feature works:
+            </p>
+            <ul style="font-size: 0.85rem; color: var(--color-text-body); margin-bottom: 16px; padding-left: 20px; line-height: 1.5;">
+                <li style="margin-bottom: 6px;">
+                    <strong>What is captured:</strong> A single camera frame is captured from your device only when you click "Check Expression".
+                </li>
+                <li style="margin-bottom: 6px;">
+                    <strong>In-memory processing only:</strong> Frames are analyzed directly in temporary server memory and immediately discarded. No video, raw frames, photos, or images are ever stored on disk or in any database.
+                </li>
+                <li>
+                    <strong>Experimental & non-diagnostic:</strong> The machine learning model provides an approximate estimate that can be wrong, ambiguous, or inaccurate. It does not determine clinical mood or mental state.
+                </li>
+            </ul>
+            <button id="consent-btn" type="button" class="btn btn-primary btn-block">
+                <span>I Understand & Agree — Enable Camera</span>
+                <span>&rarr;</span>
+            </button>
+            <div id="consent-denied-message" class="alert alert-warning mt-md" style="display: none; text-align: left; font-size: 0.85rem;">
+                <strong>Camera Permission Denied:</strong> Camera access was denied or is unavailable. Camera permission is required for this experimental check-in. No camera feed was accessed and no scan was performed. You can continue using all other MindEase AI features normally.
+            </div>
+        </div>
+
+        <!-- Camera Preview Container (Hidden until explicit consent click) -->
+        <div id="camera-container" style="display: none; background: #0f172a; border-radius: var(--border-radius-lg); overflow: hidden; position: relative; width: 100%; aspect-ratio: 4/3; margin-bottom: var(--spacing-md); border: 2px solid var(--color-border);">
             <video id="camera-preview" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
 
             <!-- Target Alignment Overlay -->
@@ -32,11 +62,11 @@
 
             <!-- Privacy Indicator Overlay -->
             <div style="position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); padding: 4px 14px; border-radius: var(--radius-pill); font-size: 0.75rem; color: #ffffff;">
-                🔒 On-device processing only • Zero video saved
+                🔒 In-memory processing only • Zero video or images saved
             </div>
             
             <div id="camera-loading" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.8); color: white; font-size: 0.9rem;">
-                Requesting camera access...
+                Starting camera...
             </div>
             
             <div id="camera-error" style="position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; background: var(--color-surface-subtle); color: var(--color-heading); padding: 20px;">
@@ -45,14 +75,14 @@
             </div>
         </div>
 
-        <button id="capture-btn" class="btn btn-primary btn-block mb-md" disabled>
+        <button id="capture-btn" class="btn btn-primary btn-block mb-md" style="display: none;" disabled>
             <span>Check Expression</span>
             <span>&rarr;</span>
         </button>
 
         <div id="result-container" class="card mb-md text-center" style="background: var(--color-primary-bg); border-color: var(--color-primary-border); display: none;">
-            <span class="badge badge-primary mb-xs">Estimated Expression</span>
-            <div id="result-emotion" style="font-size: 2.2rem; font-weight: 800; color: var(--color-primary); margin-bottom: 4px;">Neutral</div>
+            <span class="badge badge-warning mb-xs" style="background-color: #f59e0b; color: #ffffff;">Experimental Result</span>
+            <div id="result-emotion" style="font-size: 1.8rem; font-weight: 800; color: var(--color-primary); margin-bottom: 4px;">The model's guess: Neutral</div>
             <div id="result-confidence" class="text-muted" style="font-size: 0.85rem; margin-bottom: 12px;">Confidence: 85%</div>
             
             <div id="correlation-insight" style="font-size: 0.85rem; color: var(--color-text-body); background: #ffffff; padding: 10px 14px; border-radius: var(--border-radius-sm); border: 1px solid var(--color-primary-border);">
@@ -63,7 +93,7 @@
         <div id="api-error" class="alert alert-danger" style="display: none; font-size: 0.85rem; text-align: left;"></div>
         
         <div class="mt-md" style="font-size: 0.75rem; color: var(--color-text-muted); padding-top: var(--spacing-sm); border-top: 1px solid var(--color-border); text-align: left;">
-            <p style="margin-bottom: 0;"><strong>Disclaimer:</strong> Facial expression estimates are non-diagnostic indicators and do not determine clinical emotional state.</p>
+            <p style="margin-bottom: 0;"><strong>Disclaimer:</strong> Facial expression estimates are experimental, non-diagnostic indicators and do not determine clinical emotional state.</p>
         </div>
     </div>
 </div>
@@ -74,6 +104,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const loading = document.getElementById('camera-loading');
     const errorState = document.getElementById('camera-error');
     const captureBtn = document.getElementById('capture-btn');
+    const cameraContainer = document.getElementById('camera-container');
+    const consentContainer = document.getElementById('consent-container');
+    const consentBtn = document.getElementById('consent-btn');
+    const consentDeniedMsg = document.getElementById('consent-denied-message');
     
     const missingModelState = document.getElementById('missing-model-state');
     const apiError = document.getElementById('api-error');
@@ -84,27 +118,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const getCsrfToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
-    // Initialize Camera
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
-            .then(stream => {
-                video.srcObject = stream;
-                video.onloadedmetadata = () => {
-                    video.play();
-                    loading.style.display = 'none';
-                    captureBtn.disabled = false;
-                };
-            })
-            .catch(err => {
-                console.error("Camera access error:", err);
-                loading.style.display = 'none';
-                errorState.style.display = 'flex';
-            });
-    } else {
-        loading.style.display = 'none';
-        errorState.style.display = 'flex';
-        errorState.innerHTML = '<p>Camera API not supported in this browser.</p>';
-    }
+    // Consent click handler: camera access is requested ONLY here, never on page load
+    consentBtn.addEventListener('click', () => {
+        consentBtn.disabled = true;
+        consentDeniedMsg.style.display = 'none';
+
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
+                .then(stream => {
+                    // Consent granted: show camera preview and capture button
+                    consentContainer.style.display = 'none';
+                    cameraContainer.style.display = 'block';
+                    captureBtn.style.display = 'block';
+                    video.srcObject = stream;
+                    video.onloadedmetadata = () => {
+                        video.play();
+                        loading.style.display = 'none';
+                        captureBtn.disabled = false;
+                    };
+                })
+                .catch(err => {
+                    console.error("Camera access denied or error:", err);
+                    consentBtn.disabled = false;
+                    consentDeniedMsg.style.display = 'block';
+                    // Show clear message and do nothing else
+                });
+        } else {
+            consentBtn.disabled = false;
+            consentDeniedMsg.textContent = 'Camera API is not supported in this browser.';
+            consentDeniedMsg.style.display = 'block';
+        }
+    });
 
     captureBtn.addEventListener('click', async () => {
         if (captureBtn.disabled) return;
@@ -142,7 +186,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
 
-            // FIX: Pass X-CSRFToken header to pass Flask-WTF CSRF validation!
             const response = await fetch('/emotion/api/predict', {
                 method: 'POST',
                 headers: {
@@ -162,8 +205,13 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (data.status === 'no_face_detected') {
                 apiError.textContent = data.message || 'No face detected in target ring. Please adjust position and lighting.';
                 apiError.style.display = 'block';
+            } else if (data.status === 'low_confidence') {
+                resultEmotion.textContent = "The model's guess: Not sure";
+                const confPercent = Math.round((data.confidence || 0) * 100);
+                resultConfidence.textContent = `Confidence: ${confPercent}% (below threshold — scan not saved)`;
+                resultContainer.style.display = 'block';
             } else if (data.status === 'success') {
-                resultEmotion.textContent = data.emotion;
+                resultEmotion.textContent = `The model's guess: ${data.emotion}`;
                 const confPercent = Math.round(data.confidence * 100);
                 resultConfidence.textContent = `Confidence: ${confPercent}%`;
                 resultContainer.style.display = 'block';
