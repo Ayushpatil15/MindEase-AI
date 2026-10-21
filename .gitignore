@@ -8,6 +8,8 @@ venv
 .venv
 env/
 env
+clean_clone_temp/
+
 
 # Python
 __pycache__/
