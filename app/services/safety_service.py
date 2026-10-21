@@ -34,7 +34,7 @@ from app.models.stress import StressAssessment
 from app.services import mood_service, stress_service
 
 
-# Conservative phrase list for self-harm and suicide wording (English + common Hinglish phrasing).
+# Conservative phrase list for self-harm and suicide wording (English + common Hinglish + Devanagari Hindi).
 # Note: The keyword check is a simple safety net, not a reliable detector and not a diagnostic tool.
 CRISIS_PHRASES = [
     # English crisis and self-harm phrases
@@ -93,7 +93,49 @@ CRISIS_PHRASES = [
     "ab jeena nahi chahta",
     "ab jeena nahi chahti",
     "khud ko nuksan",
+    "khud ko chot",
+
+    # Devanagari Hindi phrases
+    "आत्महत्या",
+    "खुदकुशी",
+    "मरने का मन",
+    "मरना चाहता हूँ",
+    "मरना चाहता हूं",
+    "मरना चाहती हूँ",
+    "मरना चाहती हूं",
+    "जान देना चाहता हूँ",
+    "जान देना चाहती हूँ",
+    "जीने की इच्छा नहीं",
+    "खुद को नुकसान",
 ]
+
+
+def normalize_text_for_safety(text: str) -> str:
+    """Normalize text by lowercasing, resolving curly apostrophes/quotes,
+    stripping punctuation (including Devanagari dandas), and collapsing repeated spaces.
+    """
+    if not text:
+        return ""
+
+    cleaned = text.lower()
+
+    # Normalize curly apostrophes and quotes
+    for curly_apos in ('’', '‘', 'ʼ', 'ʻ'):
+        cleaned = cleaned.replace(curly_apos, "'")
+    for curly_quote in ('“', '”'):
+        cleaned = cleaned.replace(curly_quote, '"')
+
+    # Remove apostrophes without space so "don't" and "dont", "can't" and "cant" unify
+    cleaned = cleaned.replace("'", "")
+
+    # Replace all punctuation and Devanagari dandas with spaces
+    punctuation_to_strip = string.punctuation + '।॥'
+    for char in punctuation_to_strip:
+        cleaned = cleaned.replace(char, ' ')
+
+    # Collapse repeated spaces
+    tokens = cleaned.split()
+    return ' '.join(tokens)
 
 
 def text_has_crisis_language(text: Optional[str]) -> bool:
@@ -112,16 +154,18 @@ def text_has_crisis_language(text: Optional[str]) -> bool:
     if not text or not isinstance(text, str):
         return False
 
-    # Normalize: lowercase, strip punctuation, normalize whitespace
-    cleaned = text.lower()
-    for char in string.punctuation:
-        cleaned = cleaned.replace(char, ' ')
-    normalized = ' ' + ' '.join(cleaned.split()) + ' '
+    normalized_input = normalize_text_for_safety(text)
+    if not normalized_input:
+        return False
+
+    padded_input = f" {normalized_input} "
 
     for phrase in CRISIS_PHRASES:
-        # Match with space boundaries to avoid substring false positives
-        clean_phrase = ' '.join(phrase.lower().split())
-        if f" {clean_phrase} " in normalized or clean_phrase in cleaned:
+        normalized_phrase = normalize_text_for_safety(phrase)
+        if not normalized_phrase:
+            continue
+        padded_phrase = f" {normalized_phrase} "
+        if padded_phrase in padded_input:
             return True
 
     return False
@@ -135,7 +179,13 @@ def is_mood_safety_triggered(user_id: int, latest_mood: Any = _UNSET) -> bool:
 
     Triggers if:
     - Latest check-in is 'Very low', OR
-    - The last 3 daily check-ins are all low ('Low' or 'Very low').
+    - The last 3 distinct local calendar days (in student's timezone) with check-ins
+      all have a latest check-in of low ('Low' or 'Very low').
+
+    Definition:
+    The 3 most recent distinct local calendar days (student's timezone, consistent with
+    get_user_today_utc_range) that have a check-in, using each day's latest check-in.
+    Multiple entries on the same local calendar day are collapsed to that day's latest entry.
 
     Args:
         user_id (int): Student user ID.
@@ -152,19 +202,40 @@ def is_mood_safety_triggered(user_id: int, latest_mood: Any = _UNSET) -> bool:
     if latest_mood.mood == 'Very low':
         return True
 
-    # If latest mood is not Low, the last 3 check-ins cannot all be low
+    # If latest mood is not Low, the latest day's check-in cannot be Low
     if latest_mood.mood != 'Low':
         return False
 
-    # Check last 3 daily check-ins
+    # Fetch user's local timezone consistent with get_user_today_utc_range
+    from app.models.user_preferences import UserPreferences
+    from app.utils.validators import validate_timezone
+    from zoneinfo import ZoneInfo
+
+    pref = UserPreferences.query.filter_by(user_id=user_id).first()
+    tz_str = pref.timezone if (pref and pref.timezone) else 'UTC'
+    user_tz = ZoneInfo(validate_timezone(tz_str))
+
+    # Fetch recent entries to find the 3 most recent distinct local calendar days
     recent_entries = (
         MoodEntry.query
         .filter_by(user_id=user_id)
         .order_by(MoodEntry.created_at.desc())
-        .limit(3)
+        .limit(50)
         .all()
     )
-    if len(recent_entries) == 3 and all(e.mood in ('Low', 'Very low') for e in recent_entries):
+
+    distinct_daily_latest = []
+    seen_dates = set()
+
+    for entry in recent_entries:
+        local_date = _as_utc(entry.created_at).astimezone(user_tz).date()
+        if local_date not in seen_dates:
+            seen_dates.add(local_date)
+            distinct_daily_latest.append(entry)
+            if len(distinct_daily_latest) == 3:
+                break
+
+    if len(distinct_daily_latest) == 3 and all(e.mood in ('Low', 'Very low') for e in distinct_daily_latest):
         return True
 
     return False

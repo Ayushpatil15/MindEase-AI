@@ -146,3 +146,76 @@ def test_saved_scan_does_not_change_wellness_score(app, db):
         score_after = wellness_calculator.calculate_wellness_score(user.id)
         assert score_after['status'] == score_before['status']
         assert score_after['score'] == score_before['score']
+
+
+@patch('app.routes.emotion.predict')
+def test_low_confidence_scan_creates_no_db_record_and_not_on_history_page(mock_predict, client, db):
+    """A low-confidence scan creates no DB record and does not appear on the history page."""
+    import json
+    import re
+    user = create_test_student(db, username='low_conf_hist_user', email='low_conf_hist@test.com', password='pass')
+    client.post('/auth/login', data={'email': user.email, 'password': 'pass'})
+
+    # Mock low confidence prediction
+    mock_predict.return_value = {
+        'status': 'success',
+        'emotion': 'Sad',
+        'confidence': 0.35,
+    }
+
+    dummy_payload = {'image': 'data:image/jpeg;base64,dGVzdA=='}
+    resp = client.post('/emotion/api/predict', json=dummy_payload)
+    assert resp.status_code == 200
+    assert resp.get_json()['status'] == 'low_confidence'
+
+    # 1. DB assertion: 0 records
+    assert EmotionScan.query.filter_by(user_id=user.id).count() == 0
+
+    # 2. History page assertion: /history
+    hist_resp = client.get('/history')
+    assert hist_resp.status_code == 200
+    html = hist_resp.get_data(as_text=True)
+
+    # Extract embedded history JSON
+    history_match = re.search(r'const history\s*=\s*(\{.*?\});', html, re.DOTALL)
+    assert history_match is not None
+    history_json = json.loads(history_match.group(1))
+
+    # Emotion scans array is completely empty
+    assert history_json['emotion']['count'] == 0
+    assert len(history_json['emotion']['scans']) == 0
+
+
+@patch('app.routes.emotion.predict')
+def test_emotion_predict_endpoint_rate_limiting(mock_predict, app, db):
+    """Verify POST /emotion/api/predict enforces rate limiting when enabled."""
+    from app.extensions import limiter
+    user = create_test_student(db, username='rate_emo_user', email='rate_emo@test.com', password='pass')
+
+    mock_predict.return_value = {
+        'status': 'success',
+        'emotion': 'Happy',
+        'confidence': 0.85,
+    }
+
+    app.config['RATELIMIT_ENABLED'] = True
+    limiter.enabled = True
+    limiter.reset()
+
+    try:
+        client = app.test_client()
+        client.post('/auth/login', data={'email': user.email, 'password': 'pass'})
+
+        dummy_payload = {'image': 'data:image/jpeg;base64,dGVzdA=='}
+        # Rate limit is 15/minute on POST /emotion/api/predict
+        for _ in range(15):
+            res = client.post('/emotion/api/predict', json=dummy_payload)
+            assert res.status_code == 200
+
+        # 16th attempt triggers 429 Too Many Requests
+        res_blocked = client.post('/emotion/api/predict', json=dummy_payload)
+        assert res_blocked.status_code == 429
+    finally:
+        app.config['RATELIMIT_ENABLED'] = False
+        limiter.enabled = False
+        limiter.reset()

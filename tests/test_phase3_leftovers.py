@@ -7,6 +7,8 @@ Verifies:
 4. Model smoke test loading configured TFLite model and inferencing on dummy frame.
 """
 
+import os
+import ast
 import json
 import re
 from datetime import datetime, date, timezone
@@ -24,6 +26,23 @@ from tests.conftest import create_test_student
 
 class TestAppEnvPrecedence:
     """Tests for APP_ENV / FLASK_ENV environment variable precedence and validation."""
+
+    def test_run_py_debug_not_hardcoded_true(self):
+        """Verify run.py does not hard-code debug=True and retrieves debug setting dynamically."""
+        run_path = os.path.join(os.path.dirname(__file__), '..', 'run.py')
+        with open(run_path, 'r', encoding='utf-8') as f:
+            source = f.read()
+
+        assert 'debug=True' not in source
+        assert 'debug = True' not in source
+
+        tree = ast.parse(source)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call):
+                for keyword in node.keywords:
+                    if keyword.arg == 'debug':
+                        if isinstance(keyword.value, ast.Constant):
+                            assert keyword.value.value is not True
 
     def test_app_env_only(self):
         """When only APP_ENV is set, create_app() uses APP_ENV."""

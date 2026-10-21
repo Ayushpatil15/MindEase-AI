@@ -12,6 +12,7 @@ from flask import Blueprint, render_template, request, jsonify, current_app
 from flask_login import login_required, current_user
 from werkzeug.exceptions import RequestEntityTooLarge
 
+from app.extensions import limiter
 from app.utils.decorators import student_required
 from app.services.emotion_service import save_emotion_scan
 from app.ml.predictor import predict
@@ -35,17 +36,19 @@ def checkin():
 @emotion_bp.route('/api/predict', methods=['POST'])
 @login_required
 @student_required
+@limiter.limit("15/minute", methods=["POST"])
 def api_predict():
     """Receive Base64 frame, process inference in memory, persist result."""
     # 1. Enforce payload size limit securely
+    max_payload = current_app.config.get('MAX_CONTENT_LENGTH', MAX_PAYLOAD_SIZE)
     content_length = request.content_length
-    if content_length is not None and content_length > MAX_PAYLOAD_SIZE:
+    if content_length is not None and content_length > max_payload:
         return jsonify({'status': 'error', 'message': 'Payload exceeds 5MB limit.'}), 413
         
     # Read raw data directly to avoid framework parsing overhead on large files, 
     # and to catch length errors if content-length header was missing/forged
     raw_data = request.get_data(cache=False, as_text=False)
-    if len(raw_data) > MAX_PAYLOAD_SIZE:
+    if len(raw_data) > max_payload:
         return jsonify({'status': 'error', 'message': 'Payload exceeds 5MB limit.'}), 413
 
     # Now parse JSON safely

@@ -25,6 +25,7 @@ This directory contains the production facial expression recognition model for M
     - **Inference-only vs. Preprocessing**: not recorded.
     - **Warm-up**: not recorded.
     - **Number of runs**: not recorded.
+  - The 0.89 ms figure is a single-machine, inference-only measurement and has not been independently reproduced.
 
 ### Verification
 Inference verification tests and runtime fallbacks are tested as part of the test suite:

@@ -33,10 +33,10 @@
             </p>
             <ul style="font-size: 0.85rem; color: var(--color-text-body); margin-bottom: 16px; padding-left: 20px; line-height: 1.5;">
                 <li style="margin-bottom: 6px;">
-                    <strong>What is captured:</strong> A single camera frame is captured from your device only when you click "Check Expression".
+                    <strong>Live preview only:</strong> A live preview is shown while the page is open, but nothing is recorded or saved.
                 </li>
                 <li style="margin-bottom: 6px;">
-                    <strong>In-memory processing only:</strong> Frames are analyzed directly in temporary server memory and immediately discarded. No video, raw frames, photos, or images are ever stored on disk or in any database.
+                    <strong>In-memory processing only:</strong> A single frame is analyzed directly in temporary server memory and immediately discarded. No video, raw frames, photos, or images are ever stored on disk or in any database.
                 </li>
                 <li>
                     <strong>Experimental & non-diagnostic:</strong> The machine learning model provides an approximate estimate that can be wrong, ambiguous, or inaccurate. It does not determine clinical mood or mental state.
@@ -116,6 +116,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultEmotion = document.getElementById('result-emotion');
     const resultConfidence = document.getElementById('result-confidence');
 
+    let currentStream = null;
+
+    const stopCameraStream = () => {
+        if (currentStream) {
+            currentStream.getTracks().forEach(track => {
+                try {
+                    track.stop();
+                } catch (e) {
+                    console.error("Error stopping track:", e);
+                }
+            });
+            currentStream = null;
+        }
+        if (video && video.srcObject) {
+            video.srcObject = null;
+        }
+    };
+
+    // Lifecycle: Stop all stream tracks on page unload or visibility change
+    window.addEventListener('pagehide', stopCameraStream);
+    window.addEventListener('beforeunload', stopCameraStream);
+
     const getCsrfToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
     // Consent click handler: camera access is requested ONLY here, never on page load
@@ -126,7 +148,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
                 .then(stream => {
-                    // Consent granted: show camera preview and capture button
+                    // Consent granted: save stream reference and show camera preview
+                    currentStream = stream;
                     consentContainer.style.display = 'none';
                     cameraContainer.style.display = 'block';
                     captureBtn.style.display = 'block';
@@ -196,6 +219,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             const data = await response.json();
+
+            // Lifecycle: Stop all stream tracks after a scan completes
+            stopCameraStream();
 
             if (response.status === 503 || data.status === 'model_not_initialized') {
                 missingModelState.style.display = 'block';

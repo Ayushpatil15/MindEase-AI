@@ -62,6 +62,49 @@ class TestCrisisLanguageDetection:
         assert text_has_crisis_language("ab jeene ka koi fayda nahi") is True
         assert text_has_crisis_language("aatmahatya soch raha hu") is True
 
+    def test_case_normalization(self):
+        """Case variations (upper, lower, mixed) are normalized."""
+        assert text_has_crisis_language("SUICIDE") is True
+        assert text_has_crisis_language("SuIcIdAl") is True
+        assert text_has_crisis_language("END MY LIFE") is True
+        assert text_has_crisis_language("KILL MYSELF") is True
+
+    def test_curly_apostrophes_normalization(self):
+        """Curly apostrophes and quotation variants are normalized."""
+        assert text_has_crisis_language("I don’t want to live") is True
+        assert text_has_crisis_language("I can’t go on living") is True
+        assert text_has_crisis_language("don‘t want to live") is True
+        assert text_has_crisis_language("canʼt go on living") is True
+
+    def test_punctuation_normalization(self):
+        """Punctuation marks, hyphens, and Devanagari dandas are stripped."""
+        assert text_has_crisis_language("suicide???") is True
+        assert text_has_crisis_language("end-my-life") is True
+        assert text_has_crisis_language("want to die...") is True
+        assert text_has_crisis_language("आत्महत्या।") is True
+        assert text_has_crisis_language("खुदकुशी॥") is True
+
+    def test_repeated_spaces_normalization(self):
+        """Excessive or irregular spaces between words are collapsed."""
+        assert text_has_crisis_language("want   to    die") is True
+        assert text_has_crisis_language("end    my     life") is True
+        assert text_has_crisis_language("kill      myself") is True
+
+    def test_required_phrases_included(self):
+        """Explicitly verify suicide, suicidal, and end my life trigger."""
+        assert text_has_crisis_language("Thinking about suicide") is True
+        assert text_has_crisis_language("I feel suicidal today") is True
+        assert text_has_crisis_language("I have decided to end my life") is True
+
+    def test_devanagari_hindi_phrases(self):
+        """Verify common Devanagari Hindi phrases trigger detection."""
+        assert text_has_crisis_language("वह आत्महत्या करने की सोच रहा है") is True
+        assert text_has_crisis_language("खुदकुशी के विचार") is True
+        assert text_has_crisis_language("मेरा मरने का मन कर रहा है") is True
+        assert text_has_crisis_language("मैं अब मरना चाहता हूँ") is True
+        assert text_has_crisis_language("मैं अपनी जान देना चाहती हूँ") is True
+        assert text_has_crisis_language("जीने की इच्छा नहीं बची") is True
+
     def test_benign_text_does_not_fire(self):
         assert text_has_crisis_language(None) is False
         assert text_has_crisis_language("") is False
@@ -82,22 +125,75 @@ class TestIndependentTriggers:
         assert is_mood_safety_triggered(user.id) is True
         assert evaluate_safety(user.id) is True
 
-    def test_mood_trigger_last_three_all_low(self, app, db):
-        """Last 3 daily check-ins all low ('Low' / 'Very low') fires mood trigger."""
-        user = create_test_student(db, username='mood_3l_user', email='mood_3l@test.com')
-        mood_service.record_checkin(user.id, mood='Low')
-        mood_service.record_checkin(user.id, mood='Low')
-        mood_service.record_checkin(user.id, mood='Low')
+    def test_mood_three_entries_on_one_day_do_not_trigger(self, app, db):
+        """3 entries on the same local calendar day count as 1 day and do not trigger."""
+        user = create_test_student(db, username='mood_1day_user', email='mood_1d@test.com')
+        now = datetime.now(timezone.utc)
+        # All 3 entries within minutes on the same calendar day
+        e1 = MoodEntry(user_id=user.id, mood='Low', valence=-1, created_at=now - timedelta(minutes=30))
+        e2 = MoodEntry(user_id=user.id, mood='Low', valence=-1, created_at=now - timedelta(minutes=15))
+        e3 = MoodEntry(user_id=user.id, mood='Low', valence=-1, created_at=now)
+        db.session.add_all([e1, e2, e3])
+        db.session.commit()
+
+        assert is_mood_safety_triggered(user.id) is False
+
+    def test_mood_two_distinct_days_do_not_trigger(self, app, db):
+        """Low check-ins across only 2 distinct days do not trigger."""
+        user = create_test_student(db, username='mood_2day_user', email='mood_2d@test.com')
+        now = datetime.now(timezone.utc)
+        e1 = MoodEntry(user_id=user.id, mood='Low', valence=-1, created_at=now - timedelta(days=1))
+        e2 = MoodEntry(user_id=user.id, mood='Low', valence=-1, created_at=now)
+        db.session.add_all([e1, e2])
+        db.session.commit()
+
+        assert is_mood_safety_triggered(user.id) is False
+
+    def test_mood_three_distinct_days_all_low_trigger(self, app, db):
+        """3 distinct local calendar days all having latest check-in as Low fires trigger."""
+        user = create_test_student(db, username='mood_3day_user', email='mood_3d@test.com')
+        now = datetime.now(timezone.utc)
+        e1 = MoodEntry(user_id=user.id, mood='Low', valence=-1, created_at=now - timedelta(days=3))
+        e2 = MoodEntry(user_id=user.id, mood='Low', valence=-1, created_at=now - timedelta(days=2))
+        e3 = MoodEntry(user_id=user.id, mood='Low', valence=-1, created_at=now - timedelta(days=1))
+        # Even if latest entry today is Low, distinct days: 4 days total with Low
+        e4 = MoodEntry(user_id=user.id, mood='Low', valence=-1, created_at=now)
+        db.session.add_all([e1, e2, e3, e4])
+        db.session.commit()
 
         assert is_mood_safety_triggered(user.id) is True
         assert evaluate_safety(user.id) is True
 
-    def test_mood_trigger_normal_does_not_fire(self, app, db):
-        """Normal mood check-ins do not fire trigger."""
-        user = create_test_student(db, username='mood_norm_user', email='mood_norm@test.com')
-        mood_service.record_checkin(user.id, mood='Okay')
-        mood_service.record_checkin(user.id, mood='Good')
+    def test_mood_day_boundary_asia_kolkata_vs_utc(self, app, db):
+        """Verify distinct local calendar day calculation crossing Asia/Kolkata (+5:30) day boundary."""
+        from app.models.user_preferences import UserPreferences
+        user = create_test_student(db, username='mood_kolkata_user', email='kolkata@test.com')
+        pref = UserPreferences(user_id=user.id, timezone='Asia/Kolkata')
+        db.session.add(pref)
+        db.session.commit()
 
+        # In UTC:
+        # e1: 2026-10-20 20:00:00 UTC -> In Asia/Kolkata (+5:30): 2026-10-21 01:30:00 (Local date: 2026-10-21)
+        # e2: 2026-10-20 10:00:00 UTC -> In Asia/Kolkata (+5:30): 2026-10-20 15:30:00 (Local date: 2026-10-20)
+        # e3: 2026-10-19 10:00:00 UTC -> In Asia/Kolkata (+5:30): 2026-10-19 15:30:00 (Local date: 2026-10-19)
+        # In UTC, e1 and e2 share the same UTC date (2026-10-20) -> only 2 distinct UTC days.
+        # But in Asia/Kolkata, they are 3 distinct local calendar days (Oct 19, Oct 20, Oct 21)!
+        dt1 = datetime(2026, 10, 20, 20, 0, 0, tzinfo=timezone.utc)
+        dt2 = datetime(2026, 10, 20, 10, 0, 0, tzinfo=timezone.utc)
+        dt3 = datetime(2026, 10, 19, 10, 0, 0, tzinfo=timezone.utc)
+
+        e1 = MoodEntry(user_id=user.id, mood='Low', valence=-1, created_at=dt1)
+        e2 = MoodEntry(user_id=user.id, mood='Low', valence=-1, created_at=dt2)
+        e3 = MoodEntry(user_id=user.id, mood='Low', valence=-1, created_at=dt3)
+        db.session.add_all([e1, e2, e3])
+        db.session.commit()
+
+        # For student with Asia/Kolkata timezone, this counts as 3 distinct local days and triggers!
+        assert is_mood_safety_triggered(user.id) is True
+
+        # If user had UTC timezone, e1 and e2 are same day, so only 2 distinct days -> does NOT trigger!
+        pref.timezone = 'UTC'
+        db.session.commit()
         assert is_mood_safety_triggered(user.id) is False
 
     def test_stress_trigger_high_stress(self, app, db):
@@ -258,3 +354,101 @@ class TestCardBehaviorAndPersistentLink:
 
         assert 'Need to talk to someone?' in html
         assert '/support' in html
+
+
+class TestRouteLevelCrisisProtocol:
+    """Route-level crisis tests through the real POST routes."""
+
+    def test_mood_route_very_good_with_crisis_text_shows_card_immediately(self, client, db, caplog):
+        """A new mood check-in with 'Very good' mood and crisis note shows card immediately.
+        Logs must not contain matched phrase, raw text, or trigger flag. Zero crisis DB tables/columns.
+        """
+        user = create_test_student(db, username='route_mood_user', email='route_mood@test.com', password='testpass123')
+        client.post('/auth/login', data={'email': user.email, 'password': 'testpass123'})
+
+        crisis_phrase = "end my life"
+        journal_text = f"Everything went well today but I feel I want to {crisis_phrase}."
+
+        with caplog.at_level(logging.DEBUG):
+            resp = client.post('/mood/', data={
+                'mood': 'Very good',
+                'journal_note': journal_text,
+            }, follow_redirects=True)
+
+        assert resp.status_code == 200
+        html = resp.get_data(as_text=True)
+
+        # Card appears immediately on redirected dashboard
+        assert 'Support and Care Resources' in html
+        assert 'Tele-MANAS' in html
+        assert '14416' in html
+        assert '112' in html
+
+        # Log privacy assertion: matched phrase, raw text, and trigger flags must not appear
+        captured_logs = caplog.text.lower()
+        assert crisis_phrase not in captured_logs
+        assert journal_text.lower() not in captured_logs
+        assert 'safety_triggered' not in captured_logs
+        assert 'crisis_detected' not in captured_logs
+        assert 'matched_phrase' not in captured_logs
+
+        # Database privacy assertion: zero crisis columns, tables, or records
+        from sqlalchemy import inspect
+        inspector = inspect(db.engine)
+        tables = inspector.get_table_names()
+        assert not any('crisis' in t.lower() or 'safety' in t.lower() for t in tables)
+        for t in tables:
+            cols = [c['name'].lower() for c in inspector.get_columns(t)]
+            assert 'crisis' not in cols
+            assert 'safety' not in cols
+            assert 'flag' not in cols
+
+    def test_stress_route_low_stress_with_crisis_text_shows_card_immediately(self, client, db, caplog):
+        """A new stress assessment with Low stress and crisis reflection shows card immediately.
+        Logs must not contain matched phrase, raw text, or trigger flag. Zero crisis DB tables/columns.
+        """
+        user = create_test_student(db, username='route_stress_user', email='route_stress@test.com', password='testpass123')
+        client.post('/auth/login', data={'email': user.email, 'password': 'testpass123'})
+
+        crisis_phrase = "suicide"
+        reflection_text = f"Academics are fine, low stress, but I am thinking about {crisis_phrase}."
+
+        # Low stress response set: score = 0 ('Low' stress)
+        low_responses = {
+            'q1': '0', 'q2': '0', 'q3': '0', 'q4': '4',
+            'q5': '4', 'q6': '0', 'q7': '4', 'q8': '4',
+            'q9': '0', 'q10': '0', 'q11': '0',
+            'reflection': reflection_text,
+        }
+
+        with caplog.at_level(logging.DEBUG):
+            resp = client.post('/stress/', data=low_responses, follow_redirects=True)
+
+        assert resp.status_code == 200
+        html = resp.get_data(as_text=True)
+
+        # Card appears immediately on redirected stress result page
+        assert 'Support and Care Resources' in html
+        assert 'Tele-MANAS' in html
+        assert '14416' in html
+        assert '112' in html
+
+        # Log privacy assertion: matched phrase, raw text, and trigger flags must not appear
+        captured_logs = caplog.text.lower()
+        assert crisis_phrase not in captured_logs
+        assert reflection_text.lower() not in captured_logs
+        assert 'safety_triggered' not in captured_logs
+        assert 'crisis_detected' not in captured_logs
+        assert 'matched_phrase' not in captured_logs
+
+        # Database privacy assertion: zero crisis columns, tables, or records
+        from sqlalchemy import inspect
+        inspector = inspect(db.engine)
+        tables = inspector.get_table_names()
+        assert not any('crisis' in t.lower() or 'safety' in t.lower() for t in tables)
+        for t in tables:
+            cols = [c['name'].lower() for c in inspector.get_columns(t)]
+            assert 'crisis' not in cols
+            assert 'safety' not in cols
+            assert 'flag' not in cols
+

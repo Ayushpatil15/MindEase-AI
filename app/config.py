@@ -46,6 +46,9 @@ class Config:
     # Rate limiting
     RATELIMIT_STORAGE_URI = 'memory://'
 
+    # Maximum request body size (5MB for image payloads)
+    MAX_CONTENT_LENGTH = 5 * 1024 * 1024
+
 
 class _DevelopmentConfigMeta(type):
     @property
