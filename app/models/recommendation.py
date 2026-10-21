@@ -45,5 +45,8 @@ class Recommendation(db.Model):
 
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     def __repr__(self):
         return f'<Recommendation user={self.user_id} category={self.category} title={self.title!r}>'

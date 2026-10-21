@@ -20,6 +20,9 @@ class User(UserMixin, db.Model):
     role = db.Column(db.String(20), nullable=False, default='student')
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     # Relationships
     stress_assessments = db.relationship(
         'StressAssessment', backref='user', lazy='dynamic',

@@ -29,7 +29,7 @@
         ] %}
 
         {% for field, step in questions %}
-            <div class="question-step" data-step="{{ step }}" style="{% if step > 1 %}display: none;{% endif %}">
+            <div class="question-step" data-step="{{ step }}"{% if step > 1 %} style="display: none;"{% endif %}>
                 <h2 style="font-size: 1.25rem; color: var(--color-heading); margin-bottom: 20px; line-height: 1.4;">
                     {{ step }}. {{ field.label.text }}
                 </h2>

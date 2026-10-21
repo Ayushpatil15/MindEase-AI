@@ -56,6 +56,9 @@ class UserPreferences(db.Model):
     # Relationship
     user = db.relationship('User', backref=db.backref('preferences', uselist=False))
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     def __repr__(self):
         goals = self.wellness_goals or []
         return f'<UserPreferences user={self.user_id} goals={goals}>'

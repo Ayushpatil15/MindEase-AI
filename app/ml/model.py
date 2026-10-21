@@ -31,7 +31,8 @@ NUM_CLASSES = 5
 def build_model():
     """Build and compile the facial expression CNN."""
     model = Sequential([
-        Conv2D(32, (3, 3), activation='relu', input_shape=(48, 48, 1)),
+        Input(shape=(48, 48, 1)),
+        Conv2D(32, (3, 3), activation='relu'),
         BatchNormalization(),
         MaxPooling2D((2, 2)),
         Dropout(0.25),

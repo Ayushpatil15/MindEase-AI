@@ -108,8 +108,10 @@ def main():
         
         # Train with or without augmentation
         if args.augment:
-            print("Training with real-time data augmentation...")
-            from tensorflow.keras.preprocessing.image import ImageDataGenerator
+            try:
+                from keras.src.legacy.preprocessing.image import ImageDataGenerator
+            except ImportError:
+                from tensorflow.keras.preprocessing.image import ImageDataGenerator
             datagen = ImageDataGenerator(
                 rotation_range=10,
                 width_shift_range=0.10,

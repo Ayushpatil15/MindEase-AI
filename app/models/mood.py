@@ -48,5 +48,8 @@ class MoodEntry(db.Model):
 
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     def __repr__(self):
         return f'<MoodEntry user={self.user_id} mood={self.mood} valence={self.valence}>'

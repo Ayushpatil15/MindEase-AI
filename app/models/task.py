@@ -40,6 +40,9 @@ class WellnessTask(db.Model):
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     completed_at = db.Column(db.DateTime, nullable=True)
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     def mark_complete(self):
         """Mark the task as completed with a timestamp."""
         self.completed = True
