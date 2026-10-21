@@ -19,23 +19,10 @@ class Config:
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
 
-    # ML model backend & path configuration
-    # Authorized Phase 5.11 production switch: TFLite default with Keras baseline fallback
-    MODEL_BACKEND = os.environ.get('MODEL_BACKEND', 'tflite')
-    
-    MODEL_PATH = os.environ.get(
-        'MODEL_PATH',
-        os.path.join(BASE_DIR, 'models', 'deployment', 'challenger_fp32.tflite'),
-    )
-    
+    # ML model configuration (TFLite production champion)
     TFLITE_MODEL_PATH = os.environ.get(
         'TFLITE_MODEL_PATH',
         os.path.join(BASE_DIR, 'models', 'deployment', 'challenger_fp32.tflite'),
-    )
-    
-    KERAS_FALLBACK_MODEL_PATH = os.environ.get(
-        'KERAS_FALLBACK_MODEL_PATH',
-        os.path.join(BASE_DIR, 'models', 'fer2013_cnn.h5'),
     )
     
     TFLITE_NUM_THREADS = int(os.environ.get('TFLITE_NUM_THREADS', '4'))

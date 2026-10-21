@@ -1,4 +1,4 @@
-"""Predictor — runs CNN inference on preprocessed frames with multi-backend TFLite & Keras support."""
+"""Predictor — runs CNN inference on preprocessed frames with TensorFlow Lite engine."""
 
 import os
 import logging
@@ -71,95 +71,40 @@ class TFLiteBackend:
             return probs
 
 
-class KerasBackend:
-    """Keras .h5 inference engine for baseline production execution and fallback."""
-
-    def __init__(self, model_path):
-        self.model_path = model_path
-        if not os.path.isfile(model_path):
-            raise FileNotFoundError(f"Keras model artifact missing at {model_path}")
-
-        from app.ml.model import load_model
-        self.model = load_model(model_path)
-        if self.model is None:
-            raise RuntimeError(f"Failed to load Keras model from {model_path}")
-
-    def predict(self, tensor):
-        """Execute Keras model prediction."""
-        preds = self.model.predict(tensor, verbose=0)
-        return preds[0]
-
-
 class EmotionPredictor:
-    """Unified backend manager supporting TFLite, Keras, and automatic fallback."""
+    """TFLite-based emotion predictor."""
 
-    def __init__(self, primary_path, backend_type='keras', fallback_path=None, num_threads=4):
-        self.primary_path = primary_path
-        self.backend_type = backend_type.lower() if backend_type else 'keras'
-        self.fallback_path = fallback_path or os.path.join(
-            os.path.dirname(__file__), '..', '..', 'models', 'fer2013_cnn.h5'
-        )
+    def __init__(self, model_path, num_threads=4, **kwargs):
+        self.model_path = model_path
         self.num_threads = num_threads
 
         self.backend = None
         self.active_backend_name = 'uninitialized'
         self.tflite_loaded = False
-        self.keras_fallback_active = False
         self.last_error = None
 
         self._initialize_backend()
 
     def _initialize_backend(self):
-        """Initialize the requested primary backend or activate Keras fallback."""
-        if self.backend_type in ('tflite', 'auto') or (self.primary_path and self.primary_path.endswith('.tflite')):
-            try:
-                logger.info("Initializing TFLiteBackend from %s (threads=%d)", self.primary_path, self.num_threads)
-                self.backend = TFLiteBackend(self.primary_path, num_threads=self.num_threads)
-                self.active_backend_name = 'tflite'
-                self.tflite_loaded = True
-                return
-            except Exception as e:
-                self.last_error = str(e)
-                logger.warning(
-                    "TFLite initialization failed (%s); activating Keras baseline fallback from %s",
-                    str(e), self.fallback_path
-                )
-                self.tflite_loaded = False
-
-        # Attempt Keras initialization (either as primary choice or fallback)
-        keras_target = self.primary_path if (self.backend_type == 'keras' or not self.primary_path.endswith('.tflite')) else self.fallback_path
+        """Initialize the TFLite backend."""
         try:
-            logger.info("Initializing KerasBackend from %s", keras_target)
-            self.backend = KerasBackend(keras_target)
-            self.active_backend_name = 'keras'
-            if self.primary_path.endswith('.tflite') or self.backend_type == 'tflite':
-                self.keras_fallback_active = True
+            logger.info("Initializing TFLiteBackend from %s (threads=%d)", self.model_path, self.num_threads)
+            self.backend = TFLiteBackend(self.model_path, num_threads=self.num_threads)
+            self.active_backend_name = 'tflite'
+            self.tflite_loaded = True
         except Exception as e:
             self.last_error = str(e)
-            logger.error("Keras backend initialization failed: %s", str(e))
+            logger.warning("TFLite initialization failed: %s", str(e))
             self.backend = None
-            self.active_backend_name = 'failed'
+            self.active_backend_name = 'uninitialized'
+            self.tflite_loaded = False
 
     def predict(self, tensor):
-        """Execute inference using active backend with output validation."""
+        """Execute inference using TFLite backend with output validation."""
         if self.backend is None:
             raise RuntimeError("No active ML backend available")
 
-        try:
-            probs = self.backend.predict(tensor)
-        except Exception as e:
-            logger.warning("Primary backend inference failed (%s); attempting Keras fallback...", str(e))
-            if self.active_backend_name == 'tflite' and self.fallback_path and os.path.isfile(self.fallback_path):
-                try:
-                    fallback_engine = KerasBackend(self.fallback_path)
-                    probs = fallback_engine.predict(tensor)
-                    self.keras_fallback_active = True
-                    self.active_backend_name = 'keras_fallback'
-                except Exception as fallback_err:
-                    logger.error("Fallback inference failed: %s", str(fallback_err))
-                    raise RuntimeError("Inference failed on both primary and fallback backends") from fallback_err
-            else:
-                raise
+        probs = self.backend.predict(tensor)
 
         # Output Numerical Integrity Validation
         probs = np.asarray(probs)
@@ -171,7 +116,6 @@ class EmotionPredictor:
 
         prob_sum = float(np.sum(probs))
         if abs(prob_sum - 1.0) > 0.05:
-            # Re-normalize if quantization slight drift occurs
             probs = probs / (prob_sum if prob_sum > 0 else 1.0)
 
         class_idx = int(np.argmax(probs))
@@ -182,7 +126,7 @@ class EmotionPredictor:
             'emotion': emotion,
             'confidence': confidence,
             'probabilities': probs.tolist(),
-            'active_backend': self.active_backend_name
+            'active_backend': 'tflite'
         }
 
     def get_diagnostic_info(self):
@@ -190,46 +134,36 @@ class EmotionPredictor:
         return {
             'active_backend': self.active_backend_name,
             'tflite_loaded': self.tflite_loaded,
-            'keras_fallback_active': self.keras_fallback_active,
-            'primary_path_exists': os.path.isfile(self.primary_path) if self.primary_path else False,
-            'fallback_path_exists': os.path.isfile(self.fallback_path) if self.fallback_path else False,
+            'model_path_exists': os.path.isfile(self.model_path) if self.model_path else False,
             'num_threads': self.num_threads,
             'last_error': self.last_error
         }
 
 
-def _get_or_create_predictor(model_path, backend=None):
+def _get_or_create_predictor(model_path, **kwargs):
     """Retrieve or instantiate singleton EmotionPredictor."""
     global _predictor_instance
     with _predictor_lock:
         if _predictor_instance is not None:
-            # If requested path/backend matches cached instance, reuse
-            if _predictor_instance.primary_path == model_path:
+            if _predictor_instance.model_path == model_path:
                 return _predictor_instance
-            # Re-initialize if different path requested (e.g. testing different models)
 
         num_threads = 4
-        fallback_path = None
         try:
             from flask import current_app
             if current_app:
                 num_threads = current_app.config.get('TFLITE_NUM_THREADS', 4)
-                fallback_path = current_app.config.get('KERAS_FALLBACK_MODEL_PATH')
-                if not backend:
-                    backend = current_app.config.get('MODEL_BACKEND', 'keras')
         except Exception:
             pass
 
         _predictor_instance = EmotionPredictor(
-            primary_path=model_path,
-            backend_type=backend,
-            fallback_path=fallback_path,
+            model_path=model_path,
             num_threads=num_threads
         )
         return _predictor_instance
 
 
-def predict(frame_bytes, model_path, haar_cascade_path, backend=None):
+def predict(frame_bytes, model_path, haar_cascade_path, **kwargs):
     """Run facial expression inference on a camera frame."""
     if not os.path.isfile(haar_cascade_path):
         return {
@@ -237,7 +171,7 @@ def predict(frame_bytes, model_path, haar_cascade_path, backend=None):
             'message': 'Face detection classifier not found.',
         }
 
-    predictor = _get_or_create_predictor(model_path, backend=backend)
+    predictor = _get_or_create_predictor(model_path)
     if predictor.backend is None:
         return {
             'status': 'model_not_initialized',

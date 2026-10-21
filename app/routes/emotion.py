@@ -75,25 +75,17 @@ def api_predict():
         return jsonify({'status': 'error', 'message': 'Malformed Base64 payload.'}), 400
         
     # 3. Model & Cascade path resolution from configuration
-    backend = current_app.config.get('MODEL_BACKEND', 'keras')
-    if backend == 'tflite':
-        model_path = current_app.config.get(
-            'TFLITE_MODEL_PATH',
-            os.path.join(current_app.root_path, '..', 'models', 'deployment', 'challenger_fp32.tflite')
-        )
-    else:
-        model_path = current_app.config.get(
-            'MODEL_PATH',
-            os.path.join(current_app.root_path, '..', 'models', 'fer2013_cnn.h5')
-        )
-        
+    model_path = current_app.config.get(
+        'TFLITE_MODEL_PATH',
+        os.path.join(current_app.root_path, '..', 'models', 'deployment', 'challenger_fp32.tflite')
+    )
     cascade_path = current_app.config.get(
         'HAAR_CASCADE_PATH',
         os.path.join(current_app.root_path, 'static', 'haar', 'haarcascade_frontalface_default.xml')
     )
     
-    # 4. Predict via unified backend engine
-    result = predict(frame_bytes, model_path, cascade_path, backend=backend)
+    # 4. Predict via TFLite engine
+    result = predict(frame_bytes, model_path, cascade_path)
     
     # 5. Handle Results and Persist
     if result['status'] == 'success':

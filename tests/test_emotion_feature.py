@@ -141,29 +141,32 @@ def test_preprocessor_concurrency_safety():
 # --- 3. Predictor Logic ---
 
 @patch('app.ml.predictor.os.path.isfile')
-def test_missing_model_fallback(mock_isfile):
+def test_missing_tflite_model_returns_model_not_initialized(mock_isfile):
+    """Verify that a missing TFLite model gives model_not_initialized result without crashing."""
     predictor_reset()
-    mock_isfile.side_effect = lambda path: False if path.endswith('.h5') else True
+    mock_isfile.side_effect = lambda path: False if path.endswith('.tflite') else True
     
-    res = predict(b'dummy', 'fake.h5', 'fake.xml')
+    res = predict(b'dummy', 'non_existent_model.tflite', 'dummy.xml')
     assert res['status'] == 'model_not_initialized'
+    assert 'message' in res
+
 
 @patch('app.ml.predictor.os.path.isfile')
 @patch('app.ml.preprocessor.preprocess_frame')
-@patch('app.ml.model.load_model')
-def test_predictor_success_mapping(mock_load, mock_prep, mock_isfile):
+@patch('app.ml.predictor.TFLiteBackend')
+def test_predictor_success_mapping(mock_backend_cls, mock_prep, mock_isfile):
     predictor_reset()
     mock_isfile.return_value = True
     
     mock_prep.return_value = {'status': 'success', 'tensor': np.zeros((1, 48, 48, 1))}
     
-    mock_model = MagicMock()
+    mock_backend = MagicMock()
     # Output matches the 5 classes [Angry, Fear, Happy, Sad, Neutral]
     # Let's mock a high confidence for Happy (index 2)
-    mock_model.predict.return_value = np.array([[0.05, 0.05, 0.80, 0.05, 0.05]])
-    mock_load.return_value = mock_model
+    mock_backend.predict.return_value = np.array([0.05, 0.05, 0.80, 0.05, 0.05])
+    mock_backend_cls.return_value = mock_backend
     
-    res = predict(b'dummy', 'fake.h5', 'fake.xml')
+    res = predict(b'dummy', 'models/deployment/challenger_fp32.tflite', 'dummy.xml')
     assert res['status'] == 'success'
     assert res['emotion'] == 'Happy'
     assert res['confidence'] == 0.80
@@ -193,38 +196,6 @@ def test_api_malformed_base64(client, db):
     assert b'Malformed Base64 payload' in res.data
 
 
-# --- 5. Lightweight Keras Integration Test ---
-
-def test_keras_integration(tmp_path):
-    """Dynamically builds a small model, saves it, loads it via predictor to verify Keras boundary.
-    No permanent artifact is created.
-    """
-    predictor_reset()
-    
-    # 1. Build authentic 5-class TF model and save to tmp
-    model = build_model()
-    tmp_h5 = str(tmp_path / "temp_fer2013_cnn.h5")
-    model.save(tmp_h5)
-    
-    # 2. Assert file exists
-    assert os.path.exists(tmp_h5)
-    
-    # 3. Use predictor with a mocked preprocessor (so we don't need real haar/cv2 logic here)
-    with patch('app.ml.preprocessor.preprocess_frame') as mock_prep:
-        with patch('app.ml.predictor.os.path.isfile') as mock_isfile:
-            mock_isfile.return_value = True
-            
-            mock_prep.return_value = {'status': 'success', 'tensor': np.zeros((1, 48, 48, 1), dtype=np.float32)}
-            
-            res = predict(b'dummy', tmp_h5, 'dummy.xml')
-            
-            assert res['status'] == 'success'
-            assert res['emotion'] in EMOTION_CLASSES
-            assert 0.0 <= res['confidence'] <= 1.0
-
-    # Model file will be automatically deleted by pytest tmp_path cleanup
-
-
 def test_build_challenger_model_structure():
     """Verify Phase 5.6 challenger model builds with expected input/output shapes."""
     from app.ml.model import build_challenger_model
@@ -236,30 +207,16 @@ def test_build_challenger_model_structure():
 
 
 def test_challenger_keras_integration(tmp_path):
-    """Dynamically builds Phase 5.6 challenger model, saves it, loads via predictor.
-    Verifies inference boundary and output schema with zero persistent side effects.
-    """
-    from app.ml.model import build_challenger_model
-    predictor_reset()
-    
-    # 1. Build authentic challenger 5-class TF model and save to tmp
+    """Dynamically builds Phase 5.6 challenger model, saves it, and validates inference directly."""
+    from app.ml.model import build_challenger_model, load_model
     challenger = build_challenger_model()
     tmp_h5 = str(tmp_path / "temp_fer2013_challenger_cnn.h5")
     challenger.save(tmp_h5)
     
     assert os.path.exists(tmp_h5)
-    
-    # 2. Predict with mocked preprocessor
-    with patch('app.ml.preprocessor.preprocess_frame') as mock_prep:
-        with patch('app.ml.predictor.os.path.isfile') as mock_isfile:
-            mock_isfile.return_value = True
-            mock_prep.return_value = {'status': 'success', 'tensor': np.zeros((1, 48, 48, 1), dtype=np.float32)}
-            
-            res = predict(b'dummy', tmp_h5, 'dummy.xml')
-            
-            assert res['status'] == 'success'
-            assert res['emotion'] in EMOTION_CLASSES
-            assert 0.0 <= res['confidence'] <= 1.0
+    loaded = load_model(tmp_h5)
+    preds = loaded.predict(np.zeros((1, 48, 48, 1), dtype=np.float32), verbose=0)
+    assert preds.shape == (1, 5)
 
 
 def test_build_low_latency_model_structure():
@@ -273,30 +230,16 @@ def test_build_low_latency_model_structure():
 
 
 def test_build_low_latency_keras_integration(tmp_path):
-    """Dynamically builds Phase 5.7 low-latency model, saves it, loads via predictor.
-    Verifies inference boundary and output schema with zero persistent side effects.
-    """
-    from app.ml.model import build_low_latency_model
-    predictor_reset()
-    
-    # 1. Build authentic low-latency 5-class TF model and save to tmp
+    """Dynamically builds Phase 5.7 low-latency model, saves it, and validates inference directly."""
+    from app.ml.model import build_low_latency_model, load_model
     model = build_low_latency_model()
     tmp_h5 = str(tmp_path / "temp_fer2013_low_latency_cnn.h5")
     model.save(tmp_h5)
     
     assert os.path.exists(tmp_h5)
-    
-    # 2. Predict with mocked preprocessor
-    with patch('app.ml.preprocessor.preprocess_frame') as mock_prep:
-        with patch('app.ml.predictor.os.path.isfile') as mock_isfile:
-            mock_isfile.return_value = True
-            mock_prep.return_value = {'status': 'success', 'tensor': np.zeros((1, 48, 48, 1), dtype=np.float32)}
-            
-            res = predict(b'dummy', tmp_h5, 'dummy.xml')
-            
-            assert res['status'] == 'success'
-            assert res['emotion'] in EMOTION_CLASSES
-            assert 0.0 <= res['confidence'] <= 1.0
+    loaded = load_model(tmp_h5)
+    preds = loaded.predict(np.zeros((1, 48, 48, 1), dtype=np.float32), verbose=0)
+    assert preds.shape == (1, 5)
 
 
 def test_build_hybrid_model_structure():
@@ -310,33 +253,19 @@ def test_build_hybrid_model_structure():
 
 
 def test_hybrid_keras_integration(tmp_path):
-    """Dynamically builds Phase 5.8 hybrid model, saves it, loads via predictor.
-    Verifies inference boundary and output schema with zero persistent side effects.
-    """
-    from app.ml.model import build_hybrid_model
-    predictor_reset()
-    
-    # 1. Build authentic hybrid 5-class TF model and save to tmp
+    """Dynamically builds Phase 5.8 hybrid model, saves it, and validates inference directly."""
+    from app.ml.model import build_hybrid_model, load_model
     model = build_hybrid_model()
     tmp_h5 = str(tmp_path / "temp_fer2013_hybrid_cnn.h5")
     model.save(tmp_h5)
     
     assert os.path.exists(tmp_h5)
-    
-    # 2. Predict with mocked preprocessor
-    with patch('app.ml.preprocessor.preprocess_frame') as mock_prep:
-        with patch('app.ml.predictor.os.path.isfile') as mock_isfile:
-            mock_isfile.return_value = True
-            mock_prep.return_value = {'status': 'success', 'tensor': np.zeros((1, 48, 48, 1), dtype=np.float32)}
-            
-            res = predict(b'dummy', tmp_h5, 'dummy.xml')
-            
-            assert res['status'] == 'success'
-            assert res['emotion'] in EMOTION_CLASSES
-            assert 0.0 <= res['confidence'] <= 1.0
+    loaded = load_model(tmp_h5)
+    preds = loaded.predict(np.zeros((1, 48, 48, 1), dtype=np.float32), verbose=0)
+    assert preds.shape == (1, 5)
 
 
-# --- 6. Phase 5.10 Production TFLite & Fallback Tests ---
+# --- 5. Production TFLite Predictor Tests ---
 
 def test_tflite_predictor_actual_artifact():
     """Verify TFLite engine loads validated challenger_fp32.tflite artifact and predicts correctly."""
@@ -351,7 +280,7 @@ def test_tflite_predictor_actual_artifact():
         with patch('app.ml.predictor.os.path.isfile') as mock_isfile:
             mock_isfile.return_value = True
             
-            res = predict(b'dummy', tflite_path, 'dummy.xml', backend='tflite')
+            res = predict(b'dummy', tflite_path, 'dummy.xml')
             
             assert res['status'] == 'success'
             assert res['emotion'] in EMOTION_CLASSES
@@ -361,47 +290,4 @@ def test_tflite_predictor_actual_artifact():
             diag = get_backend_diagnostic_info()
             assert diag['active_backend'] == 'tflite'
             assert diag['tflite_loaded'] is True
-            assert diag['keras_fallback_active'] is False
 
-
-def test_tflite_predictor_missing_artifact_fallback():
-    """Verify predictor automatically falls back to Keras baseline when TFLite model is missing."""
-    from app.ml.predictor import get_backend_diagnostic_info
-    predictor_reset()
-    
-    fake_tflite_path = "models/deployment/non_existent_model.tflite"
-    real_keras_path = os.path.join(os.path.dirname(__file__), '..', 'models', 'fer2013_cnn.h5')
-    
-    with patch('app.ml.preprocessor.preprocess_frame') as mock_prep:
-        mock_prep.return_value = {'status': 'success', 'tensor': np.zeros((1, 48, 48, 1), dtype=np.float32)}
-        
-        # Call predict specifying fake tflite path with explicit fallback path
-        from app.ml.predictor import EmotionPredictor
-        predictor_engine = EmotionPredictor(
-            primary_path=fake_tflite_path,
-            backend_type='tflite',
-            fallback_path=real_keras_path
-        )
-        
-        assert predictor_engine.tflite_loaded is False
-        assert predictor_engine.keras_fallback_active is True
-        assert predictor_engine.active_backend_name == 'keras'
-        
-        res = predictor_engine.predict(np.zeros((1, 48, 48, 1), dtype=np.float32))
-        assert res['emotion'] in EMOTION_CLASSES
-        assert 0.0 <= res['confidence'] <= 1.0
-
-
-def test_tflite_predictor_explicit_backend_override():
-    """Verify explicit backend selection (tflite vs keras)."""
-    predictor_reset()
-    keras_path = os.path.join(os.path.dirname(__file__), '..', 'models', 'fer2013_cnn.h5')
-    
-    with patch('app.ml.preprocessor.preprocess_frame') as mock_prep:
-        mock_prep.return_value = {'status': 'success', 'tensor': np.zeros((1, 48, 48, 1), dtype=np.float32)}
-        with patch('app.ml.predictor.os.path.isfile') as mock_isfile:
-            mock_isfile.return_value = True
-            
-            res = predict(b'dummy', keras_path, 'dummy.xml', backend='keras')
-            assert res['status'] == 'success'
-            assert res['active_backend'] == 'keras'
