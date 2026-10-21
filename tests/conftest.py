@@ -21,6 +21,17 @@ def app():
     yield app
 
 
+@pytest.fixture(autouse=True)
+def reset_rate_limiter():
+    """Ensure limiter is disabled and reset between every test function."""
+    from app.extensions import limiter
+    limiter.enabled = False
+    limiter.reset()
+    yield
+    limiter.enabled = False
+    limiter.reset()
+
+
 @pytest.fixture(scope='function')
 def db(app):
     """Provide a clean database for each test function.

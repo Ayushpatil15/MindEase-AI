@@ -32,10 +32,15 @@ def create_app(config_name=None):
         Configured Flask application instance.
     """
     if config_name is None:
-        config_name = os.environ.get('APP_ENV', os.environ.get('FLASK_ENV', 'default'))
+        config_name = os.environ.get('APP_ENV') or os.environ.get('FLASK_ENV') or 'default'
+
+    if config_name not in config:
+        raise ValueError(
+            f"Invalid configuration '{config_name}'. Must be one of: {list(config.keys())}"
+        )
 
     app = Flask(__name__)
-    app.config.from_object(config.get(config_name, config['default']))
+    app.config.from_object(config[config_name])
 
     # ── Initialize Extensions ─────────────────────────────────────
     db.init_app(app)

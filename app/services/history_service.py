@@ -104,7 +104,7 @@ def get_wellness_history_data(user_id, timeframe='7d'):
             'date': m.created_at.strftime('%Y-%m-%d'),
             'mood': m.mood,
             'valence': m.valence,
-            'created_at': m.created_at.strftime('%Y-%m-%d %H:%M UTC'),
+            'created_at': m.created_at.isoformat(),
         }
         for m in mood_records
     ]
@@ -117,7 +117,7 @@ def get_wellness_history_data(user_id, timeframe='7d'):
             'date': s.created_at.strftime('%Y-%m-%d'),
             'score': s.score,
             'level': s.level,
-            'created_at': s.created_at.strftime('%Y-%m-%d %H:%M UTC'),
+            'created_at': s.created_at.isoformat(),
         }
         for s in stress_records
     ]
@@ -131,7 +131,7 @@ def get_wellness_history_data(user_id, timeframe='7d'):
             'date': e.created_at.strftime('%Y-%m-%d'),
             'emotion': e.emotion,
             'confidence': round(e.confidence, 4),
-            'created_at': e.created_at.strftime('%Y-%m-%d %H:%M UTC'),
+            'created_at': e.created_at.isoformat(),
         }
         for e in emotion_records
     ]
@@ -143,7 +143,7 @@ def get_wellness_history_data(user_id, timeframe='7d'):
             'id': t.id,
             'activity_id': t.activity_id,
             'title': t.title,
-            'completed_at': t.completed_at.strftime('%Y-%m-%d %H:%M UTC') if t.completed_at else None,
+            'completed_at': t.completed_at.isoformat() if t.completed_at else None,
         }
         for t in task_records
     ]

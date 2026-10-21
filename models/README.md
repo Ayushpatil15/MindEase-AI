@@ -19,8 +19,12 @@ This directory contains the production facial expression recognition model for M
 - **Parameters**: ~450k
 - **Binary Size**: ~4.9 MB
 - **Holdout Accuracy**: 65.94% (+10.04% improvement over legacy baseline)
-- **Macro F1 Score**: 63.06% (+9.77% improvement over legacy baseline)
-- **Inference Latency**: ~0.89 ms mean CPU latency (4 threads on standard x86_64)
+- **Inference Latency**: ~0.89 ms mean CPU latency (`0.8917 ms` mean, `p95: 1.4033 ms`, `min: 0.6551 ms`, `max: 16.2022 ms` under entry `Challenger_FP32_T4` in `experiments/phase59_results.json`).
+  - **Measurement Details** (strictly from `experiments/phase59_results.json`):
+    - **Hardware**: CPU `Intel64 Family 6 Model 186 Stepping 2, GenuineIntel`, Platform `Windows-11-10.0.26200-SP0`, Python `3.12.10`, TensorFlow `2.16.1`, Threads: `4`.
+    - **Inference-only vs. Preprocessing**: not recorded.
+    - **Warm-up**: not recorded.
+    - **Number of runs**: not recorded.
 
 ### Verification
 Inference verification tests and runtime fallbacks are tested as part of the test suite:
