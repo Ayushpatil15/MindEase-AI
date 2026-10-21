@@ -4,6 +4,11 @@
 
 
 {% block content %}
+<!-- Safety Support Alert (Evaluated in memory at request time) -->
+{% with safety_card = data.safety_card %}
+    {% include 'components/safety_card.html' %}
+{% endwith %}
+
 <!-- 1. Header & Timezone Greeting -->
 <div class="row-flex flex-between mb-lg flex-wrap gap-md">
     <div>

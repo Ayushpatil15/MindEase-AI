@@ -1,0 +1,61 @@
+{% if safety_card %}
+<div class="safety-card card mb-lg" role="alert" style="background: #fff7ed; border: 2px solid #ea580c; border-radius: var(--border-radius-lg, 12px); padding: 22px 26px; box-shadow: 0 4px 16px rgba(234, 88, 12, 0.15);">
+    <div style="display: flex; align-items: flex-start; gap: 18px;">
+        <div style="font-size: 2rem; line-height: 1;" aria-hidden="true">🤝</div>
+        <div style="flex: 1;">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 6px;">
+                <h2 style="font-size: 1.25rem; font-weight: 700; color: #9a3412; margin: 0;">
+                    {{ safety_card.heading or 'Support and Care Resources' }}
+                </h2>
+                <span class="badge" style="background: #fed7aa; color: #9a3412; font-weight: 600; font-size: 0.75rem;">
+                    Immediate &bull; 24/7 &bull; Confidential
+                </span>
+            </div>
+            
+            <p style="color: #7c2d12; font-size: 0.95rem; line-height: 1.5; margin: 0 0 16px 0;">
+                {{ safety_card.message or "If things are feeling heavy or overwhelming right now, supportive listeners and immediate care resources are available for you." }}
+            </p>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px;">
+                <!-- Tele-MANAS -->
+                <div style="background: #ffffff; border: 1px solid #fdba74; border-radius: 8px; padding: 12px 14px;">
+                    <div style="font-weight: 600; font-size: 0.85rem; color: #9a3412;">Tele-MANAS (National Mental Health)</div>
+                    <div style="font-size: 1.25rem; font-weight: 800; color: #c2410c; margin: 3px 0;">
+                        <a href="tel:14416" style="color: inherit; text-decoration: underline;">14416</a>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #7c2d12;">Toll-free 24/7 or 1800-891-4416</div>
+                </div>
+
+                <!-- Emergency 112 -->
+                <div style="background: #ffffff; border: 1px solid #fdba74; border-radius: 8px; padding: 12px 14px;">
+                    <div style="font-weight: 600; font-size: 0.85rem; color: #9a3412;">Emergency Services</div>
+                    <div style="font-size: 1.25rem; font-weight: 800; color: #dc2626; margin: 3px 0;">
+                        <a href="tel:112" style="color: inherit; text-decoration: underline;">112</a>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #7c2d12;">If you are in immediate danger call 112</div>
+                </div>
+
+                <!-- Campus Counselor if configured -->
+                {% if safety_card.campus_counselor %}
+                <div style="background: #ffffff; border: 1px solid #fdba74; border-radius: 8px; padding: 12px 14px;">
+                    <div style="font-weight: 600; font-size: 0.85rem; color: #9a3412;">Campus Counseling</div>
+                    <div style="font-size: 1rem; font-weight: 700; color: #c2410c; margin: 3px 0;">
+                        {{ safety_card.campus_counselor.name }}
+                    </div>
+                    {% if safety_card.campus_counselor.phone %}
+                    <div style="font-size: 0.8rem; color: #7c2d12;">Phone: {{ safety_card.campus_counselor.phone }}</div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                <a href="{{ url_for('student.support_center') }}" class="btn btn-primary btn-sm" style="background: #c2410c; border-color: #c2410c; font-weight: 600;">
+                    Visit Support Center &rarr;
+                </a>
+                <span style="font-size: 0.8rem; color: #9a3412;">Free &bull; Confidential &bull; Non-diagnostic</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}

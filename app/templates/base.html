@@ -56,6 +56,11 @@
                                 Support
                             </a>
                         </li>
+                        <li>
+                            <a href="{{ url_for('student.support_center') }}" class="nav-link" style="color: #ea580c; font-weight: 600; font-size: 0.825rem;" title="Immediate Care & Helplines">
+                                Need to talk to someone?
+                            </a>
+                        </li>
 
                         <li style="margin-left: 12px; padding-left: 12px; border-left: 1px solid var(--color-border); display: flex; align-items: center; gap: 8px;">
                             <span class="badge badge-muted" style="font-weight: 500; font-size: 0.75rem;">
@@ -93,6 +98,14 @@
             {% block content %}{% endblock %}
         </div>
     </main>
+
+    <footer style="text-align: center; padding: 24px 16px; margin-top: 40px; border-top: 1px solid var(--color-border); font-size: 0.825rem; color: var(--color-text-muted);">
+        <p style="margin: 0;">
+            MindEase AI is a non-clinical wellness companion.
+            <a href="{{ url_for('student.support_center') }}" style="color: var(--color-primary); font-weight: 600; text-decoration: underline;">Need to talk to someone?</a>
+            Free, confidential 24/7 support is available at Tele-MANAS (14416) and emergency services (112).
+        </p>
+    </footer>
 
     {% block scripts %}{% endblock %}
 </body>

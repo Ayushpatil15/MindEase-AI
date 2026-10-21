@@ -48,16 +48,26 @@ def generate_recommendations(user_id):
     Returns:
         list[Recommendation]: Newly generated recommendations.
     """
-    from app.services import stress_service, mood_service, emotion_service
+    from app.services import stress_service, mood_service
+    from app.services.safety_service import evaluate_safety
     from app.models.user_preferences import UserPreferences
 
     latest_stress = stress_service.get_latest(user_id)
     latest_mood = mood_service.get_latest(user_id)
-    latest_emotion = emotion_service.get_latest(user_id)
     pref = UserPreferences.query.filter_by(user_id=user_id).first()
     goals = pref.wellness_goals if (pref and pref.wellness_goals) else []
 
     candidates = []
+
+    # Safety Rule: Put CLINICAL_SUPPORT first when any safety trigger is active
+    if evaluate_safety(user_id, latest_mood=latest_mood, latest_stress=latest_stress):
+        candidates.append({
+            'category': 'CLINICAL_SUPPORT',
+            'title': 'Campus & Confidential Support Services',
+            'description': 'Connect with campus counseling, Tele-MANAS (14416), or emergency services (112) for immediate, compassionate support.',
+            'reason': 'Recommended to provide prompt access to verified support and counseling resources.',
+            'activity_id': 'grounding_54321',
+        })
 
     # Rule 1: High Stress
     if latest_stress and latest_stress.level == 'High':
@@ -79,17 +89,7 @@ def generate_recommendations(user_id):
             'activity_id': 'self_compassion',
         })
 
-    # Rule 3: Facial Expression Tension
-    if latest_emotion and latest_emotion.emotion in ('Sad', 'Fear', 'Angry'):
-        candidates.append({
-            'category': 'PHYSICAL',
-            'title': 'Physical Stretch & Tension Release',
-            'description': 'Step away from your screen for a 5-minute shoulder and neck stretch.',
-            'reason': f"Triggered because your recent facial check-in detected {latest_emotion.emotion.lower()} expression.",
-            'activity_id': 'tension_release',
-        })
-
-    # Rule 4: Moderate Stress
+    # Rule 3: Moderate Stress
     if latest_stress and latest_stress.level == 'Moderate':
         candidates.append({
             'category': 'ACADEMIC',

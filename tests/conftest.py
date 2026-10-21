@@ -26,10 +26,12 @@ def reset_rate_limiter():
     """Ensure limiter is disabled and reset between every test function."""
     from app.extensions import limiter
     limiter.enabled = False
-    limiter.reset()
+    if getattr(limiter, '_storage', None) is not None:
+        limiter.reset()
     yield
     limiter.enabled = False
-    limiter.reset()
+    if getattr(limiter, '_storage', None) is not None:
+        limiter.reset()
 
 
 @pytest.fixture(scope='function')

@@ -175,7 +175,7 @@ def test_recommendation_to_activity_mapping(app, db):
         recs = recommendation_service.generate_recommendations(user.id)
 
         assert len(recs) > 0
-        box_rec = recs[0]
+        box_rec = next(r for r in recs if r.title == 'Box Breathing')
         act_id = recommendation_service.get_activity_id_for_recommendation(box_rec)
         assert act_id == 'box_breathing'
         assert get_activity_by_id(act_id) is not None

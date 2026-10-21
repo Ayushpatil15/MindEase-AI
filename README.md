@@ -152,6 +152,7 @@ pytest --cov=app --cov-report=term-missing
 
 - 🔐 **Privacy First**: MindEase AI is a self-awareness and wellness tracking tool—not a diagnostic medical device.
 - 🙈 **Zero Private Data Exposure**: Admin views display strictly aggregated and anonymized metrics. Personal journal entries and individual scores are never exposed.
+- 🆘 **Safety Net**: The safety service keyword check is a simple safety net, not a reliable detector and not a diagnostic tool. In-memory crisis language detection connects students to 24/7 care resources (Tele-MANAS 14416 and emergency 112) without ever persisting, logging, or exposing private reflections.
 - 🤖 **Transparent AI**: Explainable scoring algorithms provide full breakdown of how wellness metrics are derived.
 
 ---

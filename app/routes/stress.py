@@ -66,7 +66,12 @@ def result(id):
     if assessment.user_id != current_user.id:
         abort(403)
 
-    return render_template('stress/result.html', assessment=assessment)
+    from app.services.safety_service import evaluate_safety, get_safety_support_card_data
+    safety_card = None
+    if evaluate_safety(current_user.id, current_text=assessment.reflection):
+        safety_card = get_safety_support_card_data()
+
+    return render_template('stress/result.html', assessment=assessment, safety_card=safety_card)
 
 
 @stress_bp.route('/history', methods=['GET'])

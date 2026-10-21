@@ -159,6 +159,14 @@ def get_student_dashboard_data(user_id):
     daily_plan = daily_plan_service.get_daily_plan(user_id, context=context)
 
 
+    # 10. Safety Care & Support Card Check (Evaluated in memory at request time)
+    from app.services.safety_service import evaluate_safety, get_safety_support_card_data
+    safety_card = (
+        get_safety_support_card_data()
+        if evaluate_safety(user_id, latest_mood=latest_mood_obj, latest_stress=latest_stress_obj)
+        else None
+    )
+
     return {
         'user': {
             'username': user.username,
@@ -177,4 +185,5 @@ def get_student_dashboard_data(user_id):
         'preferences': preferences,
         'recent_activity': recent_activity,
         'daily_plan': daily_plan,
+        'safety_card': safety_card,
     }
