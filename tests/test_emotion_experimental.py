@@ -219,3 +219,178 @@ def test_emotion_predict_endpoint_rate_limiting(mock_predict, app, db):
         app.config['RATELIMIT_ENABLED'] = False
         limiter.enabled = False
         limiter.reset()
+
+
+# --- Camera Lifecycle & Template Contract Tests ---
+
+def test_camera_lifecycle_no_request_before_consent_and_no_oval_overlay(client, db):
+    """Verify camera access is not requested before consent, and oval overlay is absent."""
+    user = create_test_student(db, email='camera_consent@test.com', password='pass')
+    client.post('/auth/login', data={'email': user.email, 'password': 'pass'})
+
+    res = client.get('/emotion/')
+    assert res.status_code == 200
+    html = res.get_data(as_text=True)
+
+    # 1. Consent UI is present
+    assert 'id="consent-container"' in html
+    assert 'id="consent-btn"' in html
+    assert 'Camera Consent &amp; Privacy Notice' in html or 'Camera Consent & Privacy Notice' in html
+
+    # 2. Camera container & capture button are hidden initially
+    assert 'id="camera-container" style="display: none;' in html
+    assert 'id="capture-btn" class="btn btn-primary btn-block mb-md" style="display: none;"' in html
+
+    # 3. No getUserMedia call before consent:
+    # getUserMedia should only be invoked inside startCameraStream
+    assert 'navigator.mediaDevices.getUserMedia' in html
+    # Verify getUserMedia is NOT called in top-level script execution or DOMContentLoaded
+    assert 'DOMContentLoaded' in html
+    # The consentBtn click initiates startCameraStream
+    assert "consentBtn.addEventListener('click'" in html
+
+    # 4. Oval overlay is completely absent
+    assert 'border: 2px dashed' not in html
+    assert 'border-radius: 50%' not in html
+    assert 'pointer-events: none' not in html
+
+    # 5. object-fit: cover is applied to video element
+    assert 'style="width: 100%; height: 100%; object-fit: cover;"' in html
+
+
+def test_camera_lifecycle_state_tracking_and_track_stoppage(client, db):
+    """Verify CameraState enum, track stoppage after scan, and on page leave."""
+    user = create_test_student(db, email='camera_lifecycle@test.com', password='pass')
+    client.post('/auth/login', data={'email': user.email, 'password': 'pass'})
+
+    res = client.get('/emotion/')
+    assert res.status_code == 200
+    html = res.get_data(as_text=True)
+
+    # 1. CameraState enum exists with all expected states
+    assert 'CameraState = Object.freeze({' in html
+    assert "IDLE: 'idle'" in html
+    assert "REQUESTING_PERMISSION: 'requesting_permission'" in html
+    assert "STREAMING: 'streaming'" in html
+    assert "SCANNING: 'scanning'" in html
+    assert "STOPPED: 'stopped'" in html
+
+    # 2. stopCameraStream stops all tracks and clears srcObject
+    assert 'currentStream.getTracks().forEach' in html
+    assert 'track.stop()' in html
+    assert 'video.srcObject = null' in html
+    assert 'cameraState = CameraState.STOPPED' in html
+
+    # 3. Page lifecycle hooks for unloading
+    assert "window.addEventListener('pagehide', stopCameraStream)" in html
+    assert "window.addEventListener('beforeunload', stopCameraStream)" in html
+
+    # 4. In performScan, finally block calls stopCameraStream
+    assert 'finally {' in html
+    assert 'stopCameraStream();' in html
+
+
+def test_camera_lifecycle_second_scan_fresh_stream_logic(client, db):
+    """Verify clicking 'Check Expression' after a scan triggers a fresh stream."""
+    user = create_test_student(db, email='camera_second_scan@test.com', password='pass')
+    client.post('/auth/login', data={'email': user.email, 'password': 'pass'})
+
+    res = client.get('/emotion/')
+    assert res.status_code == 200
+    html = res.get_data(as_text=True)
+
+    # Capture button checks for STOPPED/IDLE state to start fresh stream
+    assert "captureBtn.addEventListener('click'" in html
+    assert 'cameraState === CameraState.STOPPED' in html
+    assert 'await startCameraStream()' in html
+
+    # In startCameraStream, any previous stream is stopped first
+    assert 'stopCameraStream();' in html
+    assert 'video.srcObject = stream;' in html
+    assert 'video.play()' in html
+    assert 'video.videoWidth > 0 && video.videoHeight > 0' in html
+
+
+def test_camera_error_and_retry_messaging(client, db):
+    """Verify template handles camera permission denial with retry message without page reload."""
+    user = create_test_student(db, email='camera_error@test.com', password='pass')
+    client.post('/auth/login', data={'email': user.email, 'password': 'pass'})
+
+    res = client.get('/emotion/')
+    assert res.status_code == 200
+    html = res.get_data(as_text=True)
+
+    # Permission denied message and retry handling
+    assert 'NotAllowedError' in html
+    assert 'Camera Permission Denied.' in html
+    assert 'Retry Camera' in html
+    # UI lock prevention
+    assert 'isProcessing' in html
+
+
+@patch('app.routes.emotion.predict')
+def test_first_and_second_scan_work_sequentially(mock_predict, client, db):
+    """Verify first scan works, and second scan saves a distinct second record."""
+    user = create_test_student(db, email='seq_scan@test.com', password='pass')
+    client.post('/auth/login', data={'email': user.email, 'password': 'pass'})
+
+    dummy_payload = {'image': 'data:image/jpeg;base64,dGVzdA=='}
+
+    # First scan: Happy
+    mock_predict.return_value = {
+        'status': 'success',
+        'emotion': 'Happy',
+        'confidence': 0.88,
+    }
+    resp1 = client.post('/emotion/api/predict', json=dummy_payload)
+    assert resp1.status_code == 200
+    assert resp1.get_json()['emotion'] == 'Happy'
+
+    scans = EmotionScan.query.filter_by(user_id=user.id).all()
+    assert len(scans) == 1
+    assert scans[0].emotion == 'Happy'
+    assert scans[0].confidence == 0.88
+
+    # Second scan: Neutral (simulating fresh frame inference)
+    mock_predict.return_value = {
+        'status': 'success',
+        'emotion': 'Neutral',
+        'confidence': 0.76,
+    }
+    resp2 = client.post('/emotion/api/predict', json=dummy_payload)
+    assert resp2.status_code == 200
+    assert resp2.get_json()['emotion'] == 'Neutral'
+
+    scans = EmotionScan.query.filter_by(user_id=user.id).order_by(EmotionScan.id.asc()).all()
+    assert len(scans) == 2
+    assert scans[0].emotion == 'Happy'
+    assert scans[1].emotion == 'Neutral'
+    assert scans[1].confidence == 0.76
+
+
+@patch('app.routes.emotion.predict')
+def test_scan_retry_after_inference_error(mock_predict, client, db):
+    """Verify user can retry and succeed after an inference or API error."""
+    user = create_test_student(db, email='retry_infer@test.com', password='pass')
+    client.post('/auth/login', data={'email': user.email, 'password': 'pass'})
+
+    # 1. Trigger error (e.g., malformed payload)
+    resp_err = client.post('/emotion/api/predict', json={'image': 'data:image/jpeg;base64,invalid!!!'})
+    assert resp_err.status_code == 400
+    assert EmotionScan.query.filter_by(user_id=user.id).count() == 0
+
+    # 2. Retry with valid payload
+    mock_predict.return_value = {
+        'status': 'success',
+        'emotion': 'Sad',
+        'confidence': 0.82,
+    }
+    resp_ok = client.post('/emotion/api/predict', json={'image': 'data:image/jpeg;base64,dGVzdA=='})
+    assert resp_ok.status_code == 200
+    assert resp_ok.get_json()['status'] == 'success'
+    assert resp_ok.get_json()['emotion'] == 'Sad'
+
+    scans = EmotionScan.query.filter_by(user_id=user.id).all()
+    assert len(scans) == 1
+    assert scans[0].emotion == 'Sad'
+
