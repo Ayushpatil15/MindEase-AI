@@ -10,9 +10,9 @@ from tests.conftest import create_test_student, create_test_admin
 # --- 1. Activity Registry Unit Tests ---
 
 def test_activity_registry_definitions():
-    """Verify registry loads all 9 activities with complete metadata."""
+    """Verify registry loads all 6 active activities with complete metadata."""
     activities = get_all_activities()
-    assert len(activities) == 9
+    assert len(activities) == 6
 
     expected_categories = {'Mindfulness', 'Academic', 'Physical', 'Reflection'}
     found_categories = {a['category'] for a in activities}
@@ -119,7 +119,7 @@ def test_complete_activity_api_without_start_fails(client, db):
     user = create_test_student(db, username="api_no_start_user", email="api_nostart@test.com", password="pass")
     client.post('/auth/login', data={'email': 'api_nostart@test.com', 'password': 'pass'})
 
-    res = client.post('/api/activities/screen_break/complete', json={})
+    res = client.post('/api/activities/stretch_reset/complete', json={})
     assert res.status_code == 400
     p = res.get_json()
     assert p['status'] == 'error'
@@ -132,11 +132,11 @@ def test_start_and_complete_activity_flow(client, db):
     client.post('/auth/login', data={'email': 'flow@test.com', 'password': 'pass'})
 
     # Start
-    res_start = client.post('/api/activities/movement_break/start', json={})
+    res_start = client.post('/api/activities/stretch_reset/start', json={})
     assert res_start.status_code == 201
 
     # Complete
-    res_comp = client.post('/api/activities/movement_break/complete', json={})
+    res_comp = client.post('/api/activities/stretch_reset/complete', json={})
     assert res_comp.status_code == 200
     p_comp = res_comp.get_json()
     assert p_comp['status'] == 'success'
@@ -179,3 +179,70 @@ def test_recommendation_to_activity_mapping(app, db):
         act_id = recommendation_service.get_activity_id_for_recommendation(box_rec)
         assert act_id == 'box_breathing'
         assert get_activity_by_id(act_id) is not None
+
+
+# --- 4. Retired Activity Resolution Tests ---
+
+def test_retired_activity_resolution():
+    """Verify get_activity_by_id correctly maps retired activities to surviving ones."""
+    from app.services.activity_service import is_retired_activity, get_retired_activity_mapping
+
+    # Retired check
+    assert is_retired_activity('movement_break') is True
+    assert is_retired_activity('tension_release') is True
+    assert is_retired_activity('screen_break') is True
+    assert is_retired_activity('journal_reflection') is True
+    assert is_retired_activity('box_breathing') is False
+    assert is_retired_activity('stretch_reset') is False
+
+    # Resolution to surviving replacements
+    act_mov = get_activity_by_id('movement_break')
+    assert act_mov is not None
+    assert act_mov['id'] == 'stretch_reset'
+    assert act_mov.get('is_retired_replacement') is True
+
+    act_ten = get_activity_by_id('tension_release')
+    assert act_ten is not None
+    assert act_ten['id'] == 'stretch_reset'
+
+    act_scr = get_activity_by_id('screen_break')
+    assert act_scr is not None
+    assert act_scr['id'] == 'stretch_reset'
+
+    act_jrn = get_activity_by_id('journal_reflection')
+    assert act_jrn is not None
+    assert act_jrn['id'] == 'self_compassion'
+
+
+def test_old_tasks_with_retired_activities_render_everywhere(client, db):
+    """Verify old tasks with retired activity IDs still render on dashboard, history, daily plan, and detail view."""
+    from app.services import daily_plan_service
+    user = create_test_student(db, username="old_tasks_user", email="old_tasks@test.com", password="pass")
+    client.post('/auth/login', data={'email': user.email, 'password': 'pass'})
+
+    # 1. Manually create tasks with retired activity IDs (pre-existing rows)
+    t1 = task_service.create_task(user.id, title="Old Movement Task", activity_id='movement_break')
+    t2 = task_service.create_task(user.id, title="Old Tension Task", activity_id='tension_release')
+    t3 = task_service.create_task(user.id, title="Old Screen Task", activity_id='screen_break')
+    t4 = task_service.create_task(user.id, title="Old Journal Task", activity_id='journal_reflection')
+
+    # 2. Check Dashboard: must return 200, no 500 or 404
+    dash_res = client.get('/')
+    assert dash_res.status_code == 200
+    assert b"Old Movement Task" in dash_res.data
+    assert b"Old Tension Task" in dash_res.data
+
+    # 3. Check Daily Plan Focus: resolves active task without error
+    plan = daily_plan_service.get_daily_plan(user.id)
+    assert plan['focus'] is not None
+    assert plan['focus']['is_active_task'] is True
+
+    # 4. Check History view: must return 200
+    hist_res = client.get('/history')
+    assert hist_res.status_code == 200
+
+    # 5. Check direct detail URLs for retired activities: resolve without 404
+    for retired_id in ['movement_break', 'tension_release', 'screen_break', 'journal_reflection']:
+        res = client.get(f'/activities/{retired_id}')
+        assert res.status_code == 200, f"Expected 200 for retired activity {retired_id}, got {res.status_code}"
+

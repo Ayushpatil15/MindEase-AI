@@ -1,9 +1,20 @@
 """Activity Service — Structured guided wellness activity content definitions & queries.
 
-MindEase AI Phase 7 guided wellness activities.
+MindEase AI Guided Wellness Activities.
 All activities are non-clinical, self-reflection/wellness focused tools.
+Final set of 6 active activities:
+1. box_breathing (Mindfulness, 5 min)
+2. grounding_54321 (Mindfulness, 5 min)
+3. pomodoro_focus (Academic, 30 min)
+4. task_chunking (Academic, 5 min)
+5. self_compassion (Reflection, 5 min)
+6. stretch_reset (Physical, 5 min - replaces movement_break, tension_release, screen_break)
+
+Retired activities (movement_break, tension_release, screen_break, journal_reflection)
+are resolved at read-time to surviving replacements.
 """
 
+# Surviving 6 interactive wellness activities
 ACTIVITIES = {
     'box_breathing': {
         'id': 'box_breathing',
@@ -60,278 +71,228 @@ ACTIVITIES = {
             {
                 'step_number': 1,
                 'heading': '5 Things You Can See',
-                'instruction': 'Look around your room and name 5 distinct objects out loud or in your head.',
+                'instruction': 'Look around your environment. Tap to identify 5 distinct objects, patterns, or colors.',
+                'target_count': 5,
+                'sense': 'sight',
             },
             {
                 'step_number': 2,
-                'heading': '4 Things You Can Touch',
-                'instruction': 'Notice 4 physical sensations (e.g., your feet on the floor, texture of your desk).',
+                'heading': '4 Things You Can Physically Feel',
+                'instruction': 'Focus on physical contact. Tap to notice 4 sensations, such as feet on the floor, texture of clothing, or air temperature.',
+                'target_count': 4,
+                'sense': 'touch',
             },
             {
                 'step_number': 3,
                 'heading': '3 Things You Can Hear',
-                'instruction': 'Listen quietly and identify 3 ambient sounds around you (e.g., clock, wind, footsteps).',
+                'instruction': 'Listen attentively to your background. Tap to notice 3 ambient sounds, near or distant.',
+                'target_count': 3,
+                'sense': 'sound',
             },
             {
                 'step_number': 4,
                 'heading': '2 Things You Can Smell',
-                'instruction': 'Identify 2 scents nearby, or recall 2 pleasant smells you enjoy.',
+                'instruction': 'Notice scents around you (fresh air, coffee, books) or recall 2 calming scents.',
+                'target_count': 2,
+                'sense': 'smell',
             },
             {
                 'step_number': 5,
                 'heading': '1 Thing You Can Taste',
-                'instruction': 'Focus on 1 taste in your mouth right now or take a sip of fresh water.',
+                'instruction': 'Notice the current taste in your mouth, or take a sip of water and notice the sensation.',
+                'target_count': 1,
+                'sense': 'taste',
             },
         ],
-        'completion_guidance': 'Take one deep breath and bring your awareness back to the present moment.',
-        'safety_note': 'Grounding helps anchor attention during moments of busyness or stress.',
+        'completion_guidance': 'Check in with your body. Grounding helps anchor attention in the present moment.',
+        'safety_note': 'Focus on whatever your senses naturally observe without judging your surroundings.',
     },
     'pomodoro_focus': {
         'id': 'pomodoro_focus',
         'category': 'Academic',
         'title': 'Pomodoro Focus Session',
-        'short_description': 'Work with complete focus for 25 minutes, followed by a mandatory 5-minute break.',
-        'duration_minutes': 25,
+        'short_description': 'Structured 25-minute deep focus interval followed by an automatic 5-minute restorative break.',
+        'duration_minutes': 30,
         'has_timer': True,
-        'timer_seconds': 1500,
+        'timer_seconds': 1500,  # 25 min focus
+        'break_seconds': 300,   # 5 min break
         'steps': [
             {
                 'step_number': 1,
-                'heading': 'Set Target Task',
-                'instruction': 'Choose one clear, specific academic task to focus on during this 25-minute block.',
+                'heading': 'Set Single Focus Objective',
+                'instruction': 'Choose one clear, manageable task for this block. Remove notifications and visual distractions.',
             },
             {
                 'step_number': 2,
-                'heading': 'Eliminate Distractions',
-                'instruction': 'Close unrelated browser tabs, silence your phone, and start the 25-minute timer.',
+                'heading': 'Deep Focus Block (25 min)',
+                'instruction': 'Work continuously on your chosen task until the focus interval completes.',
             },
             {
                 'step_number': 3,
-                'heading': 'Single-Task Focus',
-                'instruction': 'Work continuously on your target task until the timer alerts you.',
-            },
-            {
-                'step_number': 4,
-                'heading': 'Take a 5-Minute Break',
-                'instruction': 'When the timer finishes, stand up, stretch, and rest your brain before returning.',
+                'heading': 'Restorative Break (5 min)',
+                'instruction': 'Step away from your screen, stretch, drink water, and let your mind recharge.',
             },
         ],
-        'completion_guidance': 'Acknowledge the progress made during this dedicated focus interval.',
-        'safety_note': 'Regular breaks prevent mental fatigue and maintain consistent study output.',
+        'completion_guidance': 'Acknowledge your focused effort. Regular study intervals with breaks prevent mental fatigue.',
+        'safety_note': 'Honor the 5-minute break completely to sustain cognitive energy for subsequent sessions.',
     },
     'task_chunking': {
         'id': 'task_chunking',
         'category': 'Academic',
-        'title': 'Structured Task Chunking',
-        'short_description': 'Break overwhelming assignments into 3 small, manageable micro-goals.',
-        'duration_minutes': 10,
+        'title': 'Task Chunking & Micro-Steps',
+        'short_description': 'Deconstruct an overwhelming project into 3 small, immediately actionable micro-tasks.',
+        'duration_minutes': 5,
         'has_timer': False,
         'timer_seconds': None,
         'steps': [
             {
                 'step_number': 1,
-                'heading': 'Identify the Main Task',
-                'instruction': 'Write down the name of the assignment or project that feels overwhelming.',
+                'heading': 'Define the Main Task',
+                'instruction': 'State the larger project or academic assignment that feels overwhelming.',
             },
             {
                 'step_number': 2,
-                'heading': 'Break into 3 Micro-Steps',
-                'instruction': 'Divide the task into 3 small steps that each take under 15 minutes to finish.',
+                'heading': 'Micro-Step 1: First 5-Minute Action',
+                'instruction': 'Define the very first small physical step you can complete in under 5 minutes.',
             },
             {
                 'step_number': 3,
-                'heading': 'Select Step 1',
-                'instruction': 'Choose the easiest or smallest micro-step to start with right away.',
+                'heading': 'Micro-Step 2: Immediate Follow-Up',
+                'instruction': 'Define the logical next action that builds on the momentum of step 1.',
             },
             {
                 'step_number': 4,
-                'heading': 'Schedule Step 1',
-                'instruction': 'Commit to executing Step 1 immediately or in your next study block.',
+                'heading': 'Micro-Step 3: Milestone Step',
+                'instruction': 'Define the third small step that brings you to a clear stopping point.',
             },
         ],
-        'completion_guidance': 'Focus only on the first micro-step rather than the entire project.',
+        'completion_guidance': 'Focus only on completing the first micro-step today rather than the entire project.',
         'safety_note': 'Chunking reduces cognitive overload and helps overcome task paralysis.',
-    },
-    'movement_break': {
-        'id': 'movement_break',
-        'category': 'Physical',
-        'title': 'Hydration & Movement Reset',
-        'short_description': 'Drink a glass of water and complete a gentle 5-minute physical stretch.',
-        'duration_minutes': 5,
-        'has_timer': False,
-        'timer_seconds': None,
-        'steps': [
-            {
-                'step_number': 1,
-                'heading': 'Hydrate',
-                'instruction': 'Drink a full glass of fresh water to restore physical hydration.',
-            },
-            {
-                'step_number': 2,
-                'heading': 'Shoulder & Neck Stretch',
-                'instruction': 'Roll your shoulders backward 5 times and gently tilt your head side to side.',
-            },
-            {
-                'step_number': 3,
-                'heading': 'Standing Stretch',
-                'instruction': 'Stand up, reach both arms up toward the ceiling, and hold for 15 seconds.',
-            },
-            {
-                'step_number': 4,
-                'heading': 'Wrist & Hand Relief',
-                'instruction': 'Extend your arms forward, gently flexing wrists and fingers to release typing tension.',
-            },
-        ],
-        'completion_guidance': 'Notice the boost in blood flow and physical energy.',
-        'safety_note': 'Gentle movement helps offset sedentary study postures.',
-    },
-    'tension_release': {
-        'id': 'tension_release',
-        'category': 'Physical',
-        'title': 'Progressive Muscle Tension Release',
-        'short_description': 'Systematically tense and release shoulder, neck, and facial muscles.',
-        'duration_minutes': 5,
-        'has_timer': False,
-        'timer_seconds': None,
-        'steps': [
-            {
-                'step_number': 1,
-                'heading': 'Facial Muscle Release',
-                'instruction': 'Squeeze facial muscles tight for 5 seconds, then completely relax jaw and forehead.',
-            },
-            {
-                'step_number': 2,
-                'heading': 'Shoulder Shrugs',
-                'instruction': 'Lift shoulders toward ears, hold tension for 5 seconds, then drop shoulders completely.',
-            },
-            {
-                'step_number': 3,
-                'heading': 'Hand & Arm Clench',
-                'instruction': 'Make tight fists for 5 seconds, then unfurl fingers and feel warmth in hands.',
-            },
-            {
-                'step_number': 4,
-                'heading': 'Full Body Exhale',
-                'instruction': 'Take one deep breath and release all lingering tension with a long sigh out.',
-            },
-        ],
-        'completion_guidance': 'Compare the physical sensation of tension versus relaxation in your body.',
-        'safety_note': 'Perform stretches gently without pushing into discomfort or pain.',
-    },
-    'screen_break': {
-        'id': 'screen_break',
-        'category': 'Physical',
-        'title': '20-20-20 Screen Rest',
-        'short_description': 'Reduce visual fatigue by looking 20 feet away for 20 seconds.',
-        'duration_minutes': 3,
-        'has_timer': True,
-        'timer_seconds': 180,
-        'steps': [
-            {
-                'step_number': 1,
-                'heading': 'Look Away',
-                'instruction': 'Shift your eyes away from your monitor, phone, or laptop screen.',
-            },
-            {
-                'step_number': 2,
-                'heading': 'Focus Distantly',
-                'instruction': 'Focus on an object at least 20 feet away (such as a window view or wall art).',
-            },
-            {
-                'step_number': 3,
-                'heading': 'Blink Slowly',
-                'instruction': 'Blink slowly 5 times to re-moisten your eyes.',
-            },
-            {
-                'step_number': 4,
-                'heading': 'Rest Eyelids',
-                'instruction': 'Optionally close your eyes for 30 seconds before returning to work.',
-            },
-        ],
-        'completion_guidance': 'Visual breaks protect against digital eye strain during long study sessions.',
-        'safety_note': 'Repeat the 20-20-20 rule every hour when using digital displays.',
-    },
-    'journal_reflection': {
-        'id': 'journal_reflection',
-        'category': 'Reflection',
-        'title': '5-Minute Guided Journal Reflection',
-        'short_description': 'Write down your current thoughts, wins, or stressors without judgment.',
-        'duration_minutes': 5,
-        'has_timer': False,
-        'timer_seconds': None,
-        'steps': [
-            {
-                'step_number': 1,
-                'heading': 'Check In',
-                'instruction': 'Pause and ask yourself: "How am I feeling right now mentally and physically?"',
-            },
-            {
-                'step_number': 2,
-                'heading': 'Write Freely',
-                'instruction': 'Jot down your current thoughts, worries, or small accomplishments for 3-5 minutes.',
-            },
-            {
-                'step_number': 3,
-                'heading': 'Identify One Action',
-                'instruction': 'Note one small positive step you can take today for your own wellbeing.',
-            },
-        ],
-        'completion_guidance': 'Reflective writing helps organize thoughts and reduce mental clutter.',
-        'safety_note': 'Your reflection notes remain private to your student account.',
     },
     'self_compassion': {
         'id': 'self_compassion',
         'category': 'Reflection',
-        'title': 'Self-Compassion & Positive Framing',
-        'short_description': 'Acknowledge daily effort and treat yourself with kindness during setbacks.',
+        'title': 'Self-Compassion Pause',
+        'short_description': 'Acknowledge difficulty, recognize shared student experience, and offer yourself patient encouragement.',
         'duration_minutes': 5,
         'has_timer': False,
         'timer_seconds': None,
         'steps': [
             {
                 'step_number': 1,
-                'heading': 'Acknowledge Difficulty',
-                'instruction': 'Silently acknowledge: "This is a challenging moment, and it is natural to feel stressed."',
+                'heading': 'Mindful Awareness of Stress',
+                'instruction': 'Notice what feels heavy or challenging right now. Give yourself permission to acknowledge this stress without judgment.',
+                'prompt': 'What feels difficult or demanding in this moment?',
             },
             {
                 'step_number': 2,
-                'heading': 'Recognize Shared Humanity',
-                'instruction': 'Remind yourself: "Many students experience similar feelings and challenges."',
+                'heading': 'Recognizing Shared Humanity',
+                'instruction': 'Remind yourself that struggle and self-doubt are normal parts of student life. You are not alone in navigating pressure.',
+                'prompt': 'What would you say to a friend facing this same pressure?',
             },
             {
                 'step_number': 3,
-                'heading': 'Offer Kindness',
-                'instruction': 'Speak to yourself with the same warmth you would offer to a close friend.',
+                'heading': 'Offering Self-Kindness',
+                'instruction': 'Choose one encouraging, patient statement for yourself. Acknowledge your daily effort regardless of the outcome.',
+                'prompt': 'What kind, realistic thought can support you right now?',
+            },
+        ],
+        'completion_guidance': 'Practicing self-compassion calms emotional reactivity and builds long-term resilience.',
+        'safety_note': 'Be gentle with yourself — progress is built through patience and small consistent steps.',
+    },
+    'stretch_reset': {
+        'id': 'stretch_reset',
+        'category': 'Physical',
+        'title': 'Physical Stretch & Eye Reset',
+        'short_description': 'Gentle timed upper-body stretches followed by a 20-second eye fatigue break.',
+        'duration_minutes': 5,
+        'has_timer': True,
+        'timer_seconds': 300,
+        'steps': [
+            {
+                'step_number': 1,
+                'heading': 'Neck & Shoulder Release',
+                'instruction': 'Gently tilt your head toward each shoulder for 15 seconds, then slowly roll shoulders backward.',
+                'step_seconds': 30,
+            },
+            {
+                'step_number': 2,
+                'heading': 'Upper Back & Chest Expansion',
+                'instruction': 'Interlace fingers behind your back or reach arms overhead. Open your chest and take deep breaths.',
+                'step_seconds': 30,
+            },
+            {
+                'step_number': 3,
+                'heading': 'Wrist & Forearm Stretch',
+                'instruction': 'Extend one arm forward, palm up, and gently draw fingers back with the opposite hand. Switch sides.',
+                'step_seconds': 30,
             },
             {
                 'step_number': 4,
-                'heading': 'Note 1 Positive Effort',
-                'instruction': 'Recognize one effort you made today, regardless of the outcome.',
+                'heading': '20-20-20 Eye Rest',
+                'instruction': 'Look away from all screens. Focus on an object at least 20 feet away for 20 seconds to relax eye muscles.',
+                'step_seconds': 20,
+            },
+            {
+                'step_number': 5,
+                'heading': 'Hydration & Posture Reset',
+                'instruction': 'Take a sip of water, sit or stand tall, and release any lingering tension with a long exhale.',
+                'step_seconds': 30,
             },
         ],
-        'completion_guidance': 'Practicing self-compassion builds emotional resilience during academic pressure.',
-        'safety_note': 'Be gentle with yourself — progress is built through consistent small steps.',
+        'completion_guidance': 'Notice the renewed circulation, relaxed posture, and reduced digital eye fatigue.',
+        'safety_note': 'Perform all movements gently within your comfortable range of motion. Never force a stretch.',
     },
 }
 
+# Old-to-new activity mapping table for retired activities
+RETIRED_ACTIVITIES_MAP = {
+    'movement_break': 'stretch_reset',
+    'tension_release': 'stretch_reset',
+    'screen_break': 'stretch_reset',
+    'journal_reflection': 'self_compassion',
+}
+
+
+def is_retired_activity(activity_id):
+    """Check if an activity ID has been retired."""
+    return activity_id in RETIRED_ACTIVITIES_MAP
+
+
+def get_retired_activity_mapping():
+    """Return dictionary of retired activity mappings."""
+    return dict(RETIRED_ACTIVITIES_MAP)
+
 
 def get_all_activities():
-    """Return all activity definitions as a list."""
+    """Return all active activity definitions as a list."""
     return list(ACTIVITIES.values())
 
 
-def get_activity_by_id(activity_id):
+def get_activity_by_id(activity_id, resolve_retired=True):
     """Retrieve an activity definition by its unique identifier.
 
     Args:
         activity_id (str): Unique slug (e.g. 'box_breathing').
+        resolve_retired (bool): If True, maps retired activities to their surviving replacement.
 
     Returns:
         dict | None: The activity dictionary, or None if not found.
     """
-    return ACTIVITIES.get(activity_id)
+    if not activity_id:
+        return None
+    if activity_id in ACTIVITIES:
+        return ACTIVITIES[activity_id]
+    if resolve_retired and activity_id in RETIRED_ACTIVITIES_MAP:
+        target_id = RETIRED_ACTIVITIES_MAP[activity_id]
+        if target_id in ACTIVITIES:
+            resolved = dict(ACTIVITIES[target_id])
+            resolved['is_retired_replacement'] = True
+            resolved['retired_original_id'] = activity_id
+            return resolved
+    return None
 
 
 def get_activities_by_category(category):
-    """Filter activities by category name."""
+    """Filter active activities by category name."""
     return [a for a in ACTIVITIES.values() if a['category'].lower() == category.lower()]

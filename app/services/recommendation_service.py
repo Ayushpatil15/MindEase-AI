@@ -13,11 +13,11 @@ RECOMMENDATION_ACTIVITY_MAP = {
     'Box Breathing': 'box_breathing',
     'Box Breathing & Grounding Exercise': 'box_breathing',
     'Self-Compassion & Reflection': 'self_compassion',
-    'Physical Stretch & Tension Release': 'tension_release',
+    'Physical Stretch & Tension Release': 'stretch_reset',
     'Structured Academic Break': 'task_chunking',
-    'Consistent Evening Wind-Down': 'screen_break',
+    'Consistent Evening Wind-Down': 'stretch_reset',
     'Pomodoro Focus Sessions': 'pomodoro_focus',
-    'Hydration & Movement Reset': 'movement_break',
+    'Hydration & Movement Reset': 'stretch_reset',
     'Welcome to MindEase AI': 'grounding_54321',
 }
 
@@ -104,9 +104,9 @@ def generate_recommendations(user_id):
         candidates.append({
             'category': 'PHYSICAL',
             'title': 'Consistent Evening Wind-Down',
-            'description': 'Turn off digital screens 30 minutes before sleep to improve recovery.',
+            'description': 'Turn off digital screens 30 minutes before sleep and do a gentle stretch to improve recovery.',
             'reason': 'Suggested based on your onboarding wellness goal: Sleep.',
-            'activity_id': 'screen_break',
+            'activity_id': 'stretch_reset',
         })
 
     if 'study_productivity' in goals:
@@ -122,9 +122,9 @@ def generate_recommendations(user_id):
         candidates.append({
             'category': 'PHYSICAL',
             'title': 'Hydration & Movement Reset',
-            'description': 'Drink a glass of water and take a brief 5-minute walk.',
+            'description': 'Drink a glass of water and complete a gentle physical stretch.',
             'reason': 'Suggested based on your onboarding wellness goal: Healthier Routines.',
-            'activity_id': 'movement_break',
+            'activity_id': 'stretch_reset',
         })
 
     # Fallback / New User Default Candidate

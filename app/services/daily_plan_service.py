@@ -177,7 +177,7 @@ def get_daily_plan(user_id, context=None):
             }
 
     if not focus and 'sleep' in goals:
-        act = get_activity_by_id('screen_break')
+        act = get_activity_by_id('stretch_reset')
         if act:
             focus = {
                 'title': act['title'],
@@ -189,7 +189,7 @@ def get_daily_plan(user_id, context=None):
             }
 
     if not focus and ('healthier_routines' in goals or 'stress' in goals):
-        act = get_activity_by_id('movement_break')
+        act = get_activity_by_id('stretch_reset')
         if act:
             focus = {
                 'title': act['title'],

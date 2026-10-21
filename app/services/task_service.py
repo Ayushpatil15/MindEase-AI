@@ -70,6 +70,10 @@ def start_activity_task(user_id, activity_id):
         return None, False
 
     existing = get_active_activity_task(user_id, activity_id)
+    if not existing:
+        from app.services.activity_service import RETIRED_ACTIVITIES_MAP
+        if activity_id in RETIRED_ACTIVITIES_MAP:
+            existing = get_active_activity_task(user_id, RETIRED_ACTIVITIES_MAP[activity_id])
     if existing:
         return existing, False
 
@@ -102,6 +106,16 @@ def complete_activity_task(user_id, activity_id):
         WellnessTask | None: Updated task if active task existed, or None if no active task.
     """
     task = get_active_activity_task(user_id, activity_id)
+    if not task:
+        from app.services.activity_service import RETIRED_ACTIVITIES_MAP
+        if activity_id in RETIRED_ACTIVITIES_MAP:
+            task = get_active_activity_task(user_id, RETIRED_ACTIVITIES_MAP[activity_id])
+        else:
+            for retired_id, target_id in RETIRED_ACTIVITIES_MAP.items():
+                if target_id == activity_id:
+                    task = get_active_activity_task(user_id, retired_id)
+                    if task:
+                        break
     if not task:
         return None
 
