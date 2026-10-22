@@ -1,164 +1,174 @@
 {% extends 'base.html' %}
 
-{% block title %}Guided Wellness Activities — MindEase AI{% endblock %}
+{% block title %}Mindful Practices &amp; Activities — MindEase AI{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/activities.css') }}">
+{% endblock %}
 
 {% block content %}
-<div style="max-width: 1060px; margin: 0 auto; padding: 1rem 0;">
+<div class="act-container">
     <!-- Catalog Header -->
-    <div class="activity-catalog-header">
-        <span class="badge badge-primary mb-xs">Self-Care &amp; Focus Catalog</span>
-        <h1 style="font-size: 2.15rem; font-weight: 800; margin-bottom: 8px; color: var(--color-heading); letter-spacing: -0.02em;">
-            Guided Wellness Activities
-        </h1>
-        <p class="text-muted" style="font-size: 1rem; line-height: 1.6; max-width: 680px; margin: 0 0 16px 0;">
-            Evidence-informed mindfulness, stress reduction, and academic focus exercises. Each session is interactive, private, and designed to support your daily student routine.
-        </p>
-
-        <!-- Category Filter Tabs -->
-        <div class="activity-filter-bar" role="tablist" aria-label="Filter activities by category">
-            <button type="button" class="filter-tab-btn active" role="tab" aria-selected="true" data-filter="all">
-                All Activities <span style="opacity: 0.7; font-size: 0.8em;">(6)</span>
-            </button>
-            <button type="button" class="filter-tab-btn" role="tab" aria-selected="false" data-filter="Mindfulness">
-                Calm &amp; Mindfulness
-            </button>
-            <button type="button" class="filter-tab-btn" role="tab" aria-selected="false" data-filter="Academic">
-                Focus &amp; Study
-            </button>
-            <button type="button" class="filter-tab-btn" role="tab" aria-selected="false" data-filter="Physical">
-                Movement &amp; Eye Rest
-            </button>
-            <button type="button" class="filter-tab-btn" role="tab" aria-selected="false" data-filter="Reflection">
-                Self-Kindness
-            </button>
+    <header class="act-catalog-header">
+        <div class="act-badge act-badge-primary" style="margin-bottom: 8px;">
+            <span>🌱</span>
+            <span>Guided Wellness Activities</span>
         </div>
-    </div>
+        <h1 class="act-catalog-title">
+            Mindful Practices for Study &amp; Life
+        </h1>
+        <p class="act-catalog-subtitle">
+            Guided, non-clinical exercises crafted to help you reset between study sessions, calm exam jitters, and regain clarity.
+        </p>
+    </header>
 
-    <!-- Activities Grid -->
-    <div class="activity-cards-grid" id="activities-grid">
+    <!-- Activities Grid (Exactly 6 Active Activities) -->
+    <section class="act-catalog-grid" id="activities-grid" aria-label="Wellness Activities">
         {% for activity in activities %}
-            <article class="activity-catalog-card" data-category="{{ activity.category }}" id="activity-card-{{ activity.id }}">
+            <article class="act-card" id="activity-card-{{ activity.id }}">
                 <div>
-                    <!-- Card Top Header: Category Icon & Meta Badges -->
-                    <div class="activity-card-icon-header">
-                        <div class="activity-card-icon-badge {% if activity.category == 'Mindfulness' %}icon-badge-mindfulness{% elif activity.category == 'Academic' %}icon-badge-academic{% elif activity.category == 'Reflection' %}icon-badge-reflection{% else %}icon-badge-physical{% endif %}">
-                            {% if activity.id == 'box_breathing' %}
-                                <!-- Geometric Square Breath Wave SVG -->
-                                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <rect x="3" y="3" width="18" height="18" rx="4"></rect>
-                                    <path d="M7 12h10"></path>
-                                    <path d="M12 7v10"></path>
-                                </svg>
-                            {% elif activity.id == 'grounding_54321' %}
-                                <!-- 5 Senses Constellation / Radar SVG -->
-                                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <circle cx="12" cy="12" r="9"></circle>
-                                    <circle cx="12" cy="12" r="5"></circle>
-                                    <circle cx="12" cy="12" r="1"></circle>
-                                </svg>
-                            {% elif activity.id == 'pomodoro_focus' %}
-                                <!-- Focus Clock & Dial SVG -->
-                                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <polyline points="12 6 12 12 16 14"></polyline>
-                                </svg>
-                            {% elif activity.id == 'task_chunking' %}
-                                <!-- 3 Connected Micro-Step Blocks SVG -->
-                                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <rect x="3" y="3" width="6" height="6" rx="1"></rect>
-                                    <rect x="15" y="3" width="6" height="6" rx="1"></rect>
-                                    <rect x="9" y="15" width="6" height="6" rx="1"></rect>
-                                    <path d="M6 9v3a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V9"></path>
-                                    <path d="M12 13v2"></path>
-                                </svg>
-                            {% elif activity.id == 'self_compassion' %}
-                                <!-- Gentle Caring Heart & Mindfulness SVG -->
-                                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
-                                </svg>
-                            {% else %}
-                                <!-- Dynamic Posture & Spine Stretch SVG -->
-                                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <path d="M12 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z"></path>
-                                    <path d="M12 7v8"></path>
-                                    <path d="m5 10 7 2 7-2"></path>
-                                    <path d="m8 22 4-7 4 7"></path>
-                                </svg>
-                            {% endif %}
-                        </div>
+                    <!-- Meta Row: Category Badge & Duration -->
+                    <div class="act-card-meta">
+                        {% if activity.id == 'box_breathing' %}
+                            <span class="act-badge act-badge-primary">Breathwork</span>
+                        {% elif activity.id == 'grounding_54321' %}
+                            <span class="act-badge act-badge-amber">Sensory Reset</span>
+                        {% elif activity.id == 'pomodoro_focus' %}
+                            <span class="act-badge act-badge-secondary">Focus Routine</span>
+                        {% elif activity.id == 'task_chunking' %}
+                            <span class="act-badge act-badge-teal">Clarity</span>
+                        {% elif activity.id == 'self_compassion' %}
+                            <span class="act-badge act-badge-tertiary">Inner Voice</span>
+                        {% else %}
+                            <span class="act-badge act-badge-rose">Physical Recharge</span>
+                        {% endif %}
 
-                        <div class="activity-card-badges">
-                            <span class="badge {% if activity.category == 'Mindfulness' %}badge-primary{% elif activity.category == 'Academic' %}badge-primary{% elif activity.category == 'Reflection' %}badge-purple{% else %}badge-muted{% endif %}">
-                                {{ activity.category }}
-                            </span>
-                            <span class="badge badge-muted">⏱ ~{{ activity.duration_minutes }} min</span>
-                        </div>
+                        <span class="act-duration-pill">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            <span>~{{ activity.duration_minutes }} min</span>
+                        </span>
                     </div>
 
-                    <!-- Title & Benefit -->
-                    <h2 class="activity-card-title">
-                        {{ activity.title }}
-                    </h2>
-
-                    <div class="activity-card-benefit">
+                    <!-- Custom Minimalist Vector Illustration -->
+                    <div class="act-card-illustration" aria-hidden="true">
                         {% if activity.id == 'box_breathing' %}
-                            <span>🌬 Physiological Calming &bull; Inhale-Hold-Exhale</span>
+                            <!-- Geometric Breathing Box -->
+                            <svg width="100" height="100" viewBox="0 0 120 120" fill="none" stroke="currentColor" class="text-primary" style="color: var(--act-primary-container);">
+                                <rect x="18" y="18" width="84" height="84" rx="20" stroke="currentColor" stroke-width="2.5" stroke-dasharray="6 6" opacity="0.35"></rect>
+                                <rect x="28" y="28" width="64" height="64" rx="16" stroke="currentColor" stroke-width="2.5" fill="currentColor" fill-opacity="0.12"></rect>
+                                <circle cx="28" cy="28" r="5" fill="currentColor"></circle>
+                                <circle cx="92" cy="28" r="4" fill="currentColor" opacity="0.6"></circle>
+                                <circle cx="92" cy="92" r="4" fill="currentColor" opacity="0.4"></circle>
+                                <circle cx="28" cy="92" r="4" fill="currentColor" opacity="0.6"></circle>
+                                <path d="M60 46V74M46 60H74" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.7"></path>
+                            </svg>
                         {% elif activity.id == 'grounding_54321' %}
-                            <span>👁 Sensory Re-Centering &bull; Anxiety De-escalation</span>
+                            <!-- Sensory Reset: Hand & Sensory Nodes -->
+                            <svg width="100" height="100" viewBox="0 0 120 120" fill="none" stroke="currentColor" style="color: var(--act-amber);">
+                                <circle cx="60" cy="60" r="42" fill="var(--act-amber-bg)" fill-opacity="0.7"></circle>
+                                <path d="M42 66C42 56 48 50 60 50C72 50 78 56 78 66C78 78 68 84 60 84C52 84 42 78 42 66Z" fill="currentColor" fill-opacity="0.2"></path>
+                                <circle cx="36" cy="42" r="5" fill="currentColor"></circle>
+                                <circle cx="84" cy="42" r="5" fill="currentColor"></circle>
+                                <circle cx="60" cy="30" r="6" fill="currentColor"></circle>
+                                <path d="M50 62C52 68 68 68 70 62" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"></path>
+                                <path d="M44 76C54 81 66 81 76 76" stroke="currentColor" stroke-width="2" stroke-dasharray="3 3" stroke-linecap="round"></path>
+                            </svg>
                         {% elif activity.id == 'pomodoro_focus' %}
-                            <span>⏱ 25m Focus Block + 5m Automatic Break</span>
+                            <!-- Circular Focus Timer Dial -->
+                            <svg width="100" height="100" viewBox="0 0 120 120" fill="none" stroke="currentColor" style="color: var(--act-secondary);">
+                                <circle cx="60" cy="60" r="44" stroke="currentColor" stroke-width="3" stroke-opacity="0.25"></circle>
+                                <path d="M60 16 A 44 44 0 1 1 24 84" stroke="currentColor" stroke-width="4" stroke-linecap="round"></path>
+                                <circle cx="60" cy="60" r="28" fill="var(--act-secondary-border)" fill-opacity="0.5"></circle>
+                                <circle cx="60" cy="60" r="4" fill="currentColor"></circle>
+                                <line x1="60" y1="60" x2="60" y2="42" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"></line>
+                                <line x1="60" y1="60" x2="74" y2="60" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line>
+                            </svg>
                         {% elif activity.id == 'task_chunking' %}
-                            <span>📋 Procrastination Breakthrough &bull; 3 Micro-Tasks</span>
+                            <!-- Modular Task Blocks -->
+                            <svg width="100" height="100" viewBox="0 0 120 120" fill="none" stroke="currentColor" style="color: var(--act-teal);">
+                                <rect x="22" y="24" width="34" height="30" rx="8" stroke="currentColor" stroke-width="2" fill="currentColor" fill-opacity="0.15"></rect>
+                                <rect x="64" y="24" width="34" height="30" rx="8" fill="currentColor" fill-opacity="0.75"></rect>
+                                <rect x="22" y="62" width="34" height="34" rx="8" stroke="currentColor" stroke-width="2" fill="currentColor" fill-opacity="0.3"></rect>
+                                <rect x="64" y="62" width="34" height="34" rx="8" stroke="currentColor" stroke-width="2" fill="var(--act-teal-bg)"></rect>
+                                <circle cx="81" cy="79" r="4" fill="currentColor"></circle>
+                                <path d="M34 39H44M76 39H86" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                            </svg>
                         {% elif activity.id == 'self_compassion' %}
-                            <span>🤍 Emotional Resilience &bull; Private Reflection</span>
+                            <!-- Gentle Leaf & Radiant Heart -->
+                            <svg width="100" height="100" viewBox="0 0 120 120" fill="none" stroke="currentColor" style="color: var(--act-tertiary);">
+                                <circle cx="60" cy="60" r="42" fill="var(--act-tertiary-border)" fill-opacity="0.5"></circle>
+                                <path d="M60 40C52 30 36 34 36 49C36 65 60 78 60 78C60 78 84 65 84 49C84 34 68 30 60 40Z" fill="currentColor" fill-opacity="0.85"></path>
+                                <circle cx="60" cy="24" r="2.5" fill="currentColor" opacity="0.4"></circle>
+                                <circle cx="26" cy="56" r="2.5" fill="currentColor" opacity="0.4"></circle>
+                                <circle cx="94" cy="56" r="2.5" fill="currentColor" opacity="0.4"></circle>
+                                <path d="M50 56C54 60 66 60 70 56" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"></path>
+                            </svg>
                         {% else %}
-                            <span>🧘 Physical Tension Release + 20-20-20 Eye Rest</span>
+                            <!-- Shoulder Relief & Ocular Rest -->
+                            <svg width="100" height="100" viewBox="0 0 120 120" fill="none" stroke="currentColor" style="color: var(--act-rose);">
+                                <circle cx="60" cy="60" r="42" fill="var(--act-rose-bg)" fill-opacity="0.8"></circle>
+                                <path d="M38 48C43 54 53 54 58 48" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"></path>
+                                <path d="M62 48C67 54 77 54 82 48" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"></path>
+                                <path d="M30 84C38 72 50 68 60 68C70 68 82 72 90 84" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="currentColor" fill-opacity="0.12"></path>
+                                <circle cx="60" cy="40" r="3" fill="currentColor" opacity="0.5"></circle>
+                            </svg>
                         {% endif %}
                     </div>
 
-                    <p class="activity-card-desc">
+                    <!-- Title & Descriptions -->
+                    <h2 class="act-card-title">
+                        {{ activity.title }}
+                    </h2>
+
+                    <div class="act-card-benefit">
+                        {% if activity.id == 'box_breathing' %}
+                            Physiological Calming &bull; Inhale-Hold-Exhale
+                        {% elif activity.id == 'grounding_54321' %}
+                            Sensory Re-Centering &bull; Anxiety De-escalation
+                        {% elif activity.id == 'pomodoro_focus' %}
+                            Deep Concentration &bull; Mindful Rest Intervals
+                        {% elif activity.id == 'task_chunking' %}
+                            Overcome Freeze &bull; 3 Bite-Sized Steps
+                        {% elif activity.id == 'self_compassion' %}
+                            Self-Talk Reset &bull; Private Reflection
+                        {% else %}
+                            Posture Release &bull; 20-20-20 Distance Gaze
+                        {% endif %}
+                    </div>
+
+                    <p class="act-card-desc">
                         {{ activity.short_description }}
                     </p>
                 </div>
 
-                <!-- Prominent Action CTA Button -->
-                <div class="activity-card-footer">
-                    <a href="{{ url_for('student.activity_detail', activity_id=activity.id) }}" class="btn btn-primary" style="width: 100%; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600;">
-                        Start Activity &rarr;
+                <!-- Prominent Start Button -->
+                <div>
+                    {% set btn_variant = 'primary' %}
+                    {% if activity.id == 'grounding_54321' %}
+                        {% set btn_variant = 'amber' %}
+                    {% elif activity.id == 'pomodoro_focus' %}
+                        {% set btn_variant = 'secondary' %}
+                    {% elif activity.id == 'task_chunking' %}
+                        {% set btn_variant = 'teal' %}
+                    {% elif activity.id == 'self_compassion' %}
+                        {% set btn_variant = 'tertiary' %}
+                    {% elif activity.id == 'stretch_reset' %}
+                        {% set btn_variant = 'rose' %}
+                    {% endif %}
+
+                    <a href="{{ url_for('student.activity_detail', activity_id=activity.id) }}"
+                       class="act-start-btn act-start-btn-{{ btn_variant }}"
+                       id="btn-start-{{ activity.id }}"
+                       aria-label="Start {{ activity.title }}">
+                        <span>Start Practice</span>
+                        <span aria-hidden="true">&rarr;</span>
                     </a>
                 </div>
             </article>
         {% endfor %}
-    </div>
+    </section>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const filterButtons = document.querySelectorAll('.filter-tab-btn');
-    const cards = document.querySelectorAll('.activity-catalog-card');
-
-    filterButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            // Update active tab state
-            filterButtons.forEach(b => {
-                b.classList.remove('active');
-                b.setAttribute('aria-selected', 'false');
-            });
-            this.classList.add('active');
-            this.setAttribute('aria-selected', 'true');
-
-            const filterValue = this.getAttribute('data-filter');
-
-            cards.forEach(card => {
-                const category = card.getAttribute('data-category');
-                if (filterValue === 'all' || category === filterValue) {
-                    card.style.display = 'flex';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-        });
-    });
-});
-</script>
 {% endblock %}

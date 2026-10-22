@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "inverse-on-surface": "#f2f0ed", "on-error-container": "#93000a", "surface-container-highest": "#e4e2df", "on-primary-fixed": "#00210a", "on-surface-variant": "#3f493f", "tertiary": "#7e0cd5", "error": "#ba1a1a", "on-primary": "#ffffff", "primary-container": "#15803d", "on-tertiary-container": "#fcf0ff", "tertiary-fixed-dim": "#ddb8ff", "surface-tint": "#006d30", "tertiary-fixed": "#f0dbff", "on-secondary": "#ffffff", "primary-fixed": "#95f8a7", "surface-container-low": "#f5f3f0", "surface-container-lowest": "#ffffff", "primary": "#00652c", "surface-dim": "#dbdad7", "on-tertiary-fixed": "#2c0051", "secondary": "#006398", "outline": "#6f7a6e", "on-error": "#ffffff", "secondary-fixed-dim": "#93ccff", "on-secondary-fixed-variant": "#004b73", "surface": "#fbf9f6", "on-background": "#1b1c1a", "error-container": "#ffdad6", "inverse-surface": "#30312f", "secondary-fixed": "#cce5ff", "on-tertiary": "#ffffff", "outline-variant": "#becabc", "on-tertiary-fixed-variant": "#6800b4", "on-primary-fixed-variant": "#005323", "surface-container": "#efeeeb", "tertiary-container": "#983aef", "background": "#fbf9f6", "surface-container-high": "#eae8e5", "on-secondary-container": "#00476e", "surface-bright": "#fbf9f6", "primary-fixed-dim": "#79db8d", "on-surface": "#1b1c1a", "inverse-primary": "#79db8d", "on-primary-container": "#d3ffd5", "surface-variant": "#e4e2df", "on-secondary-fixed": "#001d31", "secondary-container": "#5bb8fe" }, "borderRadius": { "DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px" }, "spacing": { "margin-mobile": "1.25rem", "margin": "2rem", "space-xl": "3rem", "space-xs": "0.375rem", "space-lg": "2rem", "space-sm": "0.75rem", "space-md": "1.25rem", "gutter-mobile": "1rem", "gutter": "1.5rem" }, "fontFamily": { "body-md": ["Inter"], "headline-lg": ["Inter"], "headline-sm": ["Inter"], "label-sm": ["Inter"], "body-lg": ["Inter"], "body-sm": ["Inter"], "display-lg": ["Inter"], "headline-md": ["Inter"], "label-lg": ["Inter"], "label-md": ["Inter"], "display-lg-mobile": ["Inter"], "headline-lg-mobile": ["Inter"] }, "fontSize": { "body-md": ["1rem", { "lineHeight": "1.65rem", "letterSpacing": "0em", "fontWeight": "400" }], "headline-lg": ["2.25rem", { "lineHeight": "2.75rem", "letterSpacing": "-0.02em", "fontWeight": "600" }], "headline-sm": ["1.25rem", { "lineHeight": "1.75rem", "letterSpacing": "-0.01em", "fontWeight": "600" }], "label-sm": ["0.6875rem", { "lineHeight": "0.875rem", "letterSpacing": "0.03em", "fontWeight": "600" }], "body-lg": ["1.125rem", { "lineHeight": "1.875rem", "letterSpacing": "-0.005em", "fontWeight": "400" }], "body-sm": ["0.875rem", { "lineHeight": "1.45rem", "letterSpacing": "0em", "fontWeight": "400" }], "display-lg": ["3.25rem", { "lineHeight": "3.75rem", "letterSpacing": "-0.03em", "fontWeight": "600" }], "headline-md": ["1.5rem", { "lineHeight": "2rem", "letterSpacing": "-0.015em", "fontWeight": "600" }], "label-lg": ["0.875rem", { "lineHeight": "1.25rem", "letterSpacing": "0.01em", "fontWeight": "600" }], "label-md": ["0.75rem", { "lineHeight": "1rem", "letterSpacing": "0.02em", "fontWeight": "500" }], "display-lg-mobile": ["2.25rem", { "lineHeight": "2.75rem", "letterSpacing": "-0.025em", "fontWeight": "600" }], "headline-lg-mobile": ["1.75rem", { "lineHeight": "2.25rem", "letterSpacing": "-0.015em", "fontWeight": "600" }] } } } };</script></head><body class="bg-background font-body-md text-on-surface antialiased min-h-screen flex flex-col"><header class="fixed top-0 left-0 right-0 z-50 bg-surface/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-20 w-full px-margin flex items-center justify-between gap-space-lg max-w-[1160px] mx-auto"><div class="flex items-center gap-space-md"><img alt="MindEase AI Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1W00WQUMRNOLlM4RY4vFu09qJSusJt0xU2TyFDODbyLV8Q7MY5BzcnHLMB5miWvsxxcXps07r9hecwZPrmeyO4EJSpz0Y4_2Qg3W5B93eDZa8O1duHbh3D9Tz_eK9KMwNpKL7jdVQp468xQkoYP_NW9pYz2MTRS6N4r63Y5c0LfcodKZ5F8mN-Zd6gfHMuAF-CtIZu3WDjZbNHDYXzy0jxEXu9ttQT3aiqcI-PHEvm9RjotDlNUommswJg"/><span class="font-headline-sm text-headline-sm text-primary tracking-tight">MindEase AI</span></div><nav class="hidden md:flex items-center gap-space-xs bg-surface-container-low p-space-xs rounded-full" data-active-classes="bg-primary-container text-on-primary font-label-lg text-label-lg shadow-sm"><a class="px-space-md py-space-xs rounded-full font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="daily-routine" href="#">Daily Routine</a><a aria-current="page" class="px-space-md py-space-xs rounded-full transition-all bg-primary-container text-on-primary font-label-lg text-label-lg shadow-sm" data-path="activities" href="#">Activities</a><a class="px-space-md py-space-xs rounded-full font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="focus-mode" href="#">Focus Mode</a><a class="px-space-md py-space-xs rounded-full font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="reflections" href="#">Reflections</a></nav><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs bg-surface-container px-space-sm py-space-xs rounded-full"><span class="material-symbols-outlined text-primary text-[18px]">local_fire_department</span><span class="font-label-md text-label-md text-on-surface font-semibold">5 Days</span></div><div class="flex items-center gap-space-xs pl-space-xs"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></div></header><main class="w-full pt-20 bg-background flex-1 max-w-[1160px] mx-auto px-margin"><div class="flex flex-col w-full pb-space-xl">
+<!-- Introductory & Filter Section -->
+<section class="relative pt-space-md pb-space-lg">
+<!-- Subtle organic background aura -->
+<div class="absolute -top-12 left-1/2 -translate-x-1/2 w-[720px] h-[340px] bg-gradient-to-b from-primary-fixed-dim/20 via-secondary-fixed/15 to-transparent blur-3xl pointer-events-none rounded-full -z-10"></div>
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-space-lg mb-space-lg">
+<div class="max-w-2xl">
+<div class="inline-flex items-center gap-space-xs px-space-sm py-space-xs bg-surface-container rounded-full mb-space-sm text-primary">
+<span class="material-symbols-outlined text-[16px]">self_improvement</span>
+<span class="font-label-md text-label-md tracking-wider uppercase">Adaptive Wellness Library</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight mb-space-xs">
+          Mindful Practices for Study & Life
+        </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-xl">
+          Guided, non-clinical exercises crafted to help you reset between study sessions, calm exam jitters, and regain clarity.
+        </p>
+</div>
+<!-- Quick Session Stats Pill -->
+<div class="flex items-center gap-space-md bg-surface-container-low p-space-sm rounded-lg shadow-sm">
+<div class="flex items-center gap-space-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-primary text-[20px]">timer</span>
+<span class="font-label-lg text-label-lg font-semibold text-on-surface">3-25 Min</span>
+</div>
+<span class="text-outline-variant">•</span>
+<div class="flex items-center gap-space-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[20px]">verified</span>
+<span class="font-label-lg text-label-lg font-semibold text-on-surface">Evidence-Based</span>
+</div>
+</div>
+</div>
+<!-- Filter & Search Controls -->
+<div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-space-md bg-surface-container-lowest p-space-sm rounded-lg shadow-sm">
+<!-- Filter Chips -->
+<div class="flex flex-wrap items-center gap-space-xs" id="filter-container">
+<button class="filter-btn px-space-md py-space-xs rounded-full font-label-lg text-label-lg bg-primary-container text-on-primary transition-all shadow-sm" data-filter="all" type="button">
+          All practices
+        </button>
+<button class="filter-btn px-space-md py-space-xs rounded-full font-label-lg text-label-lg bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-filter="quick" type="button">
+          Quick resets (< 5m)
+        </button>
+<button class="filter-btn px-space-md py-space-xs rounded-full font-label-lg text-label-lg bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-filter="focus" type="button">
+          Focus & Study
+        </button>
+<button class="filter-btn px-space-md py-space-xs rounded-full font-label-lg text-label-lg bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-filter="calm" type="button">
+          Calm & Rest
+        </button>
+</div>
+<!-- Search Input -->
+<div class="relative min-w-[280px]">
+<span class="material-symbols-outlined absolute left-space-md top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="w-full pl-11 pr-space-md py-space-xs bg-surface-container-low text-on-surface placeholder:text-outline font-body-sm text-body-sm rounded-full focus:outline-none focus:bg-surface-container transition-all" id="activity-search" placeholder="Search exercises, states, goals..." type="text"/>
+</div>
+</div>
+</section>
+<!-- Activities Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-lg" id="activities-grid">
+<!-- Card 1: Box Breathing -->
+<article class="activity-card group flex flex-col justify-between bg-surface-container-lowest rounded-xl p-space-lg shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden" data-category="quick calm">
+<div class="absolute -top-16 -right-16 w-36 h-36 bg-primary-container/10 rounded-full blur-2xl pointer-events-none"></div>
+<div>
+<!-- Card Header Badges -->
+<div class="flex items-center justify-between gap-space-sm mb-space-md">
+<span class="inline-flex items-center gap-1.5 px-space-sm py-1 bg-primary-fixed-dim/30 text-on-primary-fixed rounded-full font-label-sm text-label-sm font-semibold tracking-wide uppercase">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+            Breathwork
+          </span>
+<span class="inline-flex items-center gap-1 text-on-surface-variant font-label-md text-label-md">
+<span class="material-symbols-outlined text-[16px] text-primary-container">schedule</span>
+            4 mins
+          </span>
+</div>
+<!-- Flat Minimalist Graphic: Geometric Breathing Box -->
+<div class="w-full h-44 bg-surface-container-low rounded-lg flex items-center justify-center p-space-md mb-space-md group-hover:scale-[1.02] transition-transform duration-500">
+<svg class="w-28 h-28 text-primary-container" fill="none" viewbox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+<rect class="opacity-30" height="84" rx="20" stroke="currentColor" stroke-dasharray="6 6" stroke-width="3" width="84" x="18" y="18"></rect>
+<rect fill="currentColor" fill-opacity="0.12" height="64" rx="16" stroke="currentColor" stroke-width="2.5" width="64" x="28" y="28"></rect>
+<circle cx="28" cy="28" fill="currentColor" r="5"></circle>
+<circle class="opacity-60" cx="92" cy="28" fill="currentColor" r="4"></circle>
+<circle class="opacity-40" cx="92" cy="92" fill="currentColor" r="4"></circle>
+<circle class="opacity-60" cx="28" cy="92" fill="currentColor" r="4"></circle>
+<path class="opacity-70" d="M60 46V74M46 60H74" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path>
+</svg>
+</div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-space-xs group-hover:text-primary transition-colors">
+          Box Breathing
+        </h2>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">
+          Equal-ratio breathing to settle the nervous system before lectures, presentations, or major exams.
+        </p>
+</div>
+<div class="pt-space-md mt-space-md">
+<button class="w-full inline-flex items-center justify-center gap-space-xs py-space-sm px-space-md bg-primary-container text-on-primary font-label-lg text-label-lg rounded-full hover:opacity-95 shadow-sm transition-all group-hover:shadow-md" type="button">
+<span>Start Practice</span>
+<span class="material-symbols-outlined text-[18px]">play_arrow</span>
+</button>
+</div>
+</article>
+<!-- Card 2: 5-4-3-2-1 Grounding -->
+<article class="activity-card group flex flex-col justify-between bg-surface-container-lowest rounded-xl p-space-lg shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden" data-category="calm">
+<div class="absolute -top-16 -right-16 w-36 h-36 bg-amber-500/10 rounded-full blur-2xl pointer-events-none"></div>
+<div>
+<div class="flex items-center justify-between gap-space-sm mb-space-md">
+<span class="inline-flex items-center gap-1.5 px-space-sm py-1 bg-amber-100 text-amber-900 rounded-full font-label-sm text-label-sm font-semibold tracking-wide uppercase">
+<span class="w-2 h-2 rounded-full bg-amber-600"></span>
+            Sensory Reset
+          </span>
+<span class="inline-flex items-center gap-1 text-on-surface-variant font-label-md text-label-md">
+<span class="material-symbols-outlined text-[16px] text-amber-600">schedule</span>
+            6 mins
+          </span>
+</div>
+<!-- Flat Minimalist Graphic: Hands & Sensory Symbols -->
+<div class="w-full h-44 bg-surface-container-low rounded-lg flex items-center justify-center p-space-md mb-space-md group-hover:scale-[1.02] transition-transform duration-500">
+<svg class="w-28 h-28 text-amber-600" fill="none" viewbox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+<circle cx="60" cy="60" fill="#FEF3C7" fill-opacity="0.7" r="42"></circle>
+<path d="M42 66C42 56 48 50 60 50C72 50 78 56 78 66C78 78 68 84 60 84C52 84 42 78 42 66Z" fill="currentColor" fill-opacity="0.2"></path>
+<circle cx="36" cy="42" fill="currentColor" r="5"></circle>
+<circle cx="84" cy="42" fill="currentColor" r="5"></circle>
+<circle cx="60" cy="30" fill="currentColor" r="6"></circle>
+<path d="M50 62C52 68 68 68 70 62" stroke="currentColor" stroke-linecap="round" stroke-width="2.5"></path>
+<path d="M44 76C54 81 66 81 76 76" stroke="currentColor" stroke-dasharray="3 3" stroke-linecap="round" stroke-width="2"></path>
+</svg>
+</div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-space-xs group-hover:text-amber-800 transition-colors">
+          5-4-3-2-1 Grounding
+        </h2>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">
+          Anchor your attention to your physical surroundings and interrupt racing thoughts with multi-sensory awareness.
+        </p>
+</div>
+<div class="pt-space-md mt-space-md">
+<button class="w-full inline-flex items-center justify-center gap-space-xs py-space-sm px-space-md bg-amber-700 text-surface-container-lowest font-label-lg text-label-lg rounded-full hover:opacity-95 shadow-sm transition-all group-hover:shadow-md" type="button">
+<span>Start Practice</span>
+<span class="material-symbols-outlined text-[18px]">play_arrow</span>
+</button>
+</div>
+</article>
+<!-- Card 3: Pomodoro Focus -->
+<article class="activity-card group flex flex-col justify-between bg-surface-container-lowest rounded-xl p-space-lg shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden" data-category="focus">
+<div class="absolute -top-16 -right-16 w-36 h-36 bg-secondary-fixed/30 rounded-full blur-2xl pointer-events-none"></div>
+<div>
+<div class="flex items-center justify-between gap-space-sm mb-space-md">
+<span class="inline-flex items-center gap-1.5 px-space-sm py-1 bg-secondary-fixed text-on-secondary-fixed-variant rounded-full font-label-sm text-label-sm font-semibold tracking-wide uppercase">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+            Focus Routine
+          </span>
+<span class="inline-flex items-center gap-1 text-on-surface-variant font-label-md text-label-md">
+<span class="material-symbols-outlined text-[16px] text-secondary">schedule</span>
+            25 mins
+          </span>
+</div>
+<!-- Flat Minimalist Graphic: Circular Focus Timer -->
+<div class="w-full h-44 bg-surface-container-low rounded-lg flex items-center justify-center p-space-md mb-space-md group-hover:scale-[1.02] transition-transform duration-500">
+<svg class="w-28 h-28 text-secondary" fill="none" viewbox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+<circle cx="60" cy="60" r="44" stroke="currentColor" stroke-opacity="0.2" stroke-width="3"></circle>
+<path d="M60 16 A 44 44 0 1 1 24 84" stroke="currentColor" stroke-linecap="round" stroke-width="4"></path>
+<circle cx="60" cy="60" fill="#E0F2FE" r="28"></circle>
+<circle cx="60" cy="60" fill="currentColor" r="4"></circle>
+<line stroke="currentColor" stroke-linecap="round" stroke-width="2.5" x1="60" x2="60" y1="60" y2="42"></line>
+<line stroke="currentColor" stroke-linecap="round" stroke-width="2" x1="60" x2="74" y1="60" y2="60"></line>
+</svg>
+</div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-space-xs group-hover:text-secondary transition-colors">
+          Pomodoro Focus
+        </h2>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">
+          Structured intervals of deep concentration paired with mindful resting cycles to sustain mental endurance.
+        </p>
+</div>
+<div class="pt-space-md mt-space-md">
+<button class="w-full inline-flex items-center justify-center gap-space-xs py-space-sm px-space-md bg-secondary text-on-secondary font-label-lg text-label-lg rounded-full hover:opacity-95 shadow-sm transition-all group-hover:shadow-md" type="button">
+<span>Start Practice</span>
+<span class="material-symbols-outlined text-[18px]">play_arrow</span>
+</button>
+</div>
+</article>
+<!-- Card 4: Task Chunking -->
+<article class="activity-card group flex flex-col justify-between bg-surface-container-lowest rounded-xl p-space-lg shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden" data-category="focus">
+<div class="absolute -top-16 -right-16 w-36 h-36 bg-emerald-800/10 rounded-full blur-2xl pointer-events-none"></div>
+<div>
+<div class="flex items-center justify-between gap-space-sm mb-space-md">
+<span class="inline-flex items-center gap-1.5 px-space-sm py-1 bg-[#CCFBF1] text-[#0F766E] rounded-full font-label-sm text-label-sm font-semibold tracking-wide uppercase">
+<span class="w-2 h-2 rounded-full bg-[#0F766E]"></span>
+            Clarity
+          </span>
+<span class="inline-flex items-center gap-1 text-on-surface-variant font-label-md text-label-md">
+<span class="material-symbols-outlined text-[16px] text-[#0F766E]">schedule</span>
+            8 mins
+          </span>
+</div>
+<!-- Flat Minimalist Graphic: Modular Task Blocks -->
+<div class="w-full h-44 bg-surface-container-low rounded-lg flex items-center justify-center p-space-md mb-space-md group-hover:scale-[1.02] transition-transform duration-500">
+<svg class="w-28 h-28 text-[#0F766E]" fill="none" viewbox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+<rect fill="currentColor" fill-opacity="0.15" height="30" rx="8" stroke="currentColor" stroke-width="2" width="34" x="22" y="24"></rect>
+<rect fill="currentColor" fill-opacity="0.75" height="30" rx="8" width="34" x="64" y="24"></rect>
+<rect fill="currentColor" fill-opacity="0.3" height="34" rx="8" stroke="currentColor" stroke-width="2" width="34" x="22" y="62"></rect>
+<rect fill="#CCFBF1" height="34" rx="8" stroke="currentColor" stroke-width="2" width="34" x="64" y="62"></rect>
+<circle cx="81" cy="79" fill="currentColor" r="4"></circle>
+<path d="M34 39H44M76 39H86" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path>
+</svg>
+</div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-space-xs group-hover:text-[#0F766E] transition-colors">
+          Task Chunking
+        </h2>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">
+          Deconstruct overwhelming academic projects into gentle, manageable micro-steps to overcome freeze states.
+        </p>
+</div>
+<div class="pt-space-md mt-space-md">
+<button class="w-full inline-flex items-center justify-center gap-space-xs py-space-sm px-space-md bg-[#0F766E] text-surface-container-lowest font-label-lg text-label-lg rounded-full hover:opacity-95 shadow-sm transition-all group-hover:shadow-md" type="button">
+<span>Start Practice</span>
+<span class="material-symbols-outlined text-[18px]">play_arrow</span>
+</button>
+</div>
+</article>
+<!-- Card 5: Self-Compassion -->
+<article class="activity-card group flex flex-col justify-between bg-surface-container-lowest rounded-xl p-space-lg shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden" data-category="quick calm">
+<div class="absolute -top-16 -right-16 w-36 h-36 bg-tertiary-fixed/40 rounded-full blur-2xl pointer-events-none"></div>
+<div>
+<div class="flex items-center justify-between gap-space-sm mb-space-md">
+<span class="inline-flex items-center gap-1.5 px-space-sm py-1 bg-tertiary-fixed text-on-tertiary-fixed rounded-full font-label-sm text-label-sm font-semibold tracking-wide uppercase">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+            Inner Voice
+          </span>
+<span class="inline-flex items-center gap-1 text-on-surface-variant font-label-md text-label-md">
+<span class="material-symbols-outlined text-[16px] text-tertiary">schedule</span>
+            5 mins
+          </span>
+</div>
+<!-- Flat Minimalist Graphic: Gentle Leaf & Radiant Heart -->
+<div class="w-full h-44 bg-surface-container-low rounded-lg flex items-center justify-center p-space-md mb-space-md group-hover:scale-[1.02] transition-transform duration-500">
+<svg class="w-28 h-28 text-tertiary" fill="none" viewbox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+<circle cx="60" cy="60" fill="#F3E8FF" r="42"></circle>
+<path d="M60 40C52 30 36 34 36 49C36 65 60 78 60 78C60 78 84 65 84 49C84 34 68 30 60 40Z" fill="currentColor" fill-opacity="0.8"></path>
+<circle class="opacity-40" cx="60" cy="24" fill="currentColor" r="2.5"></circle>
+<circle class="opacity-40" cx="26" cy="56" fill="currentColor" r="2.5"></circle>
+<circle class="opacity-40" cx="94" cy="56" fill="currentColor" r="2.5"></circle>
+<path d="M50 56C54 60 66 60 70 56" stroke="#FFFFFF" stroke-linecap="round" stroke-width="2"></path>
+</svg>
+</div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-space-xs group-hover:text-tertiary transition-colors">
+          Self-Compassion
+        </h2>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">
+          Soften perfectionism and self-criticism during demanding academic deadlines with kindness meditations.
+        </p>
+</div>
+<div class="pt-space-md mt-space-md">
+<button class="w-full inline-flex items-center justify-center gap-space-xs py-space-sm px-space-md bg-tertiary text-on-tertiary font-label-lg text-label-lg rounded-full hover:opacity-95 shadow-sm transition-all group-hover:shadow-md" type="button">
+<span>Start Practice</span>
+<span class="material-symbols-outlined text-[18px]">play_arrow</span>
+</button>
+</div>
+</article>
+<!-- Card 6: Stretch & Eye Reset -->
+<article class="activity-card group flex flex-col justify-between bg-surface-container-lowest rounded-xl p-space-lg shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden" data-category="quick calm">
+<div class="absolute -top-16 -right-16 w-36 h-36 bg-rose-500/10 rounded-full blur-2xl pointer-events-none"></div>
+<div>
+<div class="flex items-center justify-between gap-space-sm mb-space-md">
+<span class="inline-flex items-center gap-1.5 px-space-sm py-1 bg-rose-100 text-rose-900 rounded-full font-label-sm text-label-sm font-semibold tracking-wide uppercase">
+<span class="w-2 h-2 rounded-full bg-rose-700"></span>
+            Physical Recharge
+          </span>
+<span class="inline-flex items-center gap-1 text-on-surface-variant font-label-md text-label-md">
+<span class="material-symbols-outlined text-[16px] text-rose-700">schedule</span>
+            3 mins
+          </span>
+</div>
+<!-- Flat Minimalist Graphic: Shoulder Relief & Soft Eye Lines -->
+<div class="w-full h-44 bg-surface-container-low rounded-lg flex items-center justify-center p-space-md mb-space-md group-hover:scale-[1.02] transition-transform duration-500">
+<svg class="w-28 h-28 text-rose-700" fill="none" viewbox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+<circle cx="60" cy="60" fill="#FFE4E6" fill-opacity="0.8" r="42"></circle>
+<!-- Gentle closed eye curved arches -->
+<path d="M38 48C43 54 53 54 58 48" stroke="currentColor" stroke-linecap="round" stroke-width="2.5"></path>
+<path d="M62 48C67 54 77 54 82 48" stroke="currentColor" stroke-linecap="round" stroke-width="2.5"></path>
+<!-- Soft relaxed shoulder arc -->
+<path d="M30 84C38 72 50 68 60 68C70 68 82 72 90 84" fill="currentColor" fill-opacity="0.1" stroke="currentColor" stroke-linecap="round" stroke-width="3"></path>
+<circle class="opacity-50" cx="60" cy="40" fill="currentColor" r="3"></circle>
+</svg>
+</div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-space-xs group-hover:text-rose-900 transition-colors">
+          Stretch & Eye Reset
+        </h2>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">
+          Release desk strain from long laptop sessions and rest tired screen eyes with 20-20-20 visual pauses.
+        </p>
+</div>
+<div class="pt-space-md mt-space-md">
+<button class="w-full inline-flex items-center justify-center gap-space-xs py-space-sm px-space-md bg-rose-700 text-surface-container-lowest font-label-lg text-label-lg rounded-full hover:opacity-95 shadow-sm transition-all group-hover:shadow-md" type="button">
+<span>Start Practice</span>
+<span class="material-symbols-outlined text-[18px]">play_arrow</span>
+</button>
+</div>
+</article>
+</section>
+<!-- Grounding Micro-reflection strip -->
+<aside class="mt-space-xl p-space-lg rounded-xl bg-surface-container-low flex flex-col md:flex-row items-center justify-between gap-space-md shadow-sm">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-full bg-primary-fixed-dim/40 flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[24px]">psychology_alt</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Unsure which exercise fits your current mood?</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Take a 30-second somatic check-in and let AI recommend the optimal reset protocol.</p>
+</div>
+</div>
+<button class="whitespace-nowrap px-space-lg py-space-sm rounded-full bg-surface-container-lowest text-primary font-label-lg text-label-lg shadow-sm hover:bg-surface-container-high transition-all" type="button">
+      Quick Mood Assessment
+    </button>
+</aside>
+<!-- Interactive Filtering Script -->
+<script>
+    (function() {
+      const filterBtns = document.querySelectorAll('.filter-btn');
+      const cards = document.querySelectorAll('.activity-card');
+      const searchInput = document.getElementById('activity-search');
+
+      let currentFilter = 'all';
+      let currentQuery = '';
+
+      function updateVisibility() {
+        cards.forEach(card => {
+          const category = card.getAttribute('data-category') || '';
+          const title = card.querySelector('h2')?.innerText.toLowerCase() || '';
+          const desc = card.querySelector('p')?.innerText.toLowerCase() || '';
+          
+          const matchesFilter = currentFilter === 'all' || category.includes(currentFilter);
+          const matchesSearch = !currentQuery || title.includes(currentQuery) || desc.includes(currentQuery);
+
+          if (matchesFilter && matchesSearch) {
+            card.style.display = 'flex';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      }
+
+      filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          filterBtns.forEach(b => {
+            b.classList.remove('bg-primary-container', 'text-on-primary', 'shadow-sm');
+            b.classList.add('bg-surface-container-low', 'text-on-surface-variant');
+          });
+
+          btn.classList.add('bg-primary-container', 'text-on-primary', 'shadow-sm');
+          btn.classList.remove('bg-surface-container-low', 'text-on-surface-variant');
+
+          currentFilter = btn.getAttribute('data-filter') || 'all';
+          updateVisibility();
+        });
+      });
+
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          currentQuery = e.target.value.trim().toLowerCase();
+          updateVisibility();
+        });
+      }
+    })();
+  </script>
+</div></main><footer class="w-full bg-surface-container-low py-space-lg mt-auto shadow-[0_-1px_8px_rgba(0,0,0,0.02)]"><div class="max-w-[1160px] mx-auto px-margin flex flex-col sm:flex-row items-center justify-between gap-space-md text-on-surface-variant font-body-sm text-body-sm"><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-primary text-[20px]">spa</span><span class="font-label-md text-label-md text-on-surface">MindEase AI Sanctuary</span><span>•</span><span>Gentle guidance for student cognitive wellness</span></div><div class="flex items-center gap-space-lg"><a class="font-label-md text-label-md text-primary hover:text-primary-container transition-colors" data-path="crisis-support" href="#">Immediate Support & Resources</a><span class="font-label-sm text-label-sm">© 2024 MindEase AI</span></div></div></footer></body></html>

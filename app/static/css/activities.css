@@ -1,0 +1,1212 @@
+/* ==========================================================================
+   MindEase AI — Stitch-Inspired Wellness Design System for Activities
+   File: app/static/css/activities.css
+   All custom properties prefixed with --act-
+   All CSS selectors prefixed with .act-
+   ========================================================================== */
+
+:root {
+  /* Surfaces & Canvas Tiers */
+  --act-surface: #fbf9f6;
+  --act-surface-low: #f5f3f0;
+  --act-surface-lowest: #ffffff;
+  --act-surface-high: #eae8e5;
+  --act-surface-highest: #e4e2df;
+  --act-surface-container: #efeeeb;
+
+  /* Typography Colors & Borders (High Contrast WCAG AA) */
+  --act-on-surface: #1b1c1a;
+  --act-on-surface-variant: #3f493f;
+  --act-outline: #6f7a6e;
+  --act-outline-variant: #becabc;
+  --act-border: rgba(30, 41, 34, 0.08);
+
+  /* Primary: Forest Vitality / Botanical Green */
+  --act-primary: #00652c;
+  --act-primary-container: #15803d;
+  --act-on-primary: #ffffff;
+  --act-primary-fixed: #95f8a7;
+  --act-primary-fixed-dim: #79db8d;
+  --act-on-primary-fixed: #00210a;
+  --act-on-primary-fixed-variant: #005323;
+  --act-primary-light: #f0fdf4;
+  --act-primary-border: #dcfce7;
+
+  /* Secondary: Serene Sky / Deep Work Blue (Pomodoro) */
+  --act-secondary: #006398;
+  --act-secondary-container: #5bb8fe;
+  --act-on-secondary: #ffffff;
+  --act-secondary-fixed: #cce5ff;
+  --act-secondary-fixed-dim: #93ccff;
+  --act-on-secondary-fixed: #001d31;
+  --act-on-secondary-fixed-variant: #004b73;
+  --act-secondary-light: #f0f9ff;
+  --act-secondary-border: #e0f2fe;
+
+  /* Tertiary: Restorative Lavender (Self-Compassion) */
+  --act-tertiary: #7e0cd5;
+  --act-tertiary-container: #983aef;
+  --act-on-tertiary: #ffffff;
+  --act-tertiary-fixed: #f0dbff;
+  --act-tertiary-fixed-dim: #ddb8ff;
+  --act-on-tertiary-fixed: #2c0051;
+  --act-on-tertiary-fixed-variant: #6800b4;
+  --act-tertiary-light: #faf5ff;
+  --act-tertiary-border: #f3e8ff;
+
+  /* Distinct Activity Accents */
+  /* 5-4-3-2-1 Grounding: Warm Amber */
+  --act-amber: #b45309;
+  --act-amber-dark: #78350f;
+  --act-amber-bg: #fef3c7;
+  --act-amber-border: #fde68a;
+  --act-amber-light: #fffbeb;
+
+  /* Task Chunking: Teal / Emerald */
+  --act-teal: #0f766e;
+  --act-teal-dark: #115e59;
+  --act-teal-bg: #ccfbf1;
+  --act-teal-border: #99f6e4;
+  --act-teal-light: #f0fdfa;
+
+  /* Stretch & Eye Reset: Rose / Coral */
+  --act-rose: #be123c;
+  --act-rose-dark: #9f1239;
+  --act-rose-bg: #ffe4e6;
+  --act-rose-border: #fecdd3;
+  --act-rose-light: #fff1f2;
+
+  /* Geometry & Elevation */
+  --act-radius-sm: 0.5rem;
+  --act-radius-md: 1rem;
+  --act-radius-lg: 1.5rem;
+  --act-radius-xl: 2rem;
+  --act-radius-full: 9999px;
+
+  --act-shadow-sm: 0 2px 8px -2px rgba(21, 128, 61, 0.04), 0 1px 3px 0 rgba(30, 41, 34, 0.03);
+  --act-shadow-md: 0 8px 24px -4px rgba(21, 128, 61, 0.06), 0 4px 12px -2px rgba(30, 41, 34, 0.03);
+  --act-shadow-lg: 0 16px 40px -8px rgba(30, 41, 34, 0.08);
+
+  /* Spacing */
+  --act-space-xs: 0.375rem;
+  --act-space-sm: 0.75rem;
+  --act-space-md: 1.25rem;
+  --act-space-lg: 2rem;
+  --act-space-xl: 3rem;
+}
+
+/* Base Container & Section */
+.act-container {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: var(--act-space-sm) var(--act-space-md) var(--act-space-xl);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: var(--act-on-surface);
+}
+
+.act-detail-container {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: var(--act-space-sm) var(--act-space-md) var(--act-space-xl);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: var(--act-on-surface);
+}
+
+/* Accessible Back Link */
+.act-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--act-primary);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: var(--act-radius-full);
+  background: var(--act-surface-low);
+  transition: background 0.2s ease, transform 0.2s ease;
+  min-height: 44px;
+  margin-bottom: var(--act-space-md);
+}
+
+.act-back-link:hover,
+.act-back-link:focus-visible {
+  background: var(--act-surface-high);
+  outline: 2px solid var(--act-primary);
+  outline-offset: 2px;
+}
+
+/* Badges */
+.act-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--act-radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.act-badge-primary {
+  background: var(--act-primary-light);
+  color: var(--act-primary-container);
+  border: 1px solid var(--act-primary-border);
+}
+
+.act-badge-amber {
+  background: var(--act-amber-bg);
+  color: var(--act-amber-dark);
+  border: 1px solid var(--act-amber-border);
+}
+
+.act-badge-secondary {
+  background: var(--act-secondary-fixed);
+  color: var(--act-on-secondary-fixed-variant);
+  border: 1px solid var(--act-secondary-border);
+}
+
+.act-badge-teal {
+  background: var(--act-teal-bg);
+  color: var(--act-teal-dark);
+  border: 1px solid var(--act-teal-border);
+}
+
+.act-badge-tertiary {
+  background: var(--act-tertiary-fixed);
+  color: var(--act-on-tertiary-fixed-variant);
+  border: 1px solid var(--act-tertiary-border);
+}
+
+.act-badge-rose {
+  background: var(--act-rose-bg);
+  color: var(--act-rose-dark);
+  border: 1px solid var(--act-rose-border);
+}
+
+.act-badge-muted {
+  background: var(--act-surface-low);
+  color: var(--act-on-surface-variant);
+  border: 1px solid var(--act-border);
+}
+
+/* ==========================================================================
+   Activity Catalog Styles
+   ========================================================================== */
+.act-catalog-header {
+  margin-bottom: var(--act-space-lg);
+  text-align: left;
+}
+
+.act-catalog-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: var(--act-on-surface);
+  margin: var(--act-space-xs) 0 8px 0;
+}
+
+.act-catalog-subtitle {
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: var(--act-on-surface-variant);
+  max-width: 640px;
+  margin: 0;
+}
+
+.act-catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--act-space-lg);
+}
+
+.act-card {
+  background: var(--act-surface-lowest);
+  border: 1px solid var(--act-border);
+  border-radius: var(--act-radius-xl);
+  padding: var(--act-space-lg);
+  box-shadow: var(--act-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.act-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--act-shadow-md);
+  border-color: rgba(21, 128, 61, 0.18);
+}
+
+.act-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--act-space-sm);
+  margin-bottom: var(--act-space-md);
+}
+
+.act-duration-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--act-on-surface-variant);
+}
+
+.act-card-illustration {
+  width: 100%;
+  height: 160px;
+  background: var(--act-surface-low);
+  border-radius: var(--act-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--act-space-md);
+  margin-bottom: var(--act-space-md);
+  transition: transform 0.3s ease;
+  box-sizing: border-box;
+}
+
+.act-card:hover .act-card-illustration {
+  transform: scale(1.02);
+}
+
+.act-card-title {
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--act-on-surface);
+  margin: 0 0 6px 0;
+  line-height: 1.3;
+}
+
+.act-card-benefit {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--act-primary-container);
+  margin-bottom: 8px;
+}
+
+.act-card-desc {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--act-on-surface-variant);
+  margin: 0 0 var(--act-space-md) 0;
+}
+
+.act-start-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 20px;
+  border-radius: var(--act-radius-full);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--act-shadow-sm);
+  border: none;
+  box-sizing: border-box;
+}
+
+.act-start-btn-primary {
+  background: var(--act-primary-container);
+  color: #ffffff;
+}
+.act-start-btn-primary:hover, .act-start-btn-primary:focus-visible {
+  background: var(--act-primary);
+  box-shadow: var(--act-shadow-md);
+}
+
+.act-start-btn-amber {
+  background: var(--act-amber);
+  color: #ffffff;
+}
+.act-start-btn-amber:hover, .act-start-btn-amber:focus-visible {
+  background: var(--act-amber-dark);
+  box-shadow: var(--act-shadow-md);
+}
+
+.act-start-btn-secondary {
+  background: var(--act-secondary);
+  color: #ffffff;
+}
+.act-start-btn-secondary:hover, .act-start-btn-secondary:focus-visible {
+  background: #004d77;
+  box-shadow: var(--act-shadow-md);
+}
+
+.act-start-btn-teal {
+  background: var(--act-teal);
+  color: #ffffff;
+}
+.act-start-btn-teal:hover, .act-start-btn-teal:focus-visible {
+  background: var(--act-teal-dark);
+  box-shadow: var(--act-shadow-md);
+}
+
+.act-start-btn-tertiary {
+  background: var(--act-tertiary);
+  color: #ffffff;
+}
+.act-start-btn-tertiary:hover, .act-start-btn-tertiary:focus-visible {
+  background: var(--act-tertiary-container);
+  box-shadow: var(--act-shadow-md);
+}
+
+.act-start-btn-rose {
+  background: var(--act-rose);
+  color: #ffffff;
+}
+.act-start-btn-rose:hover, .act-start-btn-rose:focus-visible {
+  background: var(--act-rose-dark);
+  box-shadow: var(--act-shadow-md);
+}
+
+/* ==========================================================================
+   Shared Guided Stepper Frame
+   ========================================================================== */
+.act-stepper-card {
+  background: var(--act-surface-lowest);
+  border: 1px solid var(--act-border);
+  border-radius: var(--act-radius-xl);
+  padding: var(--act-space-lg);
+  box-shadow: var(--act-shadow-sm);
+  margin-bottom: var(--act-space-lg);
+}
+
+.act-stepper-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--act-space-sm);
+  flex-wrap: wrap;
+  gap: var(--act-space-xs);
+}
+
+.act-step-indicator {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--act-primary-container);
+}
+
+.act-progress-track {
+  width: 100%;
+  height: 6px;
+  background: var(--act-surface-high);
+  border-radius: var(--act-radius-full);
+  overflow: hidden;
+  margin-bottom: var(--act-space-lg);
+}
+
+.act-progress-fill {
+  height: 100%;
+  background: var(--act-primary-container);
+  border-radius: var(--act-radius-full);
+  transition: width 0.4s ease;
+}
+
+.act-panel {
+  display: block;
+}
+
+.act-panel[hidden] {
+  display: none !important;
+}
+
+.act-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--act-space-sm);
+  margin-top: var(--act-space-lg);
+  padding-top: var(--act-space-md);
+  border-top: 1px solid var(--act-surface-high);
+}
+
+.act-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 10px 22px;
+  border-radius: var(--act-radius-full);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  box-sizing: border-box;
+}
+
+.act-btn-primary {
+  background: var(--act-primary-container);
+  color: #ffffff;
+  border-color: var(--act-primary-container);
+}
+.act-btn-primary:hover:not(:disabled) {
+  background: var(--act-primary);
+}
+
+.act-btn-secondary {
+  background: var(--act-surface-low);
+  color: var(--act-on-surface);
+  border-color: var(--act-border);
+}
+.act-btn-secondary:hover:not(:disabled) {
+  background: var(--act-surface-high);
+}
+
+.act-btn:disabled {
+  background: var(--act-surface-highest);
+  color: rgba(30, 41, 34, 0.4);
+  border-color: transparent;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ==========================================================================
+   1. 5-4-3-2-1 Sensory Grounding
+   ========================================================================== */
+.act-grounding-banner {
+  background: var(--act-amber-light);
+  border: 1px solid var(--act-amber-border);
+  border-radius: var(--act-radius-md);
+  padding: var(--act-space-md);
+  margin-bottom: var(--act-space-md);
+}
+
+.act-grounding-heading {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--act-amber-dark);
+  margin: 0 0 4px 0;
+}
+
+.act-grounding-instruction {
+  font-size: 0.9375rem;
+  color: var(--act-on-surface-variant);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.act-grounding-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--act-surface-lowest);
+  border: 1px solid var(--act-border);
+  border-radius: var(--act-radius-md);
+  padding: 10px 16px;
+  margin-bottom: var(--act-space-md);
+  box-shadow: var(--act-shadow-sm);
+}
+
+.act-grounding-counter {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--act-primary-container);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.act-grounding-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--act-space-sm);
+  margin-bottom: var(--act-space-md);
+}
+
+.act-grounding-card {
+  background: var(--act-surface-lowest);
+  border: 1.5px solid var(--act-border);
+  border-radius: var(--act-radius-md);
+  padding: var(--act-space-md);
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+  box-shadow: var(--act-shadow-sm);
+  box-sizing: border-box;
+}
+
+.act-grounding-card:hover {
+  border-color: var(--act-primary-border);
+  background: var(--act-surface-low);
+}
+
+.act-grounding-card.act-selected {
+  background: var(--act-primary-light);
+  border-color: var(--act-primary-container);
+}
+
+.act-grounding-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.act-grounding-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--act-radius-full);
+  background: var(--act-surface-low);
+  color: var(--act-on-surface-variant);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.act-grounding-card.act-selected .act-grounding-icon-box {
+  background: rgba(21, 128, 61, 0.15);
+  color: var(--act-primary-container);
+}
+
+.act-indicator-circle {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--act-radius-full);
+  border: 2px solid var(--act-outline-variant);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.act-grounding-card.act-selected .act-indicator-circle {
+  background: var(--act-primary-container);
+  border-color: var(--act-primary-container);
+  color: #ffffff;
+}
+
+.act-grounding-prompt-text {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--act-on-surface);
+  line-height: 1.35;
+}
+
+.act-grounding-card.act-selected .act-grounding-prompt-text {
+  color: var(--act-primary-container);
+}
+
+.act-grounding-subtext {
+  font-size: 0.75rem;
+  color: var(--act-on-surface-variant);
+  margin-top: 2px;
+}
+
+.act-grounding-hint {
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--act-outline);
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+.act-grounding-hint.act-ready {
+  color: var(--act-primary-container);
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   2. Pomodoro Focus
+   ========================================================================== */
+.act-pomodoro-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--act-space-md) 0;
+}
+
+.act-pomodoro-phase {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 18px;
+  border-radius: var(--act-radius-full);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  margin-bottom: var(--act-space-md);
+  transition: all 0.3s ease;
+}
+
+.act-pomodoro-phase.focus-mode {
+  background: var(--act-secondary-fixed);
+  color: var(--act-on-secondary-fixed-variant);
+  border: 1px solid var(--act-secondary-border);
+}
+
+.act-pomodoro-phase.break-mode {
+  background: var(--act-primary-light);
+  color: var(--act-primary-container);
+  border: 1px solid var(--act-primary-border);
+}
+
+.act-pomodoro-dial-container {
+  position: relative;
+  width: 250px;
+  height: 250px;
+  margin: 0 auto var(--act-space-md);
+}
+
+.act-pomodoro-svg {
+  width: 250px;
+  height: 250px;
+  transform: rotate(-90deg);
+}
+
+.act-pomodoro-ring-bg {
+  fill: none;
+  stroke: var(--act-surface-high);
+  stroke-width: 10;
+}
+
+.act-pomodoro-ring-progress {
+  fill: none;
+  stroke: var(--act-secondary);
+  stroke-width: 10;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.4s ease, stroke 0.3s ease;
+}
+
+.act-pomodoro-ring-progress.break-mode {
+  stroke: var(--act-primary-container);
+}
+
+.act-pomodoro-dial-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.act-pomodoro-time {
+  font-size: 3.25rem;
+  font-weight: 800;
+  font-family: monospace;
+  color: var(--act-on-surface);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.act-pomodoro-subtext {
+  font-size: 0.875rem;
+  color: var(--act-on-surface-variant);
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+.act-pomodoro-dots {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--act-space-md);
+}
+
+.act-pomodoro-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--act-radius-full);
+  background: var(--act-surface-high);
+}
+
+.act-pomodoro-dot.active {
+  width: 28px;
+  background: var(--act-secondary);
+}
+
+.act-pomodoro-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--act-space-sm);
+  margin-bottom: var(--act-space-lg);
+  flex-wrap: wrap;
+}
+
+.act-pomodoro-upnext {
+  background: var(--act-secondary-light);
+  border: 1px solid var(--act-secondary-border);
+  border-radius: var(--act-radius-lg);
+  padding: var(--act-space-md);
+  width: 100%;
+  max-width: 520px;
+  text-align: left;
+}
+
+.act-pomodoro-upnext-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--act-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 4px 0;
+}
+
+.act-pomodoro-upnext-desc {
+  font-size: 0.875rem;
+  color: var(--act-on-surface-variant);
+  margin: 0 0 10px 0;
+  line-height: 1.5;
+}
+
+.act-pomodoro-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.act-pomodoro-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--act-radius-full);
+  background: var(--act-surface-lowest);
+  color: var(--act-on-surface);
+  border: 1px solid var(--act-border);
+}
+
+/* ==========================================================================
+   3. Task Chunking
+   ========================================================================== */
+.act-chunk-wrap {
+  width: 100%;
+}
+
+.act-chunk-focal-card {
+  background: var(--act-teal-light);
+  border: 1px solid var(--act-teal-border);
+  border-radius: var(--act-radius-lg);
+  padding: var(--act-space-md);
+  margin-bottom: var(--act-space-md);
+}
+
+.act-chunk-focal-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--act-teal);
+  margin: 0 0 6px 0;
+}
+
+.act-chunk-input-wrap {
+  position: relative;
+  margin-top: 8px;
+}
+
+.act-chunk-input {
+  width: 100%;
+  min-height: 50px;
+  padding: 12px 16px;
+  font-size: 1rem;
+  color: var(--act-on-surface);
+  background: var(--act-surface-lowest);
+  border: 2px solid var(--act-border);
+  border-radius: var(--act-radius-md);
+  font-family: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.act-chunk-input:focus {
+  outline: none;
+  border-color: var(--act-teal);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+}
+
+.act-chunk-char-count {
+  font-size: 0.75rem;
+  color: var(--act-outline);
+  text-align: right;
+  margin-top: 4px;
+}
+
+.act-chunk-steps-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--act-space-md);
+  margin: var(--act-space-md) 0;
+}
+
+.act-chunk-step-card {
+  background: var(--act-surface-lowest);
+  border: 1px solid var(--act-border);
+  border-radius: var(--act-radius-md);
+  padding: var(--act-space-md);
+  box-shadow: var(--act-shadow-sm);
+  display: flex;
+  gap: var(--act-space-sm);
+  align-items: flex-start;
+}
+
+.act-chunk-step-num {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--act-radius-full);
+  background: var(--act-teal);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 8px;
+}
+
+.act-chunk-review-item {
+  background: var(--act-surface-lowest);
+  border: 1px solid var(--act-border);
+  border-radius: var(--act-radius-md);
+  padding: 14px 18px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  box-shadow: var(--act-shadow-sm);
+}
+
+.act-chunk-review-num {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--act-radius-full);
+  background: var(--act-teal);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   4. Self-Compassion
+   ========================================================================== */
+.act-compassion-card {
+  background: var(--act-tertiary-light);
+  border: 1px solid var(--act-tertiary-border);
+  border-radius: var(--act-radius-lg);
+  padding: var(--act-space-lg);
+  margin-bottom: var(--act-space-md);
+}
+
+.act-compassion-prompt {
+  font-size: 1.25rem;
+  line-height: 1.6;
+  font-weight: 600;
+  color: var(--act-on-surface);
+  margin: 0 0 10px 0;
+}
+
+.act-compassion-subtext {
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: var(--act-on-surface-variant);
+  margin: 0 0 var(--act-space-md) 0;
+}
+
+.act-compassion-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: var(--act-space-md);
+}
+
+.act-compassion-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--act-radius-full);
+  background: var(--act-surface-lowest);
+  border: 1px solid var(--act-tertiary-border);
+  color: var(--act-on-surface);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 40px;
+}
+
+.act-compassion-chip:hover {
+  background: var(--act-tertiary-fixed);
+  border-color: var(--act-tertiary);
+  transform: translateY(-1px);
+}
+
+.act-compassion-input-box {
+  background: var(--act-surface-lowest);
+  border: 1px solid var(--act-border);
+  border-radius: var(--act-radius-md);
+  padding: var(--act-space-md);
+  box-shadow: var(--act-shadow-sm);
+}
+
+.act-compassion-textarea {
+  width: 100%;
+  min-height: 120px;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--act-on-surface);
+  background: transparent;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.act-compassion-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--act-surface-high);
+  padding-top: 8px;
+  margin-top: 8px;
+}
+
+.act-compassion-privacy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--act-outline);
+  font-weight: 500;
+}
+
+.act-compassion-words {
+  font-size: 0.75rem;
+  color: var(--act-outline);
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   5. Stretch Reset
+   ========================================================================== */
+.act-stretch-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: var(--act-surface-container);
+  padding: 6px;
+  border-radius: var(--act-radius-lg);
+  margin-bottom: var(--act-space-md);
+}
+
+.act-stretch-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 12px;
+  border-radius: var(--act-radius-md);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.act-stretch-tab.active {
+  background: var(--act-primary-container);
+  color: #ffffff;
+  box-shadow: var(--act-shadow-sm);
+}
+
+.act-stretch-tab-phase {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.act-stretch-tab-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.act-stretch-card {
+  background: var(--act-surface-low);
+  border: 1px solid var(--act-border);
+  border-radius: var(--act-radius-lg);
+  padding: var(--act-space-lg);
+  margin-bottom: var(--act-space-md);
+  box-shadow: var(--act-shadow-sm);
+}
+
+.act-stretch-eyegaze-card {
+  background: var(--act-secondary-light);
+  border: 1px solid var(--act-secondary-border);
+}
+
+.act-stretch-illustration-wrap {
+  width: 100%;
+  height: 180px;
+  background: var(--act-surface-lowest);
+  border-radius: var(--act-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: var(--act-space-sm) 0 var(--act-space-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.act-stretch-timer-display {
+  font-size: 3rem;
+  font-weight: 800;
+  font-family: monospace;
+  color: var(--act-on-surface);
+  text-align: center;
+  margin: var(--act-space-sm) 0;
+  line-height: 1;
+}
+
+.act-stretch-controls {
+  display: flex;
+  justify-content: center;
+  gap: var(--act-space-sm);
+  margin-top: var(--act-space-sm);
+  flex-wrap: wrap;
+}
+
+.act-stretch-coming-next {
+  background: var(--act-secondary-light);
+  border: 1px solid var(--act-secondary-border);
+  border-radius: var(--act-radius-md);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--act-space-sm);
+  margin-top: var(--act-space-md);
+}
+
+/* ==========================================================================
+   Shared Finish State
+   ========================================================================== */
+.act-finish-card {
+  text-align: center;
+  padding: var(--act-space-xl) var(--act-space-md);
+}
+
+.act-finish-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--act-radius-full);
+  background: var(--act-primary-light);
+  border: 2px solid var(--act-primary-border);
+  color: var(--act-primary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--act-space-md) auto;
+  box-shadow: var(--act-shadow-sm);
+}
+
+.act-finish-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--act-on-surface);
+  margin: 0 0 8px 0;
+}
+
+.act-finish-desc {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--act-on-surface-variant);
+  max-width: 480px;
+  margin: 0 auto var(--act-space-lg) auto;
+}
+
+/* ==========================================================================
+   Accessibility: Reduced Motion
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   Mobile Responsiveness (360px viewport)
+   ========================================================================== */
+@media (max-width: 480px) {
+  .act-catalog-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .act-grounding-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .act-card {
+    padding: var(--act-space-md);
+  }
+
+  .act-stepper-card {
+    padding: var(--act-space-md);
+  }
+
+  .act-pomodoro-dial-container,
+  .act-pomodoro-svg {
+    width: 220px;
+    height: 220px;
+  }
+
+  .act-pomodoro-time {
+    font-size: 2.65rem;
+  }
+
+  .act-nav-bar {
+    flex-direction: column-reverse;
+  }
+
+  .act-nav-bar .act-btn {
+    width: 100%;
+  }
+
+  .act-catalog-title {
+    font-size: 1.75rem;
+  }
+}
