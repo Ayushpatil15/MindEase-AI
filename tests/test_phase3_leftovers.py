@@ -92,6 +92,74 @@ class TestAppEnvPrecedence:
             assert app.config['SECRET_KEY'] == 'real-prod-secret-key-12345'
 
 
+class TestDatabaseUrlNormalization:
+    """Tests for PostgreSQL database URL normalization and psycopg2 driver selection."""
+
+    def test_postgres_legacy_prefix_normalized_to_psycopg2(self):
+        """Render legacy 'postgres://' is normalized to 'postgresql+psycopg2://'."""
+        render_url = 'postgres://usr:pwd@dpg-c01.render.com:5432/mindease_db?sslmode=require'
+        with patch.dict('os.environ', {'APP_ENV': 'production', 'SECRET_KEY': 'k', 'DATABASE_URL': render_url}):
+            app = create_app('production')
+            uri = app.config['SQLALCHEMY_DATABASE_URI']
+            assert uri == 'postgresql+psycopg2://usr:pwd@dpg-c01.render.com:5432/mindease_db?sslmode=require'
+
+    def test_postgresql_prefix_normalized_to_psycopg2(self):
+        """Standard 'postgresql://' without explicit driver is normalized to 'postgresql+psycopg2://'."""
+        std_url = 'postgresql://usr:pwd@dpg-c01.render.com:5432/mindease_db?sslmode=require'
+        with patch.dict('os.environ', {'APP_ENV': 'production', 'SECRET_KEY': 'k', 'DATABASE_URL': std_url}):
+            app = create_app('production')
+            uri = app.config['SQLALCHEMY_DATABASE_URI']
+            assert uri == 'postgresql+psycopg2://usr:pwd@dpg-c01.render.com:5432/mindease_db?sslmode=require'
+
+    def test_postgresql_psycopg_prefix_normalized_to_psycopg2(self):
+        """Psycopg 3 'postgresql+psycopg://' is normalized to 'postgresql+psycopg2://'."""
+        p3_url = 'postgresql+psycopg://usr:pwd@dpg-c01.render.com:5432/mindease_db?sslmode=require'
+        with patch.dict('os.environ', {'APP_ENV': 'production', 'SECRET_KEY': 'k', 'DATABASE_URL': p3_url}):
+            app = create_app('production')
+            uri = app.config['SQLALCHEMY_DATABASE_URI']
+            assert uri == 'postgresql+psycopg2://usr:pwd@dpg-c01.render.com:5432/mindease_db?sslmode=require'
+
+    def test_postgresql_psycopg2_already_specified(self):
+        """Explicit 'postgresql+psycopg2://' is preserved as-is."""
+        p2_url = 'postgresql+psycopg2://usr:pwd@dpg-c01.render.com:5432/mindease_db?sslmode=require'
+        with patch.dict('os.environ', {'APP_ENV': 'production', 'SECRET_KEY': 'k', 'DATABASE_URL': p2_url}):
+            app = create_app('production')
+            uri = app.config['SQLALCHEMY_DATABASE_URI']
+            assert uri == p2_url
+
+    def test_sqlalchemy_make_url_selects_psycopg2_driver(self):
+        """Verify SQLAlchemy engine.make_url selects the installed 'psycopg2' driver."""
+        from sqlalchemy.engine import make_url
+        raw_url = 'postgres://usr:pwd@dpg-c01.render.com:5432/mindease_db?sslmode=require'
+        with patch.dict('os.environ', {'APP_ENV': 'production', 'SECRET_KEY': 'k', 'DATABASE_URL': raw_url}):
+            app = create_app('production')
+            url = make_url(app.config['SQLALCHEMY_DATABASE_URI'])
+            assert url.drivername == 'postgresql+psycopg2'
+            assert url.get_driver_name() == 'psycopg2'
+            assert url.username == 'usr'
+            assert url.password == 'pwd'
+            assert url.host == 'dpg-c01.render.com'
+            assert url.port == 5432
+            assert url.database == 'mindease_db'
+            assert url.query['sslmode'] == 'require'
+
+    def test_development_config_normalizes_postgres_url(self):
+        """DevelopmentConfig also normalizes postgres URLs when DATABASE_URL is set."""
+        raw_url = 'postgres://devusr:devpwd@localhost:5432/devdb'
+        with patch.dict('os.environ', {'DATABASE_URL': raw_url}):
+            app = create_app('development')
+            assert app.config['SQLALCHEMY_DATABASE_URI'] == 'postgresql+psycopg2://devusr:devpwd@localhost:5432/devdb'
+
+    def test_sqlite_fallback_preserved_when_database_url_unset(self):
+        """When DATABASE_URL is not set, production and development fall back to local SQLite."""
+        with patch.dict('os.environ', {'SECRET_KEY': 'k'}, clear=True):
+            prod_app = create_app('production')
+            dev_app = create_app('development')
+            assert prod_app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite:///')
+            assert 'instance' in prod_app.config['SQLALCHEMY_DATABASE_URI']
+            assert dev_app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite:///')
+
+
 class TestHistoryPagesEmbeddedJsonAndIsoDates:
     """Test rendering of both history pages and verification of embedded JSON and ISO dates."""
 

@@ -51,16 +51,26 @@ class Config:
 
 
 def _normalize_database_url(url, default):
-    """Normalize database connection URL for SQLAlchemy.
+    """Normalize database connection URL for SQLAlchemy with explicit psycopg2 driver.
 
-    Render and legacy PaaS providers inject PostgreSQL URLs starting with 'postgres://'.
-    SQLAlchemy 1.4+ and 2.0+ strictly require the 'postgresql://' dialect prefix.
-    Preserves all query parameters, hostnames, ports, and credentials.
+    Render and legacy PaaS providers inject PostgreSQL URLs starting with 'postgres://'
+    or 'postgresql://'. Without an explicit driver specification ('postgresql+psycopg2://'),
+    SQLAlchemy in certain environments attempts to load the Psycopg 3 driver ('psycopg')
+    instead of the installed 'psycopg2-binary' ('psycopg2'), triggering:
+    ModuleNotFoundError: No module named 'psycopg'.
+
+    This function normalizes 'postgres://', 'postgresql://', and 'postgresql+psycopg://'
+    to 'postgresql+psycopg2://' while preserving all credentials, hostnames, ports,
+    database paths, and query parameters.
     """
     if not url:
         return default
     if url.startswith('postgres://'):
-        return 'postgresql://' + url[len('postgres://'):]
+        return 'postgresql+psycopg2://' + url[len('postgres://'):]
+    if url.startswith('postgresql+psycopg://'):
+        return 'postgresql+psycopg2://' + url[len('postgresql+psycopg://'):]
+    if url.startswith('postgresql://'):
+        return 'postgresql+psycopg2://' + url[len('postgresql://'):]
     return url
 
 
