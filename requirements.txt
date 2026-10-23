@@ -15,4 +15,4 @@ numpy>=1.24,<2.0
 
 # Production Server & Database Drivers
 gunicorn>=21.2.0,<23.0.0
-psycopg2-binary>=2.9.9,<3.0.0
+psycopg2-binary>=2.9.9,<3.0.0psycopg[binary]>=3.1.18
