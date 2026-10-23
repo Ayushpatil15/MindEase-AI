@@ -50,20 +50,40 @@ class Config:
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024
 
 
+def _normalize_database_url(url, default):
+    """Normalize database connection URL for SQLAlchemy.
+
+    Render and legacy PaaS providers inject PostgreSQL URLs starting with 'postgres://'.
+    SQLAlchemy 1.4+ and 2.0+ strictly require the 'postgresql://' dialect prefix.
+    Preserves all query parameters, hostnames, ports, and credentials.
+    """
+    if not url:
+        return default
+    if url.startswith('postgres://'):
+        return 'postgresql://' + url[len('postgres://'):]
+    return url
+
+
 class _DevelopmentConfigMeta(type):
     @property
     def SECRET_KEY(cls):
         return os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+
+    @property
+    def SQLALCHEMY_DATABASE_URI(cls):
+        default_sqlite = 'sqlite:///' + os.path.join(BASE_DIR, 'instance', 'mindease.db')
+        return _normalize_database_url(os.environ.get('DATABASE_URL'), default_sqlite)
 
 
 class DevelopmentConfig(Config, metaclass=_DevelopmentConfigMeta):
     """Development configuration."""
 
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
-        'DATABASE_URL',
-        'sqlite:///' + os.path.join(BASE_DIR, 'instance', 'mindease.db'),
-    )
+
+    @property
+    def SQLALCHEMY_DATABASE_URI(self):
+        default_sqlite = 'sqlite:///' + os.path.join(BASE_DIR, 'instance', 'mindease.db')
+        return _normalize_database_url(os.environ.get('DATABASE_URL'), default_sqlite)
 
     @property
     def SECRET_KEY(self):
@@ -88,16 +108,22 @@ class _ProductionConfigMeta(type):
             raise RuntimeError("SECRET_KEY environment variable is required in production")
         return secret
 
+    @property
+    def SQLALCHEMY_DATABASE_URI(cls):
+        default_sqlite = 'sqlite:///' + os.path.join(BASE_DIR, 'instance', 'mindease.db')
+        return _normalize_database_url(os.environ.get('DATABASE_URL'), default_sqlite)
+
 
 class ProductionConfig(Config, metaclass=_ProductionConfigMeta):
     """Production configuration."""
 
     DEBUG = False
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
-        'DATABASE_URL',
-        'sqlite:///' + os.path.join(BASE_DIR, 'instance', 'mindease.db'),
-    )
     SESSION_COOKIE_SECURE = True
+
+    @property
+    def SQLALCHEMY_DATABASE_URI(self):
+        default_sqlite = 'sqlite:///' + os.path.join(BASE_DIR, 'instance', 'mindease.db')
+        return _normalize_database_url(os.environ.get('DATABASE_URL'), default_sqlite)
 
     @property
     def SECRET_KEY(self):
