@@ -78,6 +78,24 @@ def create_app(config_name=None):
     app.register_blueprint(mood_bp)
     app.register_blueprint(emotion_bp)
 
+    # ── Reverse Proxy Handling (ProxyFix for Render/Production) ───
+    if app.config.get('BEHIND_PROXY'):
+        from werkzeug.middleware.proxy_fix import ProxyFix
+        app.wsgi_app = ProxyFix(
+            app.wsgi_app,
+            x_for=1,
+            x_proto=1,
+            x_host=1,
+            x_port=1,
+        )
+
+    # ── Root Health & Readiness Route ─────────────────────────────
+    @app.route('/health')
+    def health_root():
+        """Root-level readiness check for load balancers and uptime monitoring."""
+        from app.routes.api import perform_health_check
+        return perform_health_check()
+
     # ── Error Handlers ────────────────────────────────────────────
     @app.errorhandler(404)
     def page_not_found(e):

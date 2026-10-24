@@ -285,24 +285,31 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
 
+            const csrfToken = getCsrfToken();
+            if (!csrfToken) {
+                apiError.textContent = 'Session security token missing. Please refresh the page.';
+                apiError.style.display = 'block';
+                return;
+            }
+
             const response = await fetch('/emotion/api/predict', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': getCsrfToken()
+                    'X-CSRFToken': csrfToken
                 },
                 body: JSON.stringify({ image: dataUrl })
             });
 
             const data = await response.json();
 
-            if (response.status === 503 || data.status === 'model_not_initialized') {
+            if (response.status === 503 || data.status === 'model_not_initialized' || data.status === 'cascade_missing') {
                 missingModelState.style.display = 'block';
-            } else if (!response.ok || data.status === 'error') {
-                apiError.textContent = data.message || data.error || 'Analysis failed. Please check frame lighting and try again.';
-                apiError.style.display = 'block';
             } else if (data.status === 'no_face_detected') {
                 apiError.textContent = data.message || 'No face detected in camera frame. Please adjust position and lighting.';
+                apiError.style.display = 'block';
+            } else if (!response.ok || data.status === 'error') {
+                apiError.textContent = data.message || data.error || 'Analysis failed. Please check frame lighting and try again.';
                 apiError.style.display = 'block';
             } else if (data.status === 'low_confidence') {
                 resultEmotion.textContent = "The model's guess: Not sure";

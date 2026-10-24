@@ -49,6 +49,9 @@ class Config:
     # Maximum request body size (5MB for image payloads)
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024
 
+    # Reverse proxy support (Render, Heroku, AWS ALB)
+    BEHIND_PROXY = os.environ.get('BEHIND_PROXY', 'false').lower() in ('true', '1')
+
 
 def _normalize_database_url(url, default):
     """Normalize database connection URL for SQLAlchemy with explicit psycopg2 driver.
@@ -129,6 +132,7 @@ class ProductionConfig(Config, metaclass=_ProductionConfigMeta):
 
     DEBUG = False
     SESSION_COOKIE_SECURE = True
+    BEHIND_PROXY = True
 
     @property
     def SQLALCHEMY_DATABASE_URI(self):

@@ -14,10 +14,64 @@ from app.services import task_service
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
 
+def perform_health_check():
+    """Readiness and health check for the application.
+
+    Contract:
+    - Database is a critical core dependency: if unreachable, returns HTTP 503 with status 'unhealthy'.
+    - TFLite model and Haar cascade are optional assets for experimental facial emotion check-in:
+      if absent, the endpoint returns HTTP 200 with status 'degraded' so the core website and student
+      safety services remain available to traffic.
+    - If all components are ready, returns HTTP 200 with status 'ok'.
+    - No credentials, secrets, or internal system paths are exposed.
+    """
+    import os
+    import sqlalchemy as sa
+    from flask import current_app
+    from app.extensions import db
+
+    status = 'ok'
+    checks = {}
+    http_status = 200
+
+    # 1. Database connectivity (critical core dependency)
+    try:
+        db.session.execute(sa.text('SELECT 1'))
+        checks['database'] = 'connected'
+    except Exception as e:
+        checks['database'] = 'unavailable'
+        status = 'unhealthy'
+        http_status = 503
+
+    # 2. TFLite model artifact availability
+    model_path = current_app.config.get('TFLITE_MODEL_PATH')
+    if model_path and os.path.isfile(model_path):
+        checks['model'] = 'ready'
+    else:
+        checks['model'] = 'missing'
+        if status == 'ok':
+            status = 'degraded'
+
+    # 3. Haar Cascade classifier availability
+    cascade_path = current_app.config.get('HAAR_CASCADE_PATH')
+    if cascade_path and os.path.isfile(cascade_path):
+        checks['cascade'] = 'ready'
+    else:
+        checks['cascade'] = 'missing'
+        if status == 'ok':
+            status = 'degraded'
+
+    return jsonify({
+        'status': status,
+        'message': 'MindEase AI is running.',
+        'checks': checks,
+    }), http_status
+
+
 @api_bp.route('/health')
 def health_check():
-    """Simple health-check endpoint for verifying the app is running."""
-    return jsonify({'status': 'ok', 'message': 'MindEase AI is running.'}), 200
+    """Health-check endpoint for verifying application and dependency readiness."""
+    return perform_health_check()
 
 
 @api_bp.route('/dashboard')

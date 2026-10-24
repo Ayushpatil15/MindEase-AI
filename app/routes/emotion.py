@@ -117,10 +117,20 @@ def api_predict():
             
     elif result['status'] == 'model_not_initialized':
         return jsonify({'status': 'model_not_initialized'}), 503
-        
-    elif result['status'] in ('no_face_detected', 'cascade_missing'):
-        return jsonify({'status': result['status'], 'message': result['message']}), 400
-        
+
+    elif result['status'] == 'cascade_missing':
+        logger.error("Haar cascade classifier file missing at: %s", cascade_path)
+        return jsonify({
+            'status': 'cascade_missing',
+            'message': 'Face detection classifier not found.'
+        }), 503
+
+    elif result['status'] == 'no_face_detected':
+        return jsonify({
+            'status': 'no_face_detected',
+            'message': result.get('message', 'No face detected in camera frame. Please adjust position and lighting.')
+        }), 200
+
     else:
         # Catch-all for error status
         return jsonify({'status': 'error', 'message': result.get('message', 'Inference failed.')}), 500

@@ -26,11 +26,25 @@ class TFLiteBackend:
         if not os.path.isfile(model_path):
             raise FileNotFoundError(f"TFLite model artifact missing at {model_path}")
 
-        import tensorflow as tf
-        self.interpreter = tf.lite.Interpreter(
-            model_path=model_path,
-            num_threads=num_threads
-        )
+        try:
+            from ai_edge_litert.interpreter import Interpreter
+            self.interpreter = Interpreter(
+                model_path=model_path,
+                num_threads=num_threads
+            )
+        except ImportError:
+            try:
+                import tflite_runtime.interpreter as tflite
+                self.interpreter = tflite.Interpreter(
+                    model_path=model_path,
+                    num_threads=num_threads
+                )
+            except ImportError:
+                import tensorflow as tf
+                self.interpreter = tf.lite.Interpreter(
+                    model_path=model_path,
+                    num_threads=num_threads
+                )
         self.interpreter.allocate_tensors()
 
         self.input_details = self.interpreter.get_input_details()
