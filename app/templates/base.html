@@ -41,6 +41,13 @@
                                 Check In
                             </a>
                         </li>
+                        {% if current_user.role == 'student' %}
+                        <li>
+                            <a href="{{ url_for('chat.index') }}" class="nav-link {% if request.endpoint and request.endpoint.startswith('chat.') %}active{% endif %}">
+                                AI Companion
+                            </a>
+                        </li>
+                        {% endif %}
                         <li>
                             <a href="{{ url_for('student.activities') }}" class="nav-link {% if request.endpoint in ['student.activities', 'student.activity_detail'] %}active{% endif %}">
                                 Activities

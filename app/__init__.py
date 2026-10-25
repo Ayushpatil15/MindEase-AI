@@ -69,6 +69,7 @@ def create_app(config_name=None):
     from app.routes.stress import stress_bp
     from app.routes.mood import mood_bp
     from app.routes.emotion import emotion_bp
+    from app.routes.chat import chat_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(student_bp)
@@ -77,6 +78,7 @@ def create_app(config_name=None):
     app.register_blueprint(stress_bp)
     app.register_blueprint(mood_bp)
     app.register_blueprint(emotion_bp)
+    app.register_blueprint(chat_bp)
 
     # ── Reverse Proxy Handling (ProxyFix for Render/Production) ───
     if app.config.get('BEHIND_PROXY'):

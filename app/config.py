@@ -52,6 +52,10 @@ class Config:
     # Reverse proxy support (Render, Heroku, AWS ALB)
     BEHIND_PROXY = os.environ.get('BEHIND_PROXY', 'false').lower() in ('true', '1')
 
+    # Google Gemini Chatbot Configuration (REST API)
+    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+    GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-2.5-flash-lite')
+
 
 def _normalize_database_url(url, default):
     """Normalize database connection URL for SQLAlchemy with explicit psycopg2 driver.

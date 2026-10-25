@@ -1,0 +1,518 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}AI Wellness Companion — MindEase AI{% endblock %}
+
+{% block content %}
+<div class="chat-page-container" style="max-width: 860px; margin: 20px auto; padding: 0 12px;">
+
+    <!-- Header Section -->
+    <div class="row-flex flex-between mb-md flex-wrap gap-md" style="align-items: flex-end;">
+        <div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                <span class="badge badge-primary">🌱 Non-Clinical AI Companion</span>
+                <span class="badge badge-muted">Private & Confidential</span>
+            </div>
+            <h1 style="font-size: 1.75rem; margin-bottom: 4px; color: var(--color-heading);">
+                AI Wellness Companion
+            </h1>
+            <p class="text-muted" style="margin-bottom: 0; font-size: 0.925rem;">
+                A calm, empathetic space to process student stress, build balance, and reflect.
+            </p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <a href="{{ url_for('student.support_center') }}" class="btn btn-secondary btn-sm" title="Immediate Human Support">
+                Need Helplines?
+            </a>
+            <button id="clearChatBtn" type="button" class="btn btn-secondary btn-sm" title="Clear chat history">
+                Reset Chat
+            </button>
+        </div>
+    </div>
+
+    <!-- Non-Clinical Wellness Notice -->
+    <div class="card mb-md" style="padding: 12px 16px; background-color: var(--color-surface-subtle); border-left: 3px solid var(--color-primary); font-size: 0.85rem; color: var(--color-text-body);">
+        <p style="margin: 0; line-height: 1.45;">
+            <strong>Helpful Note:</strong> MindEase AI is an empathetic peer companion designed to support daily student wellness and self-care. It does not provide medical diagnoses, clinical treatment, or psychiatric care. If you need urgent assistance, please reach <strong>Tele-MANAS (14416 / 1800-891-4416)</strong> or <strong>Emergency (112)</strong>.
+        </p>
+    </div>
+
+    <!-- Active Crisis Alert Banner (Hidden by default, shown on crisis response) -->
+    <div id="crisisAlertBanner" class="card mb-md" style="display: none; background: #fff5f5; border: 2px solid var(--color-error); border-radius: var(--border-radius); padding: 16px;">
+        <div style="display: flex; align-items: flex-start; gap: 12px;">
+            <div style="font-size: 1.75rem; line-height: 1;">🚨</div>
+            <div style="flex: 1;">
+                <h2 style="font-size: 1.15rem; color: var(--color-error); margin-bottom: 6px; font-weight: 700;">
+                    Immediate Support & Helplines
+                </h2>
+                <p id="crisisAlertText" style="margin-bottom: 12px; font-size: 0.9rem; color: var(--color-text-body); line-height: 1.5;">
+                    It sounds like you may be going through an intensely difficult time. You do not have to carry this alone. Free, confidential, 24/7 human listeners are available right now.
+                </p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-bottom: 12px;">
+                    <div style="background: white; border: 1px solid #fecaca; border-radius: var(--border-radius-sm); padding: 10px;">
+                        <div style="font-weight: 700; color: #991b1b; font-size: 0.85rem;">Tele-MANAS (National 24/7)</div>
+                        <div style="font-size: 1.15rem; font-weight: 700; color: var(--color-error);">14416 / 1800-891-4416</div>
+                        <div style="font-size: 0.75rem; color: var(--color-text-muted);">Toll-free, multi-lingual mental health care</div>
+                    </div>
+                    <div style="background: white; border: 1px solid #fecaca; border-radius: var(--border-radius-sm); padding: 10px;">
+                        <div style="font-weight: 700; color: #991b1b; font-size: 0.85rem;">National Emergency Services</div>
+                        <div style="font-size: 1.15rem; font-weight: 700; color: var(--color-error);">112</div>
+                        <div style="font-size: 0.75rem; color: var(--color-text-muted);">24/7 Police, Ambulance, Fire</div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <a href="{{ url_for('student.support_center') }}" class="btn btn-primary btn-sm" style="background-color: var(--color-error); border-color: var(--color-error);">
+                        Open Support Center Resources &rarr;
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Card Container -->
+    <div class="card" style="display: flex; flex-direction: column; padding: 0; overflow: hidden; box-shadow: var(--shadow-sm); border: 1px solid var(--color-border); border-radius: var(--border-radius-lg); background: var(--color-surface);">
+
+        <!-- Chat History Scroll Box -->
+        <div id="chatMessages" role="log" aria-live="polite" aria-label="Conversation with MindEase AI" style="flex: 1; min-height: 400px; max-height: 520px; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; background: #fafbfc;">
+
+            <!-- Welcome / Initial Greeting from Companion -->
+            <div class="chat-message assistant-message" style="display: flex; gap: 12px; align-items: flex-start; max-width: 85%;">
+                <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--color-primary-bg); border: 1px solid var(--color-primary-border); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;" aria-hidden="true">
+                    🌱
+                </div>
+                <div style="background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 14px; border-top-left-radius: 4px; padding: 14px 18px; box-shadow: var(--shadow-sm);">
+                    <div style="font-size: 0.75rem; font-weight: 600; color: var(--color-primary); margin-bottom: 4px;">
+                        MindEase Companion
+                    </div>
+                    <div class="message-content" style="font-size: 0.95rem; line-height: 1.55; color: var(--color-text-body); white-space: pre-wrap;">Hello! I'm your MindEase wellness companion. Whether you're navigating exam stress, feeling overwhelmed with coursework, or just need a calm space to reflect, I'm here to listen and help you find steady ground. How are you feeling today?</div>
+                </div>
+            </div>
+
+            <!-- Quick Starter Prompts -->
+            <div id="quickPromptContainer" style="display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 8px 48px;">
+                <button type="button" class="btn btn-secondary btn-sm quick-prompt-btn" style="border-radius: var(--radius-pill); font-size: 0.8rem; background: var(--color-surface); border-color: var(--color-border);" data-prompt="I'm feeling anxious about upcoming exams and deadlines.">
+                    📝 Exam anxiety
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm quick-prompt-btn" style="border-radius: var(--radius-pill); font-size: 0.8rem; background: var(--color-surface); border-color: var(--color-border);" data-prompt="Can you guide me through a 2-minute calming breathing exercise?">
+                    🌬️ Quick breathing exercise
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm quick-prompt-btn" style="border-radius: var(--radius-pill); font-size: 0.8rem; background: var(--color-surface); border-color: var(--color-border);" data-prompt="I keep procrastinating on my assignments and feeling guilty.">
+                    ⏳ Procrastination help
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm quick-prompt-btn" style="border-radius: var(--radius-pill); font-size: 0.8rem; background: var(--color-surface); border-color: var(--color-border);" data-prompt="How can I wind down and improve my sleep schedule?">
+                    🌙 Sleep & winding down
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Typing Indicator (Hidden by default) -->
+        <div id="typingIndicator" style="display: none; padding: 8px 20px 12px 68px; background: #fafbfc; font-size: 0.825rem; color: var(--color-text-muted); align-items: center; gap: 6px;">
+            <span class="typing-dot" style="animation: pulseDot 1.4s infinite ease-in-out;">🌱</span>
+            <span>MindEase is formulating a response...</span>
+        </div>
+
+        <!-- Chat Input Form -->
+        <div style="border-top: 1px solid var(--color-border); padding: 14px 18px; background: var(--color-surface);">
+            <form id="chatForm" autocomplete="off">
+                <input type="hidden" name="csrf_token" id="csrfToken" value="{{ csrf_token() }}">
+
+                <div style="display: flex; gap: 10px; align-items: flex-end;">
+                    <div style="flex: 1; position: relative;">
+                        <label for="chatInput" class="visually-hidden" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;">
+                            Type your message
+                        </label>
+                        <textarea
+                            id="chatInput"
+                            name="message"
+                            rows="2"
+                            maxlength="2000"
+                            placeholder="Type a message or what is on your mind... (Enter to send, Shift+Enter for new line)"
+                            style="width: 100%; resize: none; border-radius: var(--border-radius); border: 1px solid var(--color-border); padding: 10px 14px; font-family: var(--font-family); font-size: 0.95rem; line-height: 1.45; color: var(--color-text); outline: none; transition: border-color var(--transition-fast);"
+                            required
+                        ></textarea>
+                    </div>
+                    <button
+                        type="submit"
+                        id="sendMessageBtn"
+                        class="btn btn-primary"
+                        style="height: 48px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600;"
+                    >
+                        <span>Send</span>
+                        <span aria-hidden="true">&rarr;</span>
+                    </button>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 0.75rem; color: var(--color-text-muted);">
+                    <div id="chatStatusText" aria-live="polite"></div>
+                    <div>
+                        <span id="charCounter">0</span> / 2000 characters
+                    </div>
+                </div>
+            </form>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Styles for chat interactions -->
+<style>
+@keyframes pulseDot {
+    0%, 100% { opacity: 0.3; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.1); }
+}
+
+.chat-message.user-message {
+    align-self: flex-end;
+    display: flex;
+    justify-content: flex-end;
+    max-width: 85%;
+}
+
+.chat-message.user-message .message-bubble {
+    background-color: var(--color-primary-bg);
+    border: 1px solid var(--color-primary-border);
+    color: var(--color-text);
+    border-radius: 14px;
+    border-top-right-radius: 4px;
+    padding: 12px 16px;
+    box-shadow: var(--shadow-sm);
+}
+
+.quick-prompt-btn:hover {
+    border-color: var(--color-primary) !important;
+    color: var(--color-primary) !important;
+    background-color: var(--color-primary-bg) !important;
+}
+
+#chatInput:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px var(--color-primary-bg);
+}
+</style>
+
+<!-- Safe, Self-Contained Chat Script -->
+<script>
+(function() {
+    'use strict';
+
+    // State: In-memory client conversation history
+    // Server enforces max 10 turns and message boundaries
+    let conversationHistory = [];
+    let isSubmitting = false;
+
+    // DOM Elements
+    const chatMessages = document.getElementById('chatMessages');
+    const chatForm = document.getElementById('chatForm');
+    const chatInput = document.getElementById('chatInput');
+    const sendMessageBtn = document.getElementById('sendMessageBtn');
+    const clearChatBtn = document.getElementById('clearChatBtn');
+    const charCounter = document.getElementById('charCounter');
+    const typingIndicator = document.getElementById('typingIndicator');
+    const chatStatusText = document.getElementById('chatStatusText');
+    const crisisAlertBanner = document.getElementById('crisisAlertBanner');
+    const crisisAlertText = document.getElementById('crisisAlertText');
+    const quickPromptContainer = document.getElementById('quickPromptContainer');
+
+    // Retrieve CSRF token from meta or hidden input
+    function getCsrfToken() {
+        const metaTag = document.querySelector('meta[name="csrf-token"]');
+        if (metaTag && metaTag.content) {
+            return metaTag.content;
+        }
+        const inputTag = document.getElementById('csrfToken');
+        if (inputTag && inputTag.value) {
+            return inputTag.value;
+        }
+        return '';
+    }
+
+    // Scroll chat area to bottom
+    function scrollToBottom() {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Character counter
+    chatInput.addEventListener('input', function() {
+        charCounter.textContent = this.value.length;
+    });
+
+    // Enter to submit (Shift+Enter for newline)
+    chatInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (!isSubmitting) {
+                chatForm.dispatchEvent(new Event('submit', { cancelable: true }));
+            }
+        }
+    });
+
+    // Handle Quick Starter Prompt clicks
+    document.querySelectorAll('.quick-prompt-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const prompt = this.getAttribute('data-prompt');
+            if (prompt && !isSubmitting) {
+                chatInput.value = prompt;
+                charCounter.textContent = prompt.length;
+                chatInput.focus();
+                chatForm.dispatchEvent(new Event('submit', { cancelable: true }));
+            }
+        });
+    });
+
+    // Reset Chat button
+    clearChatBtn.addEventListener('click', function() {
+        if (confirm('Start a fresh conversation? Current chat history will be cleared.')) {
+            conversationHistory = [];
+            crisisAlertBanner.style.display = 'none';
+            chatStatusText.textContent = '';
+
+            // Retain greeting and quick prompts, remove others
+            const messages = chatMessages.querySelectorAll('.chat-message');
+            messages.forEach((msg, index) => {
+                if (index > 0) { // Keep initial assistant greeting
+                    msg.remove();
+                }
+            });
+
+            if (quickPromptContainer) {
+                quickPromptContainer.style.display = 'flex';
+            }
+            chatInput.value = '';
+            charCounter.textContent = '0';
+            chatInput.focus();
+        }
+    });
+
+    // Append User Message to UI (strict textContent rendering)
+    function appendUserMessage(text) {
+        const row = document.createElement('div');
+        row.className = 'chat-message user-message';
+
+        const bubble = document.createElement('div');
+        bubble.className = 'message-bubble';
+
+        const roleHeader = document.createElement('div');
+        roleHeader.style.fontSize = '0.75rem';
+        roleHeader.style.fontWeight = '600';
+        roleHeader.style.color = 'var(--color-primary-hover)';
+        roleHeader.style.marginBottom = '4px';
+        roleHeader.style.textAlign = 'right';
+        roleHeader.textContent = 'You';
+
+        const content = document.createElement('div');
+        content.className = 'message-content';
+        content.style.fontSize = '0.95rem';
+        content.style.lineHeight = '1.55';
+        content.style.whiteSpace = 'pre-wrap';
+        content.textContent = text; // Safe text rendering
+
+        bubble.appendChild(roleHeader);
+        bubble.appendChild(content);
+        row.appendChild(bubble);
+        chatMessages.appendChild(row);
+        scrollToBottom();
+    }
+
+    // Append Assistant Message to UI (strict textContent rendering)
+    function appendAssistantMessage(text, isCrisis) {
+        const row = document.createElement('div');
+        row.className = 'chat-message assistant-message';
+        row.style.display = 'flex';
+        row.style.gap = '12px';
+        row.style.alignItems = 'flex-start';
+        row.style.maxWidth = '85%';
+
+        const avatar = document.createElement('div');
+        avatar.style.width = '36px';
+        avatar.style.height = '36px';
+        avatar.style.borderRadius = '50%';
+        avatar.style.background = isCrisis ? '#fee2e2' : 'var(--color-primary-bg)';
+        avatar.style.border = isCrisis ? '1px solid #fca5a5' : '1px solid var(--color-primary-border)';
+        avatar.style.display = 'flex';
+        avatar.style.alignItems = 'center';
+        avatar.style.justifyContent = 'center';
+        avatar.style.fontSize = '1.1rem';
+        avatar.style.flexShrink = '0';
+        avatar.setAttribute('aria-hidden', 'true');
+        avatar.textContent = isCrisis ? '🚨' : '🌱';
+
+        const bubble = document.createElement('div');
+        bubble.style.background = isCrisis ? '#fff5f5' : 'var(--color-surface)';
+        bubble.style.border = isCrisis ? '1px solid #fecaca' : '1px solid var(--color-border)';
+        bubble.style.borderRadius = '14px';
+        bubble.style.borderTopLeftRadius = '4px';
+        bubble.style.padding = '14px 18px';
+        bubble.style.boxShadow = 'var(--shadow-sm)';
+
+        const roleHeader = document.createElement('div');
+        roleHeader.style.fontSize = '0.75rem';
+        roleHeader.style.fontWeight = '600';
+        roleHeader.style.color = isCrisis ? 'var(--color-error)' : 'var(--color-primary)';
+        roleHeader.style.marginBottom = '4px';
+        roleHeader.textContent = isCrisis ? 'Support & Immediate Care' : 'MindEase Companion';
+
+        const content = document.createElement('div');
+        content.className = 'message-content';
+        content.style.fontSize = '0.95rem';
+        content.style.lineHeight = '1.55';
+        content.style.color = 'var(--color-text-body)';
+        content.style.whiteSpace = 'pre-wrap';
+        content.textContent = text; // Safe text rendering
+
+        bubble.appendChild(roleHeader);
+        bubble.appendChild(content);
+
+        // If crisis, add direct helpline block inside the bubble as well
+        if (isCrisis) {
+            const crisisBlock = document.createElement('div');
+            crisisBlock.style.marginTop = '12px';
+            crisisBlock.style.padding = '10px 12px';
+            crisisBlock.style.background = '#ffffff';
+            crisisBlock.style.borderRadius = '8px';
+            crisisBlock.style.border = '1px solid #fecaca';
+            crisisBlock.style.fontSize = '0.85rem';
+
+            crisisBlock.innerHTML = `
+                <div style="font-weight: 700; color: #991b1b; margin-bottom: 4px;">Verified 24/7 National Helplines:</div>
+                <div style="margin-bottom: 2px;">• <strong>Tele-MANAS:</strong> <a href="tel:14416" style="color: #dc2626; font-weight: 700;">14416</a> or <a href="tel:18008914416" style="color: #dc2626; font-weight: 700;">1800-891-4416</a> (Toll-Free, 24/7)</div>
+                <div style="margin-bottom: 6px;">• <strong>National Emergency:</strong> <a href="tel:112" style="color: #dc2626; font-weight: 700;">112</a></div>
+                <div style="margin-top: 8px;">
+                    <a href="{{ url_for('student.support_center') }}" class="btn btn-secondary btn-sm" style="font-size: 0.8rem; padding: 4px 10px;">View Full Support Resources &rarr;</a>
+                </div>
+            `;
+            bubble.appendChild(crisisBlock);
+        }
+
+        row.appendChild(avatar);
+        row.appendChild(bubble);
+        chatMessages.appendChild(row);
+        scrollToBottom();
+    }
+
+    // Append Error Message to UI
+    function appendErrorMessage(errorText) {
+        const row = document.createElement('div');
+        row.className = 'chat-message error-message';
+        row.style.alignSelf = 'center';
+        row.style.margin = '4px 0';
+
+        const bubble = document.createElement('div');
+        bubble.style.background = 'var(--color-error-bg)';
+        bubble.style.color = 'var(--color-error)';
+        bubble.style.border = '1px solid #fecaca';
+        bubble.style.borderRadius = 'var(--border-radius-sm)';
+        bubble.style.padding = '8px 14px';
+        bubble.style.fontSize = '0.85rem';
+        bubble.textContent = errorText;
+
+        row.appendChild(bubble);
+        chatMessages.appendChild(row);
+        scrollToBottom();
+    }
+
+    // Form Submission
+    chatForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (isSubmitting) return;
+
+        const text = chatInput.value.trim();
+        if (!text) {
+            chatInput.focus();
+            return;
+        }
+
+        // Hide quick prompts once conversation starts
+        if (quickPromptContainer) {
+            quickPromptContainer.style.display = 'none';
+        }
+
+        // Lock form during submission
+        isSubmitting = true;
+        chatInput.disabled = true;
+        sendMessageBtn.disabled = true;
+        typingIndicator.style.display = 'flex';
+        chatStatusText.textContent = 'Contacting companion...';
+        scrollToBottom();
+
+        // Render user message immediately
+        appendUserMessage(text);
+        chatInput.value = '';
+        charCounter.textContent = '0';
+
+        try {
+            const csrfToken = getCsrfToken();
+            const payload = {
+                message: text,
+                history: conversationHistory
+            };
+
+            const response = await fetch("{{ url_for('chat.api_message') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json().catch(() => null);
+
+            if (!response.ok) {
+                const errorMsg = (data && data.message) ? data.message : `Server responded with status ${response.status}.`;
+                appendErrorMessage(errorMsg);
+                chatStatusText.textContent = 'Error occurred.';
+                return;
+            }
+
+            if (!data) {
+                appendErrorMessage('Received empty or unexpected response from server.');
+                chatStatusText.textContent = 'Error occurred.';
+                return;
+            }
+
+            if (data.status === 'crisis_detected') {
+                // Crisis language triggered: display prominently
+                crisisAlertBanner.style.display = 'block';
+                if (data.reply) {
+                    crisisAlertText.textContent = data.reply;
+                }
+                appendAssistantMessage(data.reply || 'Immediate care resources are available.', true);
+                chatStatusText.textContent = 'Support resources provided.';
+
+                // Do not append to standard LLM history
+            } else if (data.status === 'success') {
+                appendAssistantMessage(data.reply, false);
+                chatStatusText.textContent = '';
+
+                // Update client-side history for subsequent context turns
+                conversationHistory.push({ role: 'user', content: text });
+                conversationHistory.push({ role: 'model', content: data.reply });
+
+                // Keep client history bounded to last 10 items
+                if (conversationHistory.length > 10) {
+                    conversationHistory = conversationHistory.slice(-10);
+                }
+            } else {
+                appendErrorMessage(data.message || 'Could not complete the request.');
+                chatStatusText.textContent = 'Failed to generate response.';
+            }
+
+        } catch (err) {
+            console.error('Chat request failure:', err);
+            appendErrorMessage('Network connection lost. Please check your internet connection.');
+            chatStatusText.textContent = 'Connection error.';
+        } finally {
+            isSubmitting = false;
+            chatInput.disabled = false;
+            sendMessageBtn.disabled = false;
+            typingIndicator.style.display = 'none';
+            chatInput.focus();
+        }
+    });
+
+    // Auto-focus input on page load
+    chatInput.focus();
+})();
+</script>
+{% endblock %}
