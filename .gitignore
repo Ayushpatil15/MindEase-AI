@@ -68,5 +68,6 @@ MindEase Design References/
 scripts/diagnose_gemini.py
 scripts/migrate_render_to_neon.py
 scripts/verify_render_gemini.py
+scripts/verify_live_render.py
 scripts/create_demo_student.py
 scripts/seed_demo_student_wellness.py
