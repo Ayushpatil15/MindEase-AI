@@ -161,10 +161,11 @@ class TestChatServiceUnit:
                 assert "connect" in res["reply"].lower()
 
     def test_malformed_gemini_response_empty_candidates(self, app):
-        """Handles 200 OK with empty candidates gracefully."""
+        """Handles 200 OK with empty candidates gracefully without crash or 500."""
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {"candidates": []}
+        mock_response.content = b'{"candidates": []}'
+        mock_response.json.return_value = {"candidates": [], "usageMetadata": {"promptTokenCount": 10}}
 
         with app.app_context():
             with patch('requests.post', return_value=mock_response):
@@ -172,7 +173,106 @@ class TestChatServiceUnit:
                     user_message="Hello",
                     api_key="fake-key",
                 )
-                assert res["status"] == "error"
+                assert res["status"] == "empty_response"
+                assert "rephras" in res["reply"].lower()
+
+    def test_gemini_prompt_safety_block(self, app):
+        """When promptFeedback blocks the request, returns blocked status with support resources."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.content = b'{"promptFeedback": {"blockReason": "SAFETY"}}'
+        mock_response.json.return_value = {
+            "promptFeedback": {
+                "blockReason": "SAFETY",
+                "safetyRatings": [{"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "probability": "HIGH", "blocked": True}]
+            }
+        }
+
+        with app.app_context():
+            with patch('requests.post', return_value=mock_response):
+                res = send_chat_message(
+                    user_message="Tell me something dangerous",
+                    api_key="fake-key",
+                )
+                assert res["status"] == "blocked"
+                assert "safety" in res["reply"].lower()
+                assert "support_resources" in res
+
+    def test_gemini_candidate_safety_block(self, app):
+        """When candidate finishReason is SAFETY, returns blocked status with support resources."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.content = b'{"candidates": [{"finishReason": "SAFETY"}]}'
+        mock_response.json.return_value = {
+            "candidates": [
+                {
+                    "finishReason": "SAFETY",
+                    "safetyRatings": [{"category": "HARM_CATEGORY_HARASSMENT", "probability": "HIGH", "blocked": True}],
+                    "content": {"parts": []}
+                }
+            ]
+        }
+
+        with app.app_context():
+            with patch('requests.post', return_value=mock_response):
+                res = send_chat_message(
+                    user_message="Hello",
+                    api_key="fake-key",
+                )
+                assert res["status"] == "blocked"
+                assert "support_resources" in res
+
+    def test_gemini_thinking_parts_filtered_and_answer_extracted(self, app):
+        """When candidate includes thinking parts, only non-thought text is extracted as answer."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.content = b'{"candidates": [...]}'
+        mock_response.json.return_value = {
+            "candidates": [
+                {
+                    "content": {
+                        "parts": [
+                            {"thought": True, "text": "Analyzing the student's question..."},
+                            {"text": "I understand college can be busy. Let's make a calm study schedule."}
+                        ]
+                    },
+                    "finishReason": "STOP"
+                }
+            ]
+        }
+
+        with app.app_context():
+            with patch('requests.post', return_value=mock_response):
+                res = send_chat_message(
+                    user_message="I'm feeling overwhelmed with work",
+                    api_key="fake-key",
+                )
+                assert res["status"] == "success"
+                assert "Analyzing" not in res["reply"]
+                assert "calm study schedule" in res["reply"]
+
+    def test_gemini_thinking_budget_zero_for_flash(self, app):
+        """Verify thinkingConfig with thinkingBudget: 0 is included for Flash models."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.content = b'{"candidates": [{"content": {"parts": [{"text": "Hello!"}]}}]}'
+        mock_response.json.return_value = {
+            "candidates": [{"content": {"parts": [{"text": "Hello!"}]}}]
+        }
+
+        with app.app_context():
+            with patch('requests.post', return_value=mock_response) as mock_post:
+                send_chat_message(
+                    user_message="Hello",
+                    api_key="fake-key",
+                    model_name="gemini-2.5-flash-lite",
+                )
+                args, kwargs = mock_post.call_args
+                payload = kwargs["json"]
+                gen_config = payload["generationConfig"]
+                assert "thinkingConfig" in gen_config
+                assert gen_config["thinkingConfig"]["thinkingBudget"] == 0
+                assert gen_config["maxOutputTokens"] == 2048
 
     def test_empty_or_whitespace_user_message(self, app):
         """Empty or whitespace-only messages are rejected without API calls."""
@@ -386,6 +486,39 @@ class TestChatRoutes:
             data = response.get_json()
             assert data['status'] == 'service_unavailable'
 
+    def test_post_api_message_upstream_failure_returns_502(self, client, db):
+        """When Gemini returns an upstream error (HTTP 500), route returns HTTP 502 Bad Gateway."""
+        create_test_student(db, email='studentupstream500@test.com', password='pass')
+        client.post('/auth/login', data={'email': 'studentupstream500@test.com', 'password': 'pass'})
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 500
+
+        with patch('requests.post', return_value=mock_resp):
+            with patch.dict('os.environ', {'GEMINI_API_KEY': 'valid-test-key'}):
+                response = client.post(
+                    '/chat/api/message',
+                    json={'message': 'Hello there'}
+                )
+                assert response.status_code == 502
+                data = response.get_json()
+                assert data['status'] == 'error'
+
+    def test_post_api_message_upstream_timeout_returns_504(self, client, db):
+        """When Gemini request times out, route returns HTTP 504 Gateway Timeout."""
+        create_test_student(db, email='studenttimeout504@test.com', password='pass')
+        client.post('/auth/login', data={'email': 'studenttimeout504@test.com', 'password': 'pass'})
+
+        with patch('requests.post', side_effect=requests.exceptions.Timeout("Read timed out")):
+            with patch.dict('os.environ', {'GEMINI_API_KEY': 'valid-test-key'}):
+                response = client.post(
+                    '/chat/api/message',
+                    json={'message': 'Hello there'}
+                )
+                assert response.status_code == 504
+                data = response.get_json()
+                assert data['status'] == 'timeout'
+
     def test_post_api_message_csrf_protection(self):
         """Verify CSRF protection rejects requests lacking valid CSRF token when enabled."""
         class CsrfTestingConfig(TestingConfig):
@@ -466,3 +599,64 @@ class TestChatRoutes:
             app.config['RATELIMIT_ENABLED'] = False
             limiter.enabled = False
             limiter.reset()
+
+    def test_post_api_message_empty_candidates_returns_200_not_500(self, client, db):
+        """When Gemini returns empty candidates, route returns controlled HTTP 200 with empty_response status (NOT 500)."""
+        create_test_student(db, email='studentempty@test.com', password='pass')
+        client.post('/auth/login', data={'email': 'studentempty@test.com', 'password': 'pass'})
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.content = b'{"candidates": []}'
+        mock_resp.json.return_value = {"candidates": [], "usageMetadata": {"promptTokenCount": 15}}
+
+        with patch('requests.post', return_value=mock_resp):
+            with patch.dict('os.environ', {'GEMINI_API_KEY': 'valid-test-key'}):
+                response = client.post(
+                    '/chat/api/message',
+                    json={'message': 'Can you tell me about something?'}
+                )
+                assert response.status_code == 200
+                data = response.get_json()
+                assert data['status'] == 'empty_response'
+                assert 'rephras' in data['message'].lower()
+
+    def test_post_api_message_safety_blocked_returns_200_not_500(self, client, db):
+        """When Gemini blocks response due to safety, route returns HTTP 200 with blocked status and support resources."""
+        create_test_student(db, email='studentblock@test.com', password='pass')
+        client.post('/auth/login', data={'email': 'studentblock@test.com', 'password': 'pass'})
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.content = b'{"promptFeedback": {"blockReason": "SAFETY"}}'
+        mock_resp.json.return_value = {
+            "promptFeedback": {"blockReason": "SAFETY", "safetyRatings": []}
+        }
+
+        with patch('requests.post', return_value=mock_resp):
+            with patch.dict('os.environ', {'GEMINI_API_KEY': 'valid-test-key'}):
+                response = client.post(
+                    '/chat/api/message',
+                    json={'message': 'Hello'}
+                )
+                assert response.status_code == 200
+                data = response.get_json()
+                assert data['status'] == 'blocked'
+                assert 'support_resources' in data
+
+    def test_need_to_talk_navigation_links_to_chat_and_no_duplicate_ai_companion(self, client, db):
+        """Verify 'Need to talk to someone?' opens /chat/ for student, and separate 'AI Companion' nav item is removed."""
+        create_test_student(db, email='studentnav@test.com', password='pass')
+        client.post('/auth/login', data={'email': 'studentnav@test.com', 'password': 'pass'})
+
+        response = client.get('/')
+        assert response.status_code == 200
+        html = response.get_data(as_text=True)
+
+        # 1. 'Need to talk to someone?' link points to /chat/
+        assert 'href="/chat/"' in html
+        assert 'Need to talk to someone?' in html
+
+        # 2. Separate 'AI Companion' nav item is removed from primary navigation
+        assert '<a href="/chat/" class="nav-link' in html
+        assert 'AI Companion</a>' not in html

@@ -118,8 +118,22 @@ def api_message():
             'message': result.get('reply', 'Request timed out.'),
         }), 504
 
-    # Default error response
+    if status == 'blocked':
+        return jsonify({
+            'status': 'blocked',
+            'reply': result['reply'],
+            'support_resources': result.get('support_resources'),
+        }), 200
+
+    if status == 'empty_response':
+        return jsonify({
+            'status': 'empty_response',
+            'reply': result.get('reply', 'I was unable to formulate a response to that. Could you try rephrasing?'),
+            'message': result.get('reply', 'I was unable to formulate a response to that. Could you try rephrasing?'),
+        }), 200
+
+    # Default upstream failure (502 Bad Gateway rather than internal crash 500)
     return jsonify({
         'status': 'error',
         'message': result.get('reply', 'Failed to generate response.'),
-    }), 500
+    }), 502

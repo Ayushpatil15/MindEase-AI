@@ -1,6 +1,6 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
 
-{% block title %}AI Wellness Companion — MindEase AI{% endblock %}
+{% block title %}Need to talk to someone? — MindEase AI{% endblock %}
 
 {% block content %}
 <div class="chat-page-container" style="max-width: 860px; margin: 20px auto; padding: 0 12px;">
@@ -10,18 +10,18 @@
         <div>
             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
                 <span class="badge badge-primary">🌱 Non-Clinical AI Companion</span>
-                <span class="badge badge-muted">Private & Confidential</span>
+                <span class="badge badge-muted">Powered by Google Gemini</span>
             </div>
             <h1 style="font-size: 1.75rem; margin-bottom: 4px; color: var(--color-heading);">
-                AI Wellness Companion
+                Need to talk to someone?
             </h1>
             <p class="text-muted" style="margin-bottom: 0; font-size: 0.925rem;">
-                A calm, empathetic space to process student stress, build balance, and reflect.
+                Chat with your MindEase AI Wellness Companion for empathetic support, study balance, and self-care reflection.
             </p>
         </div>
         <div style="display: flex; gap: 8px;">
             <a href="{{ url_for('student.support_center') }}" class="btn btn-secondary btn-sm" title="Immediate Human Support">
-                Need Helplines?
+                Verified Helplines &amp; Support &rarr;
             </a>
             <button id="clearChatBtn" type="button" class="btn btn-secondary btn-sm" title="Clear chat history">
                 Reset Chat
@@ -29,10 +29,10 @@
         </div>
     </div>
 
-    <!-- Non-Clinical Wellness Notice -->
+    <!-- Non-Clinical Wellness Notice & Privacy Disclosure -->
     <div class="card mb-md" style="padding: 12px 16px; background-color: var(--color-surface-subtle); border-left: 3px solid var(--color-primary); font-size: 0.85rem; color: var(--color-text-body);">
         <p style="margin: 0; line-height: 1.45;">
-            <strong>Helpful Note:</strong> MindEase AI is an empathetic peer companion designed to support daily student wellness and self-care. It does not provide medical diagnoses, clinical treatment, or psychiatric care. If you need urgent assistance, please reach <strong>Tele-MANAS (14416 / 1800-891-4416)</strong> or <strong>Emergency (112)</strong>.
+            <strong>Wellness &amp; Privacy Notice:</strong> MindEase AI is an empathetic peer companion designed to support daily student wellness and self-care. It does not provide medical diagnoses, clinical treatment, or psychiatric care. Chat messages are processed securely via Google's Gemini API to generate responses. If you need urgent assistance, please reach <strong>Tele-MANAS (14416 / 1800-891-4416)</strong> or <strong>Emergency (112)</strong>.
         </p>
     </div>
 
@@ -471,16 +471,16 @@
                 return;
             }
 
-            if (data.status === 'crisis_detected') {
-                // Crisis language triggered: display prominently
+            if (data.status === 'crisis_detected' || data.status === 'blocked') {
+                // Crisis language or safety boundary triggered: display care banner
                 crisisAlertBanner.style.display = 'block';
                 if (data.reply) {
                     crisisAlertText.textContent = data.reply;
                 }
-                appendAssistantMessage(data.reply || 'Immediate care resources are available.', true);
-                chatStatusText.textContent = 'Support resources provided.';
+                appendAssistantMessage(data.reply || 'Support and immediate care resources are available.', true);
+                chatStatusText.textContent = data.status === 'crisis_detected' ? 'Support resources provided.' : 'Notice displayed.';
 
-                // Do not append to standard LLM history
+                // Do not append blocked or crisis exchanges to conversation history
             } else if (data.status === 'success') {
                 appendAssistantMessage(data.reply, false);
                 chatStatusText.textContent = '';
@@ -493,6 +493,10 @@
                 if (conversationHistory.length > 10) {
                     conversationHistory = conversationHistory.slice(-10);
                 }
+            } else if (data.status === 'empty_response') {
+                // Expected empty response: show as companion message instead of red error box
+                appendAssistantMessage(data.reply || data.message || 'I could not generate a response. Please try rephrasing.', false);
+                chatStatusText.textContent = '';
             } else {
                 appendErrorMessage(data.message || 'Could not complete the request.');
                 chatStatusText.textContent = 'Failed to generate response.';

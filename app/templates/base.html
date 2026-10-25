@@ -41,13 +41,6 @@
                                 Check In
                             </a>
                         </li>
-                        {% if current_user.role == 'student' %}
-                        <li>
-                            <a href="{{ url_for('chat.index') }}" class="nav-link {% if request.endpoint and request.endpoint.startswith('chat.') %}active{% endif %}">
-                                AI Companion
-                            </a>
-                        </li>
-                        {% endif %}
                         <li>
                             <a href="{{ url_for('student.activities') }}" class="nav-link {% if request.endpoint in ['student.activities', 'student.activity_detail'] %}active{% endif %}">
                                 Activities
@@ -64,7 +57,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="{{ url_for('student.support_center') }}" class="nav-link" style="color: #ea580c; font-weight: 600; font-size: 0.825rem;" title="Immediate Care & Helplines">
+                            <a href="{{ url_for('chat.index') if current_user.role == 'student' else url_for('student.support_center') }}" class="nav-link {% if request.endpoint and request.endpoint.startswith('chat.') %}active{% endif %}" style="color: #ea580c; font-weight: 600; font-size: 0.825rem;" title="Need to talk to someone?">
                                 Need to talk to someone?
                             </a>
                         </li>
@@ -109,8 +102,8 @@
     <footer style="text-align: center; padding: 24px 16px; margin-top: 40px; border-top: 1px solid var(--color-border); font-size: 0.825rem; color: var(--color-text-muted);">
         <p style="margin: 0;">
             MindEase AI is a non-clinical wellness companion.
-            <a href="{{ url_for('student.support_center') }}" style="color: var(--color-primary); font-weight: 600; text-decoration: underline;">Need to talk to someone?</a>
-            Free, confidential 24/7 support is available at Tele-MANAS (14416) and emergency services (112).
+            <a href="{{ url_for('chat.index') if current_user.is_authenticated and current_user.role == 'student' else url_for('student.support_center') }}" style="color: var(--color-primary); font-weight: 600; text-decoration: underline;">Need to talk to someone?</a>
+            Free, confidential 24/7 support is available at <a href="{{ url_for('student.support_center') }}" style="color: var(--color-text-muted); text-decoration: underline;">Tele-MANAS (14416)</a> and emergency services (112).
         </p>
     </footer>
 
