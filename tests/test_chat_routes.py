@@ -82,11 +82,11 @@ class TestChatServiceUnit:
                 res = send_chat_message(
                     user_message="I'm feeling stressed about my history test tomorrow",
                     api_key="fake-key-12345",
-                    model_name="gemini-2.5-flash-lite",
+                    model_name="gemini-3.5-flash-lite",
                 )
                 assert res["status"] == "success"
                 assert "Take a slow, deep breath" in res["reply"]
-                assert res["model"] == "gemini-2.5-flash-lite"
+                assert res["model"] == "gemini-3.5-flash-lite"
                 mock_post.assert_called_once()
 
                 # Verify payload structure sent to Gemini
@@ -265,7 +265,7 @@ class TestChatServiceUnit:
                 send_chat_message(
                     user_message="Hello",
                     api_key="fake-key",
-                    model_name="gemini-2.5-flash-lite",
+                    model_name="gemini-3.5-flash-lite",
                 )
                 args, kwargs = mock_post.call_args
                 payload = kwargs["json"]

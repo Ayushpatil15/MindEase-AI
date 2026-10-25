@@ -21,7 +21,7 @@ from app.services.safety_service import (
 logger = logging.getLogger(__name__)
 
 # Default model identifier for low-cost prototyping
-DEFAULT_GEMINI_MODEL = "gemini-2.5-flash-lite"
+DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite"
 
 # Safe regex pattern for model identifiers (prevents URL injection, allows optional models/ prefix)
 MODEL_IDENTIFIER_PATTERN = re.compile(r"^(models/)?[a-zA-Z0-9._-]+$")
