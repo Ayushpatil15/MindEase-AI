@@ -22,6 +22,13 @@
     <form id="stress-assessment-form" method="POST" action="{{ url_for('stress.take_assessment') }}" class="card card-hover" novalidate>
         {{ form.csrf_token }}
 
+        {% if form.errors %}
+            <div class="alert alert-error mb-md" id="server-validation-alert" style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--color-error); color: var(--color-error); padding: 12px 16px; border-radius: var(--border-radius-md);">
+                Please answer all 11 questions before completing the assessment. Review the highlighted question below.
+            </div>
+        {% endif %}
+        <div id="step-validation-notice" class="alert alert-error mb-md" style="display: none; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--color-error); color: var(--color-error); padding: 12px 16px; border-radius: var(--border-radius-md);"></div>
+
         {% set questions = [
             (form.q1, 1), (form.q2, 2), (form.q3, 3), (form.q4, 4),
             (form.q5, 5), (form.q6, 6), (form.q7, 7), (form.q8, 8),
@@ -105,7 +112,10 @@
 document.addEventListener('DOMContentLoaded', () => {
     let currentStep = 1;
     const totalSteps = 11;
+    let autoAdvanceTimer = null;
+    let isSubmitting = false;
 
+    const form = document.getElementById('stress-assessment-form');
     const questionSteps = document.querySelectorAll('.question-step');
     const reflectionStep = document.getElementById('reflection-step');
     const prevBtn = document.getElementById('prev-btn');
@@ -114,11 +124,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const indicator = document.getElementById('question-indicator');
     const progressBar = document.getElementById('stepper-bar');
 
+    function clearAutoAdvance() {
+        if (autoAdvanceTimer) {
+            clearTimeout(autoAdvanceTimer);
+            autoAdvanceTimer = null;
+        }
+    }
+
+    function syncStepVisuals(step) {
+        const stepEl = document.querySelector(`.question-step[data-step="${step}"]`);
+        if (!stepEl) return;
+        const cards = stepEl.querySelectorAll('.selectable-card');
+        cards.forEach(card => {
+            const radio = card.querySelector('.option-radio');
+            if (radio && radio.checked) {
+                card.classList.add('selected');
+            } else {
+                card.classList.remove('selected');
+            }
+        });
+    }
+
+    function checkCurrentAnswered() {
+        if (currentStep > totalSteps) return;
+
+        const currentStepEl = document.querySelector(`.question-step[data-step="${currentStep}"]`);
+        if (!currentStepEl) return;
+
+        syncStepVisuals(currentStep);
+        const checkedRadio = currentStepEl.querySelector('.option-radio:checked');
+        nextBtn.disabled = !checkedRadio;
+    }
+
     function updateStep(step) {
-        currentStep = step;
+        clearAutoAdvance();
+        currentStep = Math.max(1, Math.min(step, totalSteps + 1));
+
+        const notice = document.getElementById('step-validation-notice');
+        if (notice) notice.style.display = 'none';
 
         questionSteps.forEach(el => {
-            const s = parseInt(el.getAttribute('data-step'));
+            const s = parseInt(el.getAttribute('data-step'), 10);
             el.style.display = (s === currentStep) ? 'block' : 'none';
         });
 
@@ -130,6 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
             prevBtn.style.visibility = 'visible';
             nextBtn.style.display = 'none';
             submitBtn.style.display = 'inline-flex';
+            if (!isSubmitting) submitBtn.disabled = false;
         } else {
             reflectionStep.style.display = 'none';
             indicator.textContent = `Question ${currentStep} of ${totalSteps}`;
@@ -139,60 +186,63 @@ document.addEventListener('DOMContentLoaded', () => {
             nextBtn.style.display = 'inline-flex';
             submitBtn.style.display = 'none';
 
-            // Check if current question has an answer selected
             checkCurrentAnswered();
         }
     }
 
-    function checkCurrentAnswered() {
-        if (currentStep > totalSteps) return;
+    function selectOption(card) {
+        if (!card || isSubmitting) return;
+        const radio = card.querySelector('.option-radio');
+        if (!radio) return;
 
-        const currentStepEl = document.querySelector(`.question-step[data-step="${currentStep}"]`);
-        if (!currentStepEl) return;
+        radio.checked = true;
 
-        const checkedRadio = currentStepEl.querySelector('.option-radio:checked');
-        nextBtn.disabled = !checkedRadio;
+        const container = card.closest('.options-container');
+        if (container) {
+            container.querySelectorAll('.selectable-card').forEach(c => c.classList.remove('selected'));
+        }
+        card.classList.add('selected');
+        nextBtn.disabled = false;
+
+        clearAutoAdvance();
+
+        const stepWhenSelected = currentStep;
+        if (stepWhenSelected <= totalSteps) {
+            autoAdvanceTimer = setTimeout(() => {
+                if (currentStep === stepWhenSelected && currentStep <= totalSteps) {
+                    updateStep(stepWhenSelected + 1);
+                }
+            }, 220);
+        }
     }
 
-    // Attach click events to option cards
+    // Attach click and keyboard events to option cards
     document.querySelectorAll('.selectable-card').forEach(card => {
         card.addEventListener('click', (e) => {
-            const radio = card.querySelector('.option-radio');
-            if (radio) {
-                radio.checked = true;
-
-                // Update selected visuals in current container
-                const container = card.closest('.options-container');
-                container.querySelectorAll('.selectable-card').forEach(c => c.classList.remove('selected'));
-                card.classList.add('selected');
-
-                nextBtn.disabled = false;
-
-                // Auto-advance after brief delay
-                setTimeout(() => {
-                    if (currentStep <= totalSteps) {
-                        updateStep(currentStep + 1);
-                    }
-                }, 220);
+            // Ignore synthetic click event bubbling from the nested radio input
+            if (e.target && e.target.classList.contains('option-radio')) {
+                return;
             }
+            selectOption(card);
         });
 
-        // Keyboard Enter/Space on focusable card
         card.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                card.click();
+                selectOption(card);
             }
         });
     });
 
     prevBtn.addEventListener('click', () => {
+        clearAutoAdvance();
         if (currentStep > 1) {
             updateStep(currentStep - 1);
         }
     });
 
     nextBtn.addEventListener('click', () => {
+        clearAutoAdvance();
         if (currentStep <= totalSteps) {
             updateStep(currentStep + 1);
         }
@@ -203,25 +253,71 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentStep > totalSteps) return;
         if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
 
-        const num = parseInt(e.key);
+        const num = parseInt(e.key, 10);
         if (!isNaN(num) && num >= 1 && num <= 5) {
+            e.preventDefault();
             const currentStepEl = document.querySelector(`.question-step[data-step="${currentStep}"]`);
             if (currentStepEl) {
                 const cards = currentStepEl.querySelectorAll('.selectable-card');
                 if (cards[num - 1]) {
-                    cards[num - 1].click();
+                    selectOption(cards[num - 1]);
                 }
             }
         }
     });
 
-    // Initialize initial radio selection state visuals
-    document.querySelectorAll('.option-radio:checked').forEach(radio => {
-        const card = radio.closest('.selectable-card');
-        if (card) card.classList.add('selected');
+    // Client-side submission validation & in-flight duplicate submission locking
+    form.addEventListener('submit', (e) => {
+        if (isSubmitting) {
+            e.preventDefault();
+            return;
+        }
+
+        clearAutoAdvance();
+
+        // Ensure all questions are answered
+        for (let s = 1; s <= totalSteps; s++) {
+            const stepEl = document.querySelector(`.question-step[data-step="${s}"]`);
+            const checked = stepEl ? stepEl.querySelector('.option-radio:checked') : null;
+            if (!checked) {
+                e.preventDefault();
+                updateStep(s);
+                const notice = document.getElementById('step-validation-notice');
+                if (notice) {
+                    notice.textContent = `Please answer Question ${s} before submitting your assessment.`;
+                    notice.style.display = 'block';
+                }
+                return;
+            }
+        }
+
+        isSubmitting = true;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = 'Submitting Assessment &hellip;';
+        prevBtn.disabled = true;
     });
 
-    updateStep(1);
+    // Initialize option visuals across all steps
+    for (let s = 1; s <= totalSteps; s++) {
+        syncStepVisuals(s);
+    }
+
+    // Determine initial step: if server reported field errors, jump to the first error step
+    let initialStep = 1;
+    let foundErrorStep = false;
+    for (let s = 1; s <= totalSteps; s++) {
+        const stepEl = document.querySelector(`.question-step[data-step="${s}"]`);
+        if (stepEl && stepEl.querySelector('.form-error')) {
+            initialStep = s;
+            foundErrorStep = true;
+            break;
+        }
+    }
+    if (!foundErrorStep && reflectionStep && reflectionStep.querySelector('.form-error')) {
+        initialStep = totalSteps + 1;
+    }
+
+    updateStep(initialStep);
 });
 </script>
 {% endblock %}

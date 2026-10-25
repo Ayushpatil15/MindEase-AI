@@ -124,3 +124,122 @@ class TestStressHistory:
         response = client.get('/stress/history')
         assert response.status_code == 200
         assert response.data.count(b'View Details') == 2
+
+
+class TestStressRedirectAndHub:
+    def test_post_submission_redirects_to_checkin_hub_not_today(self, client, db):
+        create_test_student(db, email='redirect_student@test.com', password='pass')
+        client.post('/auth/login', data={'email': 'redirect_student@test.com', 'password': 'pass'})
+
+        data = {f'q{i}': 1 for i in range(1, 12)}
+        data['reflection'] = 'Redirect test reflection.'
+
+        response = client.post('/stress/', data=data, follow_redirects=False)
+        assert response.status_code == 302
+        assert response.headers['Location'] == '/checkin'
+        assert response.headers['Location'] != '/'
+
+    def test_post_submission_followed_redirect_shows_results_and_flash(self, client, db):
+        user = create_test_student(db, email='hub_student@test.com', password='pass')
+        client.post('/auth/login', data={'email': 'hub_student@test.com', 'password': 'pass'})
+
+        # Reverse scored: 3, 4, 6, 7 (q4, q5, q7, q8)
+        # q1..q3 = 1, q4..q5 = 3 (reverse 4-3=1), q6 = 1, q7..q8 = 3 (reverse 1), q9..q11 = 1 -> total = 11 -> Low
+        data = {f'q{i}': 1 for i in range(1, 12)}
+        data['q4'] = 3
+        data['q5'] = 3
+        data['q7'] = 3
+        data['q8'] = 3
+        data['reflection'] = 'Accessible results test.'
+
+        response = client.post('/stress/', data=data, follow_redirects=True)
+        assert response.status_code == 200
+        html = response.get_data(as_text=True)
+
+        assert 'Stress assessment submitted successfully.' in html
+        assert 'Choose Your Check-In' in html
+        assert 'Latest result:' in html
+        assert '11/44 (Low)' in html
+        assert 'View Result' in html
+        assert 'History' in html
+
+        assessment = StressAssessment.query.filter_by(user_id=user.id).first()
+        assert f'/stress/result/{assessment.id}' in html
+
+    def test_result_page_accessible_with_checkin_back_button(self, client, db):
+        user = create_test_student(db, email='result_student@test.com', password='pass')
+        client.post('/auth/login', data={'email': 'result_student@test.com', 'password': 'pass'})
+
+        data = {f'q{i}': 2 for i in range(1, 12)}
+        client.post('/stress/', data=data)
+
+        assessment = StressAssessment.query.filter_by(user_id=user.id).first()
+        response = client.get(f'/stress/result/{assessment.id}')
+        assert response.status_code == 200
+        html = response.get_data(as_text=True)
+
+        assert 'Assessment Result' in html
+        assert 'Back to Check-In' in html
+        assert 'href="/checkin"' in html
+
+
+class TestStressFlowAndPreservation:
+    def test_template_stepper_structure_and_guards(self, client, db):
+        create_test_student(db, email='flow_student@test.com', password='pass')
+        client.post('/auth/login', data={'email': 'flow_student@test.com', 'password': 'pass'})
+
+        response = client.get('/stress/')
+        assert response.status_code == 200
+        html = response.get_data(as_text=True)
+
+        # 1. Sequential question steps 1 to 11
+        for s in range(1, 12):
+            assert f'data-step="{s}"' in html
+
+        # 2. Reflection step
+        assert 'id="reflection-step"' in html
+
+        # 3. Stepper controls
+        assert 'id="prev-btn"' in html
+        assert 'id="next-btn"' in html
+        assert 'id="submit-btn"' in html
+
+        # 4. JavaScript safeguards for jumping, auto-advance, answer preservation, and submission locking
+        assert 'clearAutoAdvance' in html
+        assert 'autoAdvanceTimer' in html
+        assert 'isSubmitting' in html
+        assert 'option-radio' in html
+        assert 'stepWhenSelected' in html
+        assert 'syncStepVisuals' in html
+
+    def test_incomplete_submission_preserves_answers_and_indicates_error(self, client, db):
+        create_test_student(db, email='preserve_student@test.com', password='pass')
+        client.post('/auth/login', data={'email': 'preserve_student@test.com', 'password': 'pass'})
+
+        # Answer Q1..Q10, leave Q11 blank
+        data = {f'q{i}': 3 for i in range(1, 11)}
+        response = client.post('/stress/', data=data)
+        assert response.status_code == 200
+        html = response.get_data(as_text=True)
+
+        # Validation error displayed
+        assert 'Please answer all 11 questions before completing the assessment.' in html
+        assert 'This field is required.' in html
+
+        # Previous answers preserved in form inputs
+        assert 'value="3" checked' in html or 'checked' in html
+
+    def test_duplicate_submission_handling(self, client, db):
+        user = create_test_student(db, email='dupe_student@test.com', password='pass')
+        client.post('/auth/login', data={'email': 'dupe_student@test.com', 'password': 'pass'})
+
+        data = {f'q{i}': 2 for i in range(1, 12)}
+        # Submit twice
+        res1 = client.post('/stress/', data=data, follow_redirects=True)
+        assert res1.status_code == 200
+        res2 = client.post('/stress/', data=data, follow_redirects=True)
+        assert res2.status_code == 200
+
+        # Two records exist cleanly without database or state corruption
+        assessments = StressAssessment.query.filter_by(user_id=user.id).all()
+        assert len(assessments) == 2

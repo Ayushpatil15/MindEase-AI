@@ -100,5 +100,16 @@ def support_center():
 @student_required
 def checkin_hub():
     """Unified Check-In Hub landing page for Mood, Stress, and Facial Expression."""
-    return render_template('checkin/hub.html')
+    from app.services import stress_service
+    from app.services.safety_service import evaluate_safety, get_safety_support_card_data
 
+    latest_stress = stress_service.get_latest(current_user.id)
+    safety_card = None
+    if evaluate_safety(current_user.id):
+        safety_card = get_safety_support_card_data()
+
+    return render_template(
+        'checkin/hub.html',
+        latest_stress=latest_stress,
+        safety_card=safety_card,
+    )

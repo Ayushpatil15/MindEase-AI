@@ -13,6 +13,12 @@
     </p>
 </div>
 
+{% if safety_card %}
+<div class="mb-lg">
+    {% include 'components/safety_card.html' %}
+</div>
+{% endif %}
+
 <div class="grid grid-3" style="gap: 20px;">
     <!-- Mood Check-In -->
     <div class="card card-hover" style="display: flex; flex-direction: column; justify-content: space-between;">
@@ -46,10 +52,25 @@
                 Reflect on your academic workload using an 11-question PSS-based stress assessment.
             </p>
 
+            {% if latest_stress %}
+            <div style="margin-bottom: 16px; padding: 10px 12px; background: var(--color-surface-subtle); border-radius: var(--border-radius-sm); border: 1px solid var(--color-border); font-size: 0.85rem;">
+                <div class="flex-between mb-xs">
+                    <span class="text-muted">Latest result:</span>
+                    <strong style="color: {% if latest_stress.level == 'Low' %}var(--color-success){% elif latest_stress.level == 'Moderate' %}var(--color-warning){% else %}var(--color-error){% endif %};">
+                        {{ latest_stress.score }}/44 ({{ latest_stress.level }})
+                    </strong>
+                </div>
+                <div style="display: flex; gap: 8px; font-size: 0.8rem;">
+                    <a href="{{ url_for('stress.result', id=latest_stress.id) }}" style="color: var(--color-primary); font-weight: 600;">View Result &rarr;</a>
+                    <span class="text-muted">&bull;</span>
+                    <a href="{{ url_for('stress.history') }}" class="text-muted">History</a>
+                </div>
+            </div>
+            {% endif %}
         </div>
         <div>
             <a href="{{ url_for('stress.take_assessment') }}" class="btn btn-secondary btn-block">
-                <span>Take Assessment</span>
+                <span>{% if latest_stress %}Retake Assessment{% else %}Take Assessment{% endif %}</span>
                 <span>&rarr;</span>
             </a>
         </div>

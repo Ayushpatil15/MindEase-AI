@@ -50,7 +50,7 @@ def take_assessment():
         refresh_recommendations(current_user.id)
 
         flash('Stress assessment submitted successfully.', 'success')
-        return redirect(url_for('stress.result', id=assessment.id))
+        return redirect(url_for('student.checkin_hub'))
 
     return render_template('stress/assessment.html', form=form)
 
