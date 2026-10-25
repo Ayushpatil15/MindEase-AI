@@ -3,263 +3,623 @@
 {% block title %}Need to talk to someone? — MindEase AI{% endblock %}
 
 {% block content %}
-<div class="chat-page-container" style="max-width: 860px; margin: 20px auto; padding: 0 12px;">
-
-    <!-- Header Section -->
-    <div class="row-flex flex-between mb-md flex-wrap gap-md" style="align-items: flex-end;">
-        <div>
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                <span class="badge badge-primary">🌱 Non-Clinical AI Companion</span>
-                <span class="badge badge-muted">Powered by Google Gemini</span>
-            </div>
-            <h1 style="font-size: 1.75rem; margin-bottom: 4px; color: var(--color-heading);">
-                Need to talk to someone?
-            </h1>
-            <p class="text-muted" style="margin-bottom: 0; font-size: 0.925rem;">
-                Chat with your MindEase AI Wellness Companion for empathetic support, study balance, and self-care reflection.
-            </p>
-        </div>
-        <div style="display: flex; gap: 8px;">
-            <a href="{{ url_for('student.support_center') }}" class="btn btn-secondary btn-sm" title="Immediate Human Support">
-                Verified Helplines &amp; Support &rarr;
-            </a>
-            <button id="openMemoryPanelBtn" type="button" class="btn btn-secondary btn-sm" title="Review or clear saved companion memory">
-                🧠 Memory (<span id="memoryBadgeCount">0</span>)
-            </button>
-            <button id="clearChatBtn" type="button" class="btn btn-secondary btn-sm" title="Clear chat history">
-                Reset Chat
-            </button>
-        </div>
-    </div>
-
-    <!-- Non-Clinical Wellness Notice & Privacy Disclosure -->
-    <div class="card mb-md" style="padding: 12px 16px; background-color: var(--color-surface-subtle); border-left: 3px solid var(--color-primary); font-size: 0.85rem; color: var(--color-text-body);">
-        <p style="margin: 0; line-height: 1.45;">
-            <strong>Wellness &amp; Privacy Notice:</strong> MindEase AI is an empathetic peer companion designed to support daily student wellness and self-care. It does not provide medical diagnoses, clinical treatment, or psychiatric care. Chat messages are processed securely via Google's Gemini API to generate responses. If you need urgent assistance, please reach <strong>Tele-MANAS (14416 / 1800-891-4416)</strong> or <strong>Emergency (112)</strong>.
-        </p>
-    </div>
-
-    <!-- Chatbot Memory & Personalization Panel (Collapsible) -->
-    <div id="memoryPanel" class="card mb-md" style="display: none; padding: 16px 20px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--border-radius); box-shadow: var(--shadow-sm);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid var(--color-border); padding-bottom: 8px;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 1.25rem;">🧠</span>
-                <h2 style="margin: 0; font-size: 1.05rem; color: var(--color-heading); font-weight: 600;">
-                    Personalization &amp; Memory Settings
-                </h2>
-            </div>
-            <button id="closeMemoryPanelBtn" type="button" class="btn btn-secondary btn-sm" style="padding: 2px 8px; font-size: 0.8rem;">
-                ✕ Close
-            </button>
-        </div>
-
-        <p class="text-muted" style="font-size: 0.85rem; line-height: 1.45; margin-bottom: 12px;">
-            MindEase saves compact, non-sensitive preferences (such as your major, preferred study routines, or everyday habits) so your companion feels like a consistent peer partner. Sensitive mental health disclosures, crisis text, and private journal reflections are <strong>never</strong> stored in memory. Wellness records remain your ground truth and are not duplicated into memory.
-        </p>
-
-        <!-- Memory Toggle -->
-        <div style="display: flex; align-items: center; justify-content: space-between; background: var(--color-surface-subtle); padding: 10px 14px; border-radius: var(--border-radius-sm); margin-bottom: 14px;">
-            <div>
-                <strong style="font-size: 0.9rem; color: var(--color-heading);">Enable Companion Memory</strong>
-                <div style="font-size: 0.775rem; color: var(--color-text-muted);">
-                    When turned off, the companion will not remember your past conversations or recall saved facts.
-                </div>
-            </div>
-            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px; margin: 0;">
-                <input type="checkbox" id="memoryToggleCheckbox" checked style="opacity: 0; width: 0; height: 0;">
-                <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 24px;"></span>
-            </label>
-        </div>
-
-        <!-- Saved Memories List -->
-        <div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <span style="font-weight: 600; font-size: 0.85rem; color: var(--color-heading);">
-                    Saved Facts (<span id="savedMemoriesCount">0</span>/10)
-                </span>
-                <button id="clearAllMemoriesBtn" type="button" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 2px 8px; color: var(--color-error); border-color: var(--color-error-border);" disabled>
-                    Clear All Memories
-                </button>
-            </div>
-
-            <div id="memoriesListContainer" style="display: flex; flex-direction: column; gap: 6px; max-height: 180px; overflow-y: auto;">
-                <div class="text-muted" style="font-size: 0.825rem; font-style: italic;">Loading memories...</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Active Crisis Alert Banner (Hidden by default, shown on crisis response) -->
-    <div id="crisisAlertBanner" class="card mb-md" style="display: none; background: #fff5f5; border: 2px solid var(--color-error); border-radius: var(--border-radius); padding: 16px;">
-        <div style="display: flex; align-items: flex-start; gap: 12px;">
-            <div style="font-size: 1.75rem; line-height: 1;">🚨</div>
-            <div style="flex: 1;">
-                <h2 style="font-size: 1.15rem; color: var(--color-error); margin-bottom: 6px; font-weight: 700;">
-                    Immediate Support & Helplines
-                </h2>
-                <p id="crisisAlertText" style="margin-bottom: 12px; font-size: 0.9rem; color: var(--color-text-body); line-height: 1.5;">
-                    It sounds like you may be going through an intensely difficult time. You do not have to carry this alone. Free, confidential, 24/7 human listeners are available right now.
-                </p>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-bottom: 12px;">
-                    <div style="background: white; border: 1px solid #fecaca; border-radius: var(--border-radius-sm); padding: 10px;">
-                        <div style="font-weight: 700; color: #991b1b; font-size: 0.85rem;">Tele-MANAS (National 24/7)</div>
-                        <div style="font-size: 1.15rem; font-weight: 700; color: var(--color-error);">14416 / 1800-891-4416</div>
-                        <div style="font-size: 0.75rem; color: var(--color-text-muted);">Toll-free, multi-lingual mental health care</div>
-                    </div>
-                    <div style="background: white; border: 1px solid #fecaca; border-radius: var(--border-radius-sm); padding: 10px;">
-                        <div style="font-weight: 700; color: #991b1b; font-size: 0.85rem;">National Emergency Services</div>
-                        <div style="font-size: 1.15rem; font-weight: 700; color: var(--color-error);">112</div>
-                        <div style="font-size: 0.75rem; color: var(--color-text-muted);">24/7 Police, Ambulance, Fire</div>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 8px;">
-                    <a href="{{ url_for('student.support_center') }}" class="btn btn-primary btn-sm" style="background-color: var(--color-error); border-color: var(--color-error);">
-                        Open Support Center Resources &rarr;
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Chat Card Container -->
-    <div class="card" style="display: flex; flex-direction: column; padding: 0; overflow: hidden; box-shadow: var(--shadow-sm); border: 1px solid var(--color-border); border-radius: var(--border-radius-lg); background: var(--color-surface);">
-
-        <!-- Chat History Scroll Box -->
-        <div id="chatMessages" role="log" aria-live="polite" aria-label="Conversation with MindEase AI" style="flex: 1; min-height: 400px; max-height: 520px; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; background: #fafbfc;">
-
-            <!-- Welcome / Initial Greeting from Companion -->
-            <div class="chat-message assistant-message" style="display: flex; gap: 12px; align-items: flex-start; max-width: 85%;">
-                <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--color-primary-bg); border: 1px solid var(--color-primary-border); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;" aria-hidden="true">
-                    🌱
-                </div>
-                <div style="background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 14px; border-top-left-radius: 4px; padding: 14px 18px; box-shadow: var(--shadow-sm);">
-                    <div style="font-size: 0.75rem; font-weight: 600; color: var(--color-primary); margin-bottom: 4px;">
-                        MindEase Companion
-                    </div>
-                    <div class="message-content" style="font-size: 0.95rem; line-height: 1.55; color: var(--color-text-body); white-space: pre-wrap;">Hello! I'm your MindEase wellness companion. Whether you're navigating exam stress, feeling overwhelmed with coursework, or just need a calm space to reflect, I'm here to listen and help you find steady ground. How are you feeling today?</div>
-                </div>
-            </div>
-
-            <!-- Quick Starter Prompts -->
-            <div id="quickPromptContainer" style="display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 8px 48px;">
-                <button type="button" class="btn btn-secondary btn-sm quick-prompt-btn" style="border-radius: var(--radius-pill); font-size: 0.8rem; background: var(--color-surface); border-color: var(--color-border);" data-prompt="I'm feeling anxious about upcoming exams and deadlines.">
-                    📝 Exam anxiety
-                </button>
-                <button type="button" class="btn btn-secondary btn-sm quick-prompt-btn" style="border-radius: var(--radius-pill); font-size: 0.8rem; background: var(--color-surface); border-color: var(--color-border);" data-prompt="Can you guide me through a 2-minute calming breathing exercise?">
-                    🌬️ Quick breathing exercise
-                </button>
-                <button type="button" class="btn btn-secondary btn-sm quick-prompt-btn" style="border-radius: var(--radius-pill); font-size: 0.8rem; background: var(--color-surface); border-color: var(--color-border);" data-prompt="I keep procrastinating on my assignments and feeling guilty.">
-                    ⏳ Procrastination help
-                </button>
-                <button type="button" class="btn btn-secondary btn-sm quick-prompt-btn" style="border-radius: var(--radius-pill); font-size: 0.8rem; background: var(--color-surface); border-color: var(--color-border);" data-prompt="How can I wind down and improve my sleep schedule?">
-                    🌙 Sleep & winding down
-                </button>
-            </div>
-
-        </div>
-
-        <!-- Typing Indicator (Hidden by default) -->
-        <div id="typingIndicator" style="display: none; padding: 8px 20px 12px 68px; background: #fafbfc; font-size: 0.825rem; color: var(--color-text-muted); align-items: center; gap: 6px;">
-            <span class="typing-dot" style="animation: pulseDot 1.4s infinite ease-in-out;">🌱</span>
-            <span>MindEase is formulating a response...</span>
-        </div>
-
-        <!-- Chat Input Form -->
-        <div style="border-top: 1px solid var(--color-border); padding: 14px 18px; background: var(--color-surface);">
-            <form id="chatForm" autocomplete="off">
-                <input type="hidden" name="csrf_token" id="csrfToken" value="{{ csrf_token() }}">
-
-                <div style="display: flex; gap: 10px; align-items: flex-end;">
-                    <div style="flex: 1; position: relative;">
-                        <label for="chatInput" class="visually-hidden" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;">
-                            Type your message
-                        </label>
-                        <textarea
-                            id="chatInput"
-                            name="message"
-                            rows="2"
-                            maxlength="2000"
-                            placeholder="Type a message or what is on your mind... (Enter to send, Shift+Enter for new line)"
-                            style="width: 100%; resize: none; border-radius: var(--border-radius); border: 1px solid var(--color-border); padding: 10px 14px; font-family: var(--font-family); font-size: 0.95rem; line-height: 1.45; color: var(--color-text); outline: none; transition: border-color var(--transition-fast);"
-                            required
-                        ></textarea>
-                    </div>
-                    <button
-                        type="submit"
-                        id="sendMessageBtn"
-                        class="btn btn-primary"
-                        style="height: 48px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600;"
-                    >
-                        <span>Send</span>
-                        <span aria-hidden="true">&rarr;</span>
-                    </button>
-                </div>
-
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 0.75rem; color: var(--color-text-muted);">
-                    <div id="chatStatusText" aria-live="polite"></div>
-                    <div>
-                        <span id="charCounter">0</span> / 2000 characters
-                    </div>
-                </div>
-            </form>
-        </div>
-
-    </div>
-
-</div>
-
-<!-- Styles for chat interactions -->
 <style>
-@keyframes pulseDot {
-    0%, 100% { opacity: 0.3; transform: scale(0.9); }
-    50% { opacity: 1; transform: scale(1.1); }
+/* Scoped styles for MindEase Companion Chatbot (Stitch Sanctuary Alignment) */
+.companion-sanctuary-wrap {
+    position: relative;
+    max-width: 920px;
+    margin: 12px auto 40px auto;
+    padding: 0 16px;
+    min-height: calc(100vh - 8rem);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* Ambient glow orbs */
+.chat-ambient-orb-1 {
+    position: absolute;
+    top: -20px;
+    left: 40px;
+    width: 420px;
+    height: 420px;
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgba(149, 248, 167, 0.18) 0%, rgba(220, 252, 231, 0) 70%);
+    filter: blur(56px);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.chat-ambient-orb-2 {
+    position: absolute;
+    top: 280px;
+    right: -40px;
+    width: 360px;
+    height: 360px;
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgba(204, 229, 255, 0.22) 0%, rgba(204, 229, 255, 0) 70%);
+    filter: blur(52px);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Companion Header Toolbar */
+.chat-toolbar-card {
+    position: relative;
+    z-index: 10;
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 16px 22px;
+    border: 1px solid rgba(220, 252, 231, 0.8);
+    box-shadow: 0 4px 16px -2px rgba(21, 128, 61, 0.05), 0 1px 4px 0 rgba(30, 41, 34, 0.02);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.chat-companion-identity {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.chat-companion-avatar {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    border-radius: 9999px;
+    background: #dcfce7;
+    color: #15803d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.3rem;
+}
+
+.chat-status-pulse-dot {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 11px;
+    height: 11px;
+    border-radius: 9999px;
+    background: #15803d;
+    border: 2px solid #ffffff;
+}
+
+.chat-companion-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.chat-companion-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.chat-companion-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1b1c1a;
+    letter-spacing: -0.015em;
+    margin: 0;
+}
+
+.chat-online-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 9px;
+    border-radius: 9999px;
+    background: #f0fdf4;
+    border: 1px solid rgba(21, 128, 61, 0.2);
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #15803d;
+}
+
+.chat-online-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    background: #15803d;
+    animation: companionPulse 2s infinite;
+}
+
+@keyframes companionPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.chat-companion-desc {
+    font-size: 0.82rem;
+    color: #6f7a6e;
+    margin: 0;
+}
+
+/* Toolbar Action Buttons */
+.chat-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.chat-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 9999px;
+    background: #f5f3f0;
+    color: #3f493f;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border: 1px solid #eae8e5;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chat-action-btn:hover {
+    background: #eae8e5;
+    color: #1b1c1a;
+    transform: translateY(-1px);
+}
+
+.chat-action-helpline {
+    background: #e0f2fe;
+    color: #0284c7;
+    border-color: #bae6fd;
+}
+
+.chat-action-helpline:hover {
+    background: #bae6fd;
+    color: #0369a1;
+}
+
+/* Prompt Starters Horizontal Pill Tray */
+.chat-starters-tray {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    margin-bottom: 16px;
+    scrollbar-width: none;
+}
+
+.chat-starters-tray::-webkit-scrollbar {
+    display: none;
+}
+
+.chat-starters-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #6f7a6e;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    padding-left: 4px;
+}
+
+.quick-prompt-btn {
+    white-space: nowrap;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    background: #ffffff;
+    border: 1px solid #eae8e5;
+    color: #4a5a50;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.quick-prompt-btn:hover {
+    background: #f0fdf4;
+    border-color: #15803d;
+    color: #15803d;
+    transform: translateY(-1px);
+}
+
+/* Conversation Stream Container */
+.chat-conversation-container {
+    position: relative;
+    z-index: 1;
+    background: #ffffff;
+    border-radius: 28px;
+    border: 1px solid rgba(220, 252, 231, 0.75);
+    box-shadow: 0 6px 24px -4px rgba(21, 128, 61, 0.05), 0 2px 8px 0 rgba(30, 41, 34, 0.02);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin-bottom: 16px;
+    flex: 1;
+}
+
+.chat-messages-box {
+    flex: 1;
+    min-height: 420px;
+    max-height: 560px;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    background: #faf8f5;
+}
+
+/* Chat Message Bubbles */
+.chat-message.assistant-message {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    max-width: 86%;
+    align-self: flex-start;
+}
+
+.chat-assistant-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 9999px;
+    background: #dcfce7;
+    border: 1.5px solid rgba(21, 128, 61, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.chat-assistant-bubble {
+    background: #ffffff;
+    border: 1px solid rgba(220, 252, 231, 0.85);
+    border-radius: 4px 20px 20px 20px;
+    padding: 16px 20px;
+    box-shadow: 0 2px 8px -1px rgba(21, 128, 61, 0.04);
+}
+
+.chat-assistant-label {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #15803d;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .chat-message.user-message {
     align-self: flex-end;
     display: flex;
-    justify-content: flex-end;
-    max-width: 85%;
+    flex-direction: column;
+    align-items: flex-end;
+    max-width: 80%;
 }
 
 .chat-message.user-message .message-bubble {
-    background-color: var(--color-primary-bg);
-    border: 1px solid var(--color-primary-border);
-    color: var(--color-text);
-    border-radius: 14px;
-    border-top-right-radius: 4px;
-    padding: 12px 16px;
-    box-shadow: var(--shadow-sm);
+    background: #15803d;
+    color: #ffffff;
+    border-radius: 20px 20px 4px 20px;
+    padding: 14px 18px;
+    box-shadow: 0 4px 14px -2px rgba(21, 128, 61, 0.28);
 }
 
-.quick-prompt-btn:hover {
-    border-color: var(--color-primary) !important;
-    color: var(--color-primary) !important;
-    background-color: var(--color-primary-bg) !important;
+.chat-user-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #6f7a6e;
+    margin-top: 4px;
+    margin-right: 4px;
 }
 
-#chatInput:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px var(--color-primary-bg);
+.message-content {
+    font-size: 0.96rem;
+    line-height: 1.62;
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
-.slider.round:before {
-    position: absolute;
-    content: "";
-    height: 18px;
-    width: 18px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    transition: .3s;
-    border-radius: 50%;
+/* Typing Indicator */
+.chat-typing-bar {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 24px 12px 72px;
+    background: #faf8f5;
+    font-size: 0.82rem;
+    color: #6f7a6e;
+    font-style: italic;
 }
-input:checked + .slider {
-    background-color: var(--color-primary) !important;
+
+.typing-dot-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 3px 8px;
+    background: #efeeeb;
+    border-radius: 9999px;
 }
-input:checked + .slider:before {
-    transform: translateX(20px);
+
+.typing-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    background: #15803d;
+    animation: typingBounce 1.2s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(2) { animation-delay: 0.15s; }
+.typing-dot:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes typingBounce {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1.1); opacity: 1; }
+}
+
+/* Floating Message Composer Dock */
+.chat-composer-dock {
+    position: relative;
+    z-index: 10;
+    background: #ffffff;
+    border-radius: 22px;
+    padding: 14px 18px;
+    border: 1.5px solid #eae8e5;
+    box-shadow: 0 4px 20px -2px rgba(21, 128, 61, 0.06);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chat-composer-dock:focus-within {
+    border-color: #15803d;
+    box-shadow: 0 8px 28px -4px rgba(21, 128, 61, 0.14);
+}
+
+.chat-textarea-field {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: none;
+    font-family: inherit;
+    font-size: 0.98rem;
+    line-height: 1.5;
+    color: #1b1c1a;
+    padding: 2px 4px 6px 4px;
+    box-sizing: border-box;
+}
+
+.chat-textarea-field::placeholder {
+    color: #8c988a;
+}
+
+.chat-composer-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 6px;
+    border-top: 1px solid #f5f3f0;
+}
+
+.chat-hint-meta {
+    font-size: 0.76rem;
+    color: #8c988a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chat-send-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 9999px;
+    background: #15803d;
+    color: #ffffff;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(21, 128, 61, 0.28);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+}
+
+.chat-send-btn:hover:not(:disabled) {
+    background: #166534;
+    transform: scale(1.04);
+    box-shadow: 0 4px 12px rgba(21, 128, 61, 0.35);
+}
+
+.chat-send-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Footer Safety & Privacy Note */
+.chat-safety-footer {
+    text-align: center;
+    padding: 10px 16px 0 16px;
+    font-size: 0.78rem;
+    color: #6f7a6e;
+    line-height: 1.45;
+}
+
+.chat-safety-footer strong {
+    color: #3f493f;
 }
 </style>
+
+<div class="companion-sanctuary-wrap">
+    <!-- Ambient Background Light -->
+    <div class="chat-ambient-orb-1"></div>
+    <div class="chat-ambient-orb-2"></div>
+
+    <div>
+        <!-- Companion Header Toolbar -->
+        <header class="chat-toolbar-card">
+            <div class="chat-companion-identity">
+                <div class="chat-companion-avatar">
+                    <span>🌱</span>
+                    <span class="chat-status-pulse-dot" title="Active"></span>
+                </div>
+                <div class="chat-companion-meta">
+                    <div class="chat-companion-title-row">
+                        <h1 class="chat-companion-title">MindEase Companion</h1>
+                        <span class="chat-online-pill">
+                            <span class="chat-online-dot"></span>
+                            <span>Online &amp; Listening</span>
+                        </span>
+                    </div>
+                    <p class="chat-companion-desc">
+                        AI Wellness Companion &bull; Powered by Google Gemini &bull; Safe peer space
+                    </p>
+                </div>
+            </div>
+
+            <!-- Toolbar Action Buttons -->
+            <div class="chat-toolbar-actions">
+                <button id="clearChatBtn" type="button" class="chat-action-btn" title="Clear chat history">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg>
+                    <span>Reset Chat</span>
+                </button>
+                <a href="{{ url_for('student.support_center') }}" class="chat-action-btn chat-action-helpline" title="Immediate Human Support">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                    <span>Verified Helplines</span>
+                </a>
+            </div>
+        </header>
+
+        <!-- Active Crisis Alert Banner (Hidden by default) -->
+        <div id="crisisAlertBanner" style="display: none; background: #fff5f5; border: 2px solid #dc2626; border-radius: 20px; padding: 20px; margin-bottom: 16px;">
+            <div style="display: flex; align-items: flex-start; gap: 14px;">
+                <div style="font-size: 2rem; line-height: 1;">🚨</div>
+                <div style="flex: 1;">
+                    <h2 style="font-size: 1.15rem; color: #dc2626; margin: 0 0 6px 0; font-weight: 700;">
+                        Immediate Support &amp; Helplines
+                    </h2>
+                    <p id="crisisAlertText" style="margin-bottom: 14px; font-size: 0.9rem; color: #3f493f; line-height: 1.5;">
+                        It sounds like you may be going through an intensely difficult time. You do not have to carry this alone. Free, confidential, 24/7 human listeners are available right now.
+                    </p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 14px;">
+                        <div style="background: white; border: 1px solid #fecaca; border-radius: 12px; padding: 12px;">
+                            <div style="font-weight: 700; color: #991b1b; font-size: 0.85rem;">Tele-MANAS (National 24/7)</div>
+                            <div style="font-size: 1.2rem; font-weight: 700; color: #dc2626;">14416 / 1800-891-4416</div>
+                            <div style="font-size: 0.75rem; color: #6f7a6e;">Toll-free, multi-lingual mental health care</div>
+                        </div>
+                        <div style="background: white; border: 1px solid #fecaca; border-radius: 12px; padding: 12px;">
+                            <div style="font-weight: 700; color: #991b1b; font-size: 0.85rem;">National Emergency Services</div>
+                            <div style="font-size: 1.2rem; font-weight: 700; color: #dc2626;">112</div>
+                            <div style="font-size: 0.75rem; color: #6f7a6e;">24/7 Police, Ambulance, Fire</div>
+                        </div>
+                    </div>
+                    <div>
+                        <a href="{{ url_for('student.support_center') }}" class="chat-action-btn" style="background: #dc2626; color: #ffffff; border-color: #dc2626;">
+                            Open Support Center Resources &rarr;
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Starter Prompts Tray -->
+        <div id="quickPromptContainer" class="chat-starters-tray">
+            <span class="chat-starters-label">Gentle Starters:</span>
+            <button type="button" class="quick-prompt-btn" data-prompt="I'm feeling anxious about upcoming exams and deadlines.">
+                🌱 Help me clear my head
+            </button>
+            <button type="button" class="quick-prompt-btn" data-prompt="Can you guide me through a 2-minute calming breathing exercise?">
+                🌬️ Quick breathing exercise
+            </button>
+            <button type="button" class="quick-prompt-btn" data-prompt="I keep procrastinating on my assignments and feeling guilty.">
+                ⏳ Procrastination help
+            </button>
+            <button type="button" class="quick-prompt-btn" data-prompt="How can I wind down and improve my sleep schedule?">
+                🌙 Sleep &amp; winding down
+            </button>
+        </div>
+
+        <!-- Conversation Stream Card -->
+        <div class="chat-conversation-container">
+            <!-- Messages Scroll View -->
+            <div id="chatMessages" role="log" aria-live="polite" aria-label="Conversation with MindEase AI" class="chat-messages-box">
+                <!-- Initial Companion Welcome Message -->
+                <div class="chat-message assistant-message">
+                    <div class="chat-assistant-avatar" aria-hidden="true">🌱</div>
+                    <div class="chat-assistant-bubble">
+                        <div class="chat-assistant-label">
+                            <span>MindEase Companion</span>
+                            <span style="font-weight: 500; color: #8c988a;">&bull; Just now</span>
+                        </div>
+                        <div class="message-content">Hello! I'm your MindEase wellness companion. Whether you're navigating exam stress, feeling overwhelmed with coursework, or just need a calm space to reflect, I'm here to listen and help you find steady ground. How are you feeling today?</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Typing Indicator -->
+            <div id="typingIndicator" class="chat-typing-bar">
+                <div class="typing-dot-pill">
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                </div>
+                <span>MindEase is holding space...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Message Composer Dock -->
+    <div>
+        <form id="chatForm" autocomplete="off" class="chat-composer-dock">
+            <input type="hidden" name="csrf_token" id="csrfToken" value="{{ csrf_token() }}">
+
+            <label for="chatInput" class="visually-hidden" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;">
+                Type your message
+            </label>
+            <textarea
+                id="chatInput"
+                name="message"
+                rows="2"
+                maxlength="2000"
+                class="chat-textarea-field"
+                placeholder="Talk to me about anything... (study stress, thoughts, or taking a breather)"
+                required
+            ></textarea>
+
+            <div class="chat-composer-bottom">
+                <div class="chat-hint-meta">
+                    <span id="chatStatusText" aria-live="polite"></span>
+                    <span>Shift + Return for new line</span>
+                    <span>&bull;</span>
+                    <span><span id="charCounter">0</span> / 2000</span>
+                </div>
+
+                <button type="submit" id="sendMessageBtn" class="chat-send-btn" title="Send message">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+                </button>
+            </div>
+        </form>
+
+        <!-- Safety Posture Disclaimer -->
+        <footer class="chat-safety-footer">
+            <p style="margin: 0;">
+                MindEase AI is an empathetic peer companion and study guide, not a substitute for clinical psychological or medical care. If you need urgent assistance, reach <strong>Tele-MANAS (14416 / 1800-891-4416)</strong> or <strong>Emergency (112)</strong>.
+            </p>
+        </footer>
+    </div>
+</div>
 
 <!-- Safe, Self-Contained Chat Script -->
 <script>
@@ -267,7 +627,6 @@ input:checked + .slider:before {
     'use strict';
 
     // State: In-memory client conversation history
-    // Server enforces max 10 turns and message boundaries
     let conversationHistory = [];
     let isSubmitting = false;
 
@@ -345,10 +704,10 @@ input:checked + .slider:before {
             crisisAlertBanner.style.display = 'none';
             chatStatusText.textContent = '';
 
-            // Retain greeting and quick prompts, remove others
+            // Retain greeting, remove others
             const messages = chatMessages.querySelectorAll('.chat-message');
             messages.forEach((msg, index) => {
-                if (index > 0) { // Keep initial assistant greeting
+                if (index > 0) {
                     msg.remove();
                 }
             });
@@ -362,7 +721,7 @@ input:checked + .slider:before {
         }
     });
 
-    // Append User Message to UI (strict textContent rendering)
+    // Append User Message to UI
     function appendUserMessage(text) {
         const row = document.createElement('div');
         row.className = 'chat-message user-message';
@@ -370,93 +729,75 @@ input:checked + .slider:before {
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble';
 
-        const roleHeader = document.createElement('div');
-        roleHeader.style.fontSize = '0.75rem';
-        roleHeader.style.fontWeight = '600';
-        roleHeader.style.color = 'var(--color-primary-hover)';
-        roleHeader.style.marginBottom = '4px';
-        roleHeader.style.textAlign = 'right';
-        roleHeader.textContent = 'You';
-
         const content = document.createElement('div');
         content.className = 'message-content';
-        content.style.fontSize = '0.95rem';
-        content.style.lineHeight = '1.55';
-        content.style.whiteSpace = 'pre-wrap';
-        content.textContent = text; // Safe text rendering
+        content.textContent = text;
 
-        bubble.appendChild(roleHeader);
+        const roleHeader = document.createElement('div');
+        roleHeader.className = 'chat-user-label';
+        const now = new Date();
+        roleHeader.textContent = 'You \u2022 ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
         bubble.appendChild(content);
         row.appendChild(bubble);
+        row.appendChild(roleHeader);
         chatMessages.appendChild(row);
         scrollToBottom();
     }
 
-    // Append Assistant Message to UI (strict textContent rendering)
+    // Append Assistant Message to UI
     function appendAssistantMessage(text, isCrisis) {
         const row = document.createElement('div');
         row.className = 'chat-message assistant-message';
-        row.style.display = 'flex';
-        row.style.gap = '12px';
-        row.style.alignItems = 'flex-start';
-        row.style.maxWidth = '85%';
 
         const avatar = document.createElement('div');
-        avatar.style.width = '36px';
-        avatar.style.height = '36px';
-        avatar.style.borderRadius = '50%';
-        avatar.style.background = isCrisis ? '#fee2e2' : 'var(--color-primary-bg)';
-        avatar.style.border = isCrisis ? '1px solid #fca5a5' : '1px solid var(--color-primary-border)';
-        avatar.style.display = 'flex';
-        avatar.style.alignItems = 'center';
-        avatar.style.justifyContent = 'center';
-        avatar.style.fontSize = '1.1rem';
-        avatar.style.flexShrink = '0';
+        avatar.className = 'chat-assistant-avatar';
         avatar.setAttribute('aria-hidden', 'true');
         avatar.textContent = isCrisis ? '🚨' : '🌱';
+        if (isCrisis) {
+            avatar.style.background = '#fee2e2';
+            avatar.style.borderColor = '#fca5a5';
+        }
 
         const bubble = document.createElement('div');
-        bubble.style.background = isCrisis ? '#fff5f5' : 'var(--color-surface)';
-        bubble.style.border = isCrisis ? '1px solid #fecaca' : '1px solid var(--color-border)';
-        bubble.style.borderRadius = '14px';
-        bubble.style.borderTopLeftRadius = '4px';
-        bubble.style.padding = '14px 18px';
-        bubble.style.boxShadow = 'var(--shadow-sm)';
+        bubble.className = 'chat-assistant-bubble';
+        if (isCrisis) {
+            bubble.style.background = '#fff5f5';
+            bubble.style.borderColor = '#fecaca';
+        }
 
         const roleHeader = document.createElement('div');
-        roleHeader.style.fontSize = '0.75rem';
-        roleHeader.style.fontWeight = '600';
-        roleHeader.style.color = isCrisis ? 'var(--color-error)' : 'var(--color-primary)';
-        roleHeader.style.marginBottom = '4px';
-        roleHeader.textContent = isCrisis ? 'Support & Immediate Care' : 'MindEase Companion';
+        roleHeader.className = 'chat-assistant-label';
+        if (isCrisis) {
+            roleHeader.style.color = '#dc2626';
+            roleHeader.textContent = 'Support & Immediate Care';
+        } else {
+            const now = new Date();
+            roleHeader.innerHTML = `<span>MindEase AI</span><span style="font-weight: 500; color: #8c988a;">&bull; ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>`;
+        }
 
         const content = document.createElement('div');
         content.className = 'message-content';
-        content.style.fontSize = '0.95rem';
-        content.style.lineHeight = '1.55';
-        content.style.color = 'var(--color-text-body)';
-        content.style.whiteSpace = 'pre-wrap';
-        content.textContent = text; // Safe text rendering
+        content.textContent = text;
 
         bubble.appendChild(roleHeader);
         bubble.appendChild(content);
 
-        // If crisis, add direct helpline block inside the bubble as well
         if (isCrisis) {
             const crisisBlock = document.createElement('div');
             crisisBlock.style.marginTop = '12px';
-            crisisBlock.style.padding = '10px 12px';
+            crisisBlock.style.padding = '10px 14px';
             crisisBlock.style.background = '#ffffff';
-            crisisBlock.style.borderRadius = '8px';
+            crisisBlock.style.borderRadius = '12px';
             crisisBlock.style.border = '1px solid #fecaca';
             crisisBlock.style.fontSize = '0.85rem';
 
             crisisBlock.innerHTML = `
                 <div style="font-weight: 700; color: #991b1b; margin-bottom: 4px;">Verified 24/7 National Helplines:</div>
-                <div style="margin-bottom: 2px;">• <strong>Tele-MANAS:</strong> <a href="tel:14416" style="color: #dc2626; font-weight: 700;">14416</a> or <a href="tel:18008914416" style="color: #dc2626; font-weight: 700;">1800-891-4416</a> (Toll-Free, 24/7)</div>
-                <div style="margin-bottom: 6px;">• <strong>National Emergency:</strong> <a href="tel:112" style="color: #dc2626; font-weight: 700;">112</a></div>
+                <div style="margin-bottom: 3px;">&bull; <strong>Tele-MANAS:</strong> <a href="tel:14416" style="color: #dc2626; font-weight: 700;">14416</a> or <a href="tel:18008914416" style="color: #dc2626; font-weight: 700;">1800-891-4416</a></div>
+                <div style="margin-bottom: 6px;">&bull; <strong>National Emergency:</strong> <a href="tel:112" style="color: #dc2626; font-weight: 700;">112</a></div>
                 <div style="margin-top: 8px;">
-                    <a href="{{ url_for('student.support_center') }}" class="btn btn-secondary btn-sm" style="font-size: 0.8rem; padding: 4px 10px;">View Full Support Resources &rarr;</a>
+                    <a href="{{ url_for('student.support_center') }}" class="chat-action-btn" style="font-size: 0.78rem; padding: 4px 10px;">View Full Support Resources &rarr;</a>
                 </div>
             `;
             bubble.appendChild(crisisBlock);
@@ -476,11 +817,11 @@ input:checked + .slider:before {
         row.style.margin = '4px 0';
 
         const bubble = document.createElement('div');
-        bubble.style.background = 'var(--color-error-bg)';
-        bubble.style.color = 'var(--color-error)';
+        bubble.style.background = '#fef2f2';
+        bubble.style.color = '#dc2626';
         bubble.style.border = '1px solid #fecaca';
-        bubble.style.borderRadius = 'var(--border-radius-sm)';
-        bubble.style.padding = '8px 14px';
+        bubble.style.borderRadius = '12px';
+        bubble.style.padding = '8px 16px';
         bubble.style.fontSize = '0.85rem';
         bubble.textContent = errorText;
 
@@ -500,20 +841,17 @@ input:checked + .slider:before {
             return;
         }
 
-        // Hide quick prompts once conversation starts
         if (quickPromptContainer) {
             quickPromptContainer.style.display = 'none';
         }
 
-        // Lock form during submission
         isSubmitting = true;
         chatInput.disabled = true;
         sendMessageBtn.disabled = true;
         typingIndicator.style.display = 'flex';
-        chatStatusText.textContent = 'Contacting companion...';
+        chatStatusText.textContent = 'Connecting...';
         scrollToBottom();
 
-        // Render user message immediately
         appendUserMessage(text);
         chatInput.value = '';
         charCounter.textContent = '0';
@@ -550,32 +888,25 @@ input:checked + .slider:before {
             }
 
             if (data.status === 'crisis_detected' || data.status === 'blocked') {
-                // Crisis language or safety boundary triggered: display care banner
                 crisisAlertBanner.style.display = 'block';
                 if (data.reply) {
                     crisisAlertText.textContent = data.reply;
                 }
                 appendAssistantMessage(data.reply || 'Support and immediate care resources are available.', true);
                 chatStatusText.textContent = data.status === 'crisis_detected' ? 'Support resources provided.' : 'Notice displayed.';
-
-                // Do not append blocked or crisis exchanges to conversation history
             } else if (data.status === 'success') {
                 appendAssistantMessage(data.reply, false);
                 chatStatusText.textContent = '';
 
-                // Update client-side history for subsequent context turns
                 conversationHistory.push({ role: 'user', content: text });
                 conversationHistory.push({ role: 'model', content: data.reply });
 
-                // Keep client history bounded to last 10 items
                 if (conversationHistory.length > 10) {
                     conversationHistory = conversationHistory.slice(-10);
                 }
 
-                // Refresh memory badge and list if companion extracted new safe facts
                 loadMemories();
             } else if (data.status === 'empty_response') {
-                // Expected empty response: show as companion message instead of red error box
                 appendAssistantMessage(data.reply || data.message || 'I could not generate a response. Please try rephrasing.', false);
                 chatStatusText.textContent = '';
             } else {
@@ -604,6 +935,7 @@ input:checked + .slider:before {
     }
 
     async function loadMemories() {
+        if (!memoriesListContainer && !openMemoryPanelBtn) return;
         try {
             const res = await fetch('/chat/api/memories');
             if (!res.ok) return;
@@ -618,15 +950,15 @@ input:checked + .slider:before {
 
                 if (!memoriesListContainer) return;
                 if (count === 0) {
-                    memoriesListContainer.innerHTML = '<div class="text-muted" style="font-size: 0.825rem; font-style: italic; padding: 4px 0;">No saved companion memories yet. As you chat about your studies and preferences, non-sensitive facts will appear here.</div>';
+                    memoriesListContainer.innerHTML = '<div class="text-muted" style="font-size: 0.82rem; font-style: italic; padding: 4px 0;">No saved companion memories yet. As you chat about your studies and preferences, non-sensitive facts will appear here.</div>';
                 } else {
                     memoriesListContainer.innerHTML = memories.map(m => `
-                        <div style="display: flex; justify-content: space-between; align-items: center; background: var(--color-surface-subtle); padding: 8px 12px; border-radius: 6px; font-size: 0.825rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: #faf8f5; border: 1px solid #eae8e5; padding: 8px 12px; border-radius: 10px; font-size: 0.82rem;">
                             <div style="flex: 1; padding-right: 8px;">
-                                <span style="font-weight: 500; color: var(--color-text);">${escapeHtml(m.text)}</span>
+                                <span style="font-weight: 500; color: #1b1c1a;">${escapeHtml(m.text)}</span>
                                 <span class="badge badge-muted" style="font-size: 0.7rem; margin-left: 6px;">${escapeHtml(m.category || 'general')}</span>
                             </div>
-                            <button type="button" class="btn btn-secondary btn-sm delete-mem-btn" data-id="${m.id}" style="padding: 2px 8px; font-size: 0.75rem; color: var(--color-error); border-color: var(--color-error-border);" title="Delete this memory">
+                            <button type="button" class="chat-action-btn delete-mem-btn" data-id="${m.id}" style="padding: 2px 8px; font-size: 0.72rem; color: #dc2626; border-color: #fecaca;" title="Delete this memory">
                                 🗑️ Delete
                             </button>
                         </div>

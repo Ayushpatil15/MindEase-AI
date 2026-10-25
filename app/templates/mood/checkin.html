@@ -1,37 +1,355 @@
 {% extends 'base.html' %}
 
-{% block title %}Log Mood Check-In — MindEase AI{% endblock %}
+{% block title %}Daily Mood Check-In — MindEase AI{% endblock %}
 
 {% block content %}
-<div style="max-width: 540px; margin: 20px auto;">
+<style>
+/* Scoped styles for Mood Check-In screen (Stitch Sanctuary Aesthetic) */
+.mood-checkin-wrapper {
+    max-width: 780px;
+    margin: 16px auto 48px auto;
+}
+
+.mood-container-card {
+    background: var(--color-surface);
+    border-radius: 18px;
+    padding: 32px 32px;
+    border: 1px solid var(--color-border);
+    box-shadow: 0 2px 12px -2px rgba(21, 128, 61, 0.04), 0 1px 3px 0 rgba(15, 23, 42, 0.03);
+}
+
+.mood-badge-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-surface-subtle);
+    color: var(--color-primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.mood-badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--color-primary);
+}
+
+.mood-header-title {
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: var(--color-heading);
+    margin-bottom: 6px;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+}
+
+.mood-header-sub {
+    font-size: 0.95rem;
+    color: var(--color-text-muted);
+    margin-bottom: 0;
+    line-height: 1.5;
+}
+
+.mood-section-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.mood-section-tag {
+    font-size: 0.725rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.mood-section-req {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+.mood-section-heading {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--color-heading);
+    margin-bottom: 14px;
+}
+
+/* 5-Column Responsive Mood Grid */
+.mood-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 900px) {
+    .mood-cards-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .mood-cards-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.mood-option-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px 14px;
+    border-radius: 14px;
+    background: var(--color-surface);
+    border: 1.5px solid var(--color-border);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    text-align: left;
+}
+
+.mood-option-card:hover {
+    border-color: var(--color-primary);
+    background-color: var(--color-surface-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+}
+
+.mood-option-card.selected {
+    border-color: var(--color-primary);
+    background-color: var(--color-primary-bg);
+    box-shadow: 0 0 0 2px rgba(21, 128, 61, 0.25), 0 4px 14px rgba(21, 128, 61, 0.08);
+}
+
+.mood-option-card:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.mood-card-top {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.mood-icon-bubble {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    transition: transform 0.2s ease;
+}
+
+.mood-option-card:hover .mood-icon-bubble {
+    transform: scale(1.08);
+}
+
+.mood-indicator-circle {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1.5px solid #cbd5e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.mood-option-card.selected .mood-indicator-circle {
+    border-color: var(--color-primary);
+    background-color: var(--color-primary);
+    color: #ffffff;
+}
+
+.mood-indicator-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    display: none;
+}
+
+.mood-option-card.selected .mood-indicator-dot {
+    display: block;
+}
+
+.mood-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-heading);
+    margin-bottom: 4px;
+    line-height: 1.25;
+}
+
+.mood-desc {
+    font-size: 0.775rem;
+    color: var(--color-text-muted);
+    line-height: 1.4;
+}
+
+/* Reflection Note Container */
+.mood-reflection-box {
+    background: var(--color-surface-subtle);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 16px;
+    transition: all 0.2s ease;
+}
+
+.mood-reflection-box:focus-within {
+    background: var(--color-surface);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.15);
+}
+
+.mood-textarea {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: var(--font-family);
+    font-size: 0.95rem;
+    color: var(--color-heading);
+    resize: vertical;
+    min-height: 84px;
+    line-height: 1.6;
+}
+
+.mood-textarea::placeholder {
+    color: var(--color-text-muted);
+    opacity: 0.8;
+}
+
+.mood-reflection-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-border);
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+}
+
+.mood-privacy-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-primary);
+    font-weight: 500;
+}
+
+/* Privacy Assurance Card */
+.mood-trust-card {
+    background: var(--color-surface-subtle);
+    border-radius: 14px;
+    border: 1px solid var(--color-border);
+    padding: 14px 18px;
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+@media (max-width: 640px) {
+    .mood-trust-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+</style>
+
+<div class="mood-checkin-wrapper">
     <div class="mb-md">
         <a href="{{ url_for('student.checkin_hub') }}" class="btn btn-secondary btn-sm">&larr; Back to Check-In Hub</a>
     </div>
 
-    <div class="text-center mb-lg">
-        <span class="badge badge-purple mb-xs">Fast Check-In • ~1 min</span>
-        <h1 style="font-size: 1.85rem; font-weight: 700; margin-bottom: 6px;">How are you feeling right now?</h1>
-        <p class="text-muted" style="margin-bottom: 0; font-size: 0.95rem;">
-            Select your current emotional state to track your mood baseline over time.
+    <!-- Header Block -->
+    <div class="mb-lg">
+        <div class="mood-badge-header">
+            <span class="mood-badge-dot"></span>
+            <span>Daily Reflection • ~1 Min</span>
+        </div>
+        <h1 class="mood-header-title">Daily Mood Check-In</h1>
+        <p class="mood-header-sub">
+            A quiet pause to notice your internal weather. Select what best describes your headspace today.
         </p>
     </div>
 
-    <form method="POST" action="{{ url_for('mood.checkin') }}" class="card card-hover">
+    <form method="POST" action="{{ url_for('mood.checkin') }}" class="mood-container-card" novalidate id="mood-checkin-form">
         {{ form.csrf_token }}
 
-        <div class="form-group mb-lg">
-            <label class="form-label" style="margin-bottom: 12px;">Select Primary Feeling</label>
-            <div style="display: flex; flex-direction: column; gap: 10px;">
+        <!-- Section 01: Mood Selection -->
+        <div class="form-group mb-xl">
+            <div class="mood-section-meta">
+                <span class="mood-section-tag">Section 01</span>
+                <span class="mood-section-req">Required</span>
+            </div>
+            <h2 class="mood-section-heading">How does your headspace feel right now?</h2>
+
+            <div class="mood-cards-grid" id="mood-cards-group">
+                {% set mood_metadata = {
+                    'Very good': {
+                        'icon': '✨',
+                        'bg': 'rgba(21, 128, 61, 0.12)',
+                        'desc': 'Energized, flourishing, positive outlook.'
+                    },
+                    'Good': {
+                        'icon': '🌱',
+                        'bg': 'rgba(34, 197, 94, 0.14)',
+                        'desc': 'Calm, grounded, stable and focused.'
+                    },
+                    'Okay': {
+                        'icon': '⚖️',
+                        'bg': 'rgba(2, 132, 199, 0.12)',
+                        'desc': 'Balanced, neutral, steady rhythm.'
+                    },
+                    'Low': {
+                        'icon': '🔋',
+                        'bg': 'rgba(217, 119, 6, 0.14)',
+                        'desc': 'A bit drained, sluggish, needing rest.'
+                    },
+                    'Very low': {
+                        'icon': '🌧️',
+                        'bg': 'rgba(220, 38, 38, 0.12)',
+                        'desc': 'Overwhelmed, heavy load, tension.'
+                    }
+                } %}
+
                 {% for subfield in form.mood %}
-                    <label class="selectable-card" tabindex="0">
+                    {% set meta = mood_metadata.get(subfield.label.text, {'icon': '🌿', 'bg': 'rgba(21, 128, 61, 0.1)', 'desc': 'Current emotional state.'}) %}
+                    <label class="mood-option-card" tabindex="0" data-mood="{{ subfield.label.text }}">
                         {{ subfield(style="display: none;", class="mood-radio") }}
-                        <span style="font-weight: 600; color: var(--color-heading); font-size: 0.95rem;">
-                            {{ subfield.label.text }}
-                        </span>
-                        <span class="badge badge-muted">Select</span>
+                        <div class="mood-card-top">
+                            <div class="mood-icon-bubble" style="background: {{ meta.bg }};">
+                                <span>{{ meta.icon }}</span>
+                            </div>
+                            <div class="mood-indicator-circle">
+                                <span class="mood-indicator-dot"></span>
+                            </div>
+                        </div>
+                        <div class="mood-title">{{ subfield.label.text }}</div>
+                        <div class="mood-desc">{{ meta.desc }}</div>
                     </label>
                 {% endfor %}
             </div>
+
             {% if form.mood.errors %}
                 <div class="form-error mt-sm">
                     {% for error in form.mood.errors %}
@@ -41,14 +359,25 @@
             {% endif %}
         </div>
 
-        <div class="form-group mb-lg">
-            <label class="form-label" for="journal_note">
-                🔒 Private Journal Note (Optional)
-            </label>
-            <small class="text-muted" style="display: block; margin-bottom: 8px;">
-                {{ form.journal_note.description or 'Optional reflection. Encrypted and visible only to you.' }}
-            </small>
-            {{ form.journal_note(class="form-control", rows="3", placeholder="Reflect on what is influencing your mood today...") }}
+        <!-- Section 02: Private Reflection Note (Optional) -->
+        <div class="form-group mb-xl">
+            <div class="mood-section-meta">
+                <span class="mood-section-tag">Section 02</span>
+                <span class="mood-section-req">Private Reflection (Optional)</span>
+            </div>
+            <h2 class="mood-section-heading">Reflection Note <span class="text-muted" style="font-size: 0.9rem; font-weight: 400;">(Optional)</span></h2>
+
+            <div class="mood-reflection-box">
+                {{ form.journal_note(class="mood-textarea", id="journal_note", rows="3", placeholder="Add a gentle private note or thought... (e.g., Feeling shoulders loosen after tea, heading to chemistry lab.)") }}
+                <div class="mood-reflection-meta">
+                    <div class="mood-privacy-pill">
+                        <span>🔒</span>
+                        <span>Saved to your private check-in log</span>
+                    </div>
+                    <span id="char-count" style="font-family: monospace; font-size: 0.8rem;">0 / 2000</span>
+                </div>
+            </div>
+
             {% if form.journal_note.errors %}
                 <div class="form-error mt-xs">
                     {% for error in form.journal_note.errors %}
@@ -58,38 +387,111 @@
             {% endif %}
         </div>
 
-        <div class="mt-lg">
-            {{ form.submit(class="btn btn-primary btn-block") }}
+        <!-- Submission Row -->
+        <div class="flex-between pt-md" style="border-top: 1px solid var(--color-border); gap: 12px; flex-wrap: wrap;">
+            <a href="{{ url_for('student.checkin_hub') }}" class="btn btn-secondary">
+                Return to Hub
+            </a>
+            <button type="submit" class="btn btn-primary" id="submit-btn" style="padding: 11px 26px;">
+                <span>Log Check-In</span>
+                <span>&rarr;</span>
+            </button>
         </div>
     </form>
+
+    <!-- Trust & Privacy Assurance Banner -->
+    <div class="mood-trust-card">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--color-surface); border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; font-size: 0.95rem; flex-shrink: 0;">
+                🛡️
+            </div>
+            <p style="margin: 0; font-size: 0.85rem; color: var(--color-text-muted); line-height: 1.45;">
+                <strong style="color: var(--color-heading);">Private &amp; Confidential:</strong> Your mood logs are private to your personal student account and are never shared or visible to administrators.
+            </p>
+        </div>
+        <a href="{{ url_for('chat.index') if current_user.role == 'student' else url_for('student.support_center') }}" style="font-size: 0.85rem; font-weight: 600; color: var(--color-primary); white-space: nowrap; text-decoration: none;">
+            Need to talk? &rarr;
+        </a>
+    </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    const cards = document.querySelectorAll('.mood-option-card');
+    const form = document.getElementById('mood-checkin-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const noteArea = document.getElementById('journal_note');
+    const charCounter = document.getElementById('char-count');
+    let isSubmitting = false;
+
+    function selectCard(card) {
+        if (!card) return;
+        const radio = card.querySelector('.mood-radio');
+        if (radio) {
+            radio.checked = true;
+            cards.forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+        }
+    }
+
     // Interactive card selection
-    document.querySelectorAll('.selectable-card').forEach(card => {
-        card.addEventListener('click', () => {
-            const radio = card.querySelector('.mood-radio');
-            if (radio) {
-                radio.checked = true;
-                document.querySelectorAll('.selectable-card').forEach(c => c.classList.remove('selected'));
-                card.classList.add('selected');
+    cards.forEach(card => {
+        card.addEventListener('click', (e) => {
+            if (e.target && e.target.classList.contains('mood-radio')) {
+                return;
             }
+            selectCard(card);
         });
 
         card.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                card.click();
+                selectCard(card);
             }
         });
     });
 
-    // Initial selected state
-    document.querySelectorAll('.mood-radio:checked').forEach(radio => {
-        const card = radio.closest('.selectable-card');
-        if (card) card.classList.add('selected');
+    // Keyboard shortcuts (1 to 5)
+    document.addEventListener('keydown', (e) => {
+        if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+        const num = parseInt(e.key, 10);
+        if (!isNaN(num) && num >= 1 && num <= cards.length) {
+            e.preventDefault();
+            selectCard(cards[num - 1]);
+        }
     });
+
+    // Synchronize initial selection on load / browser back
+    const checkedRadio = document.querySelector('.mood-radio:checked');
+    if (checkedRadio) {
+        const card = checkedRadio.closest('.mood-option-card');
+        if (card) card.classList.add('selected');
+    }
+
+    // Dynamic character counter
+    if (noteArea && charCounter) {
+        const updateCount = () => {
+            const count = noteArea.value.length;
+            charCounter.textContent = `${count} / 2000`;
+            if (count > 1950) {
+                charCounter.style.color = 'var(--color-error)';
+            } else {
+                charCounter.style.color = 'var(--color-text-muted)';
+            }
+        };
+        noteArea.addEventListener('input', updateCount);
+        updateCount();
+    }
+
+    // Prevent duplicate in-flight submissions
+    if (form && submitBtn) {
+        form.addEventListener('submit', () => {
+            if (isSubmitting) return;
+            isSubmitting = true;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span>Saving...</span>';
+        });
+    }
 });
 </script>
 {% endblock %}

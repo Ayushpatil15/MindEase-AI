@@ -3,92 +3,509 @@
 {% block title %}Facial Expression Check-In (Experimental) — MindEase AI{% endblock %}
 
 {% block content %}
-<div style="max-width: 620px; margin: 20px auto;">
+<style>
+/* Scoped styles for CNN Facial Expression Check-In (Stitch Bento Sanctuary Layout) */
+.cnn-checkin-wrapper {
+    max-width: 1080px;
+    margin: 16px auto 48px auto;
+}
+
+.cnn-editorial-header {
+    margin-bottom: 24px;
+}
+
+.cnn-header-badge-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.cnn-badge-sensing {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-primary-bg);
+    color: var(--color-primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.cnn-pulse-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-primary);
+    animation: cnnPulse 2s infinite;
+}
+
+@keyframes cnnPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.cnn-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-heading);
+    margin-bottom: 6px;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+}
+
+.cnn-subtitle {
+    font-size: 1rem;
+    color: var(--color-text-muted);
+    line-height: 1.55;
+    max-width: 700px;
+    margin-bottom: 0;
+}
+
+/* Bento 2-Column Grid */
+.cnn-bento-grid {
+    display: grid;
+    grid-template-columns: 7fr 5fr;
+    gap: 24px;
+    align-items: start;
+}
+
+@media (max-width: 960px) {
+    .cnn-bento-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Left Column: Primary Interactive Module */
+.cnn-main-card {
+    background: var(--color-surface);
+    border-radius: 20px;
+    padding: 28px;
+    border: 1px solid var(--color-border);
+    box-shadow: 0 2px 12px -2px rgba(21, 128, 61, 0.04), 0 1px 3px 0 rgba(15, 23, 42, 0.03);
+}
+
+/* Status Bar Above Viewport */
+.cnn-status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--color-border-subtle);
+    margin-bottom: 18px;
+}
+
+.cnn-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-heading);
+}
+
+.cnn-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-primary);
+}
+
+.cnn-security-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-surface-subtle);
+    color: var(--color-primary);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Natural Camera Viewport (Completely Natural: NO face boundaries, NO ovals, NO masks) */
+.cnn-viewport-shell {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4/3;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #0f172a;
+    border: 2px solid var(--color-border);
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
+    margin-bottom: 18px;
+}
+
+.cnn-lighting-pill {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(8px);
+    padding: 5px 14px;
+    border-radius: var(--radius-pill);
+    font-size: 0.75rem;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+/* Consent Card */
+.cnn-consent-box {
+    background: var(--color-surface-subtle);
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    padding: 22px;
+    margin-bottom: 18px;
+    text-align: left;
+}
+
+.cnn-consent-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--color-heading);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cnn-consent-list {
+    font-size: 0.85rem;
+    color: var(--color-text-body);
+    margin-bottom: 18px;
+    padding-left: 20px;
+    line-height: 1.55;
+}
+
+.cnn-consent-list li {
+    margin-bottom: 8px;
+}
+
+/* Result Card */
+.cnn-result-card {
+    background: var(--color-primary-bg);
+    border: 1.5px solid var(--color-primary-border);
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 18px;
+}
+
+.cnn-result-guess {
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: var(--color-primary);
+    margin-bottom: 4px;
+}
+
+.cnn-result-conf {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    margin-bottom: 14px;
+}
+
+.cnn-insight-box {
+    background: #ffffff;
+    border: 1px solid var(--color-primary-border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 0.85rem;
+    color: var(--color-text-body);
+    text-align: left;
+    line-height: 1.5;
+}
+
+/* Right Column Sidebar Cards */
+.cnn-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.cnn-info-card {
+    background: var(--color-surface);
+    border-radius: 20px;
+    padding: 24px;
+    border: 1px solid var(--color-border);
+    box-shadow: 0 2px 12px -2px rgba(21, 128, 61, 0.04), 0 1px 3px 0 rgba(15, 23, 42, 0.03);
+}
+
+.cnn-info-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-heading);
+    margin-bottom: 16px;
+}
+
+.cnn-step-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.cnn-step-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.cnn-step-num {
+    width: 26px;
+    height: 26px;
+    border-radius: var(--radius-pill);
+    background: var(--color-surface-subtle);
+    border: 1px solid var(--color-border);
+    color: var(--color-primary);
+    font-weight: 700;
+    font-size: 0.775rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.cnn-step-title {
+    font-size: 0.925rem;
+    font-weight: 600;
+    color: var(--color-heading);
+    margin-bottom: 2px;
+}
+
+.cnn-step-text {
+    font-size: 0.825rem;
+    color: var(--color-text-muted);
+    line-height: 1.45;
+    margin: 0;
+}
+
+.cnn-privacy-box {
+    background: var(--color-surface-subtle);
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    padding: 12px 14px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    line-height: 1.45;
+}
+
+/* Alternative Card */
+.cnn-alt-card {
+    background: var(--color-surface-subtle);
+    border-radius: 18px;
+    padding: 22px;
+    border: 1px solid var(--color-border);
+}
+
+.cnn-alt-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.cnn-alt-text {
+    font-size: 0.85rem;
+    color: var(--color-text-body);
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+</style>
+
+<div class="cnn-checkin-wrapper">
     <div class="mb-md">
         <a href="{{ url_for('student.checkin_hub') }}" class="btn btn-secondary btn-sm">&larr; Back to Check-In Hub</a>
     </div>
 
-    <div class="text-center mb-lg">
-        <span class="badge badge-warning mb-xs" style="background-color: #f59e0b; color: #ffffff;">Experimental Feature</span>
-        <h1 style="font-size: 1.85rem; font-weight: 700; margin-bottom: 6px;">
-            Facial Expression Scan <span class="badge badge-warning" style="font-size: 0.75rem; vertical-align: middle; background-color: #f59e0b; color: #ffffff;">Experimental</span>
-        </h1>
-        <p class="text-muted" style="margin-bottom: 0; font-size: 0.95rem;">
-            Private facial expression estimation processed directly in your browser session.
+    <!-- Editorial Header Block -->
+    <div class="cnn-editorial-header">
+        <div class="cnn-header-badge-row">
+            <span class="cnn-badge-sensing">
+                <span class="cnn-pulse-dot"></span>
+                <span>AI Sensing • ~30 Sec</span>
+            </span>
+            <span class="badge badge-warning" style="background-color: #f59e0b; color: #ffffff;">Experimental</span>
+            <span class="text-muted" style="font-size: 0.775rem;">Non-Diagnostic Check-In</span>
+        </div>
+        <h1 class="cnn-title">Facial Expression Scan (CNN)</h1>
+        <p class="cnn-subtitle">
+            A non-intrusive facial expression check-in powered by convolutional neural network analysis to gently reflect your current affect.
         </p>
     </div>
 
-    <div class="card card-hover text-center">
-        <div id="missing-model-state" class="alert alert-warning mb-md" style="display: none; text-align: left;">
-            <strong>Unavailable:</strong> Facial expression analysis model has not been initialized yet.
-        </div>
+    <!-- Main Bento Grid Layout -->
+    <div class="cnn-bento-grid">
+        <!-- Left Column: Primary Interactive Module -->
+        <div class="cnn-main-card">
+            <!-- State Bar -->
+            <div class="cnn-status-bar">
+                <div class="cnn-status-indicator">
+                    <span class="cnn-status-dot" id="status-dot"></span>
+                    <span id="session-status-text">Ready for Analysis</span>
+                </div>
+                <div class="cnn-security-pill">
+                    <span>🔒</span>
+                    <span>In-Memory Only • Zero Images Stored</span>
+                </div>
+            </div>
 
-        <!-- Consent Container (Displayed before camera permission is requested) -->
-        <div id="consent-container" class="card text-left mb-md" style="background: #f8fafc; border: 1px solid var(--color-border); padding: 20px;">
-            <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 12px; color: var(--color-heading);">
-                Camera Consent & Privacy Notice
-            </h3>
-            <p style="font-size: 0.875rem; color: var(--color-text-body); margin-bottom: 10px;">
-                Before enabling your camera, please review how this experimental feature works:
-            </p>
-            <ul style="font-size: 0.85rem; color: var(--color-text-body); margin-bottom: 16px; padding-left: 20px; line-height: 1.5;">
-                <li style="margin-bottom: 6px;">
-                    <strong>Live preview only:</strong> A live preview is shown while the page is open, but nothing is recorded or saved.
-                </li>
-                <li style="margin-bottom: 6px;">
-                    <strong>In-memory processing only:</strong> A single frame is analyzed directly in temporary server memory and immediately discarded. No video, raw frames, photos, or images are ever stored on disk or in any database.
-                </li>
-                <li>
-                    <strong>Experimental & non-diagnostic:</strong> The machine learning model provides an approximate estimate that can be wrong, ambiguous, or inaccurate. It does not determine clinical mood or mental state.
-                </li>
-            </ul>
-            <button id="consent-btn" type="button" class="btn btn-primary btn-block">
-                <span>I Understand & Agree — Enable Camera</span>
+            <!-- Model Missing Alert -->
+            <div id="missing-model-state" class="alert alert-warning mb-md" style="display: none; text-align: left;">
+                <strong>Unavailable:</strong> Facial expression analysis model has not been initialized yet.
+            </div>
+
+            <!-- Consent Container (Displayed before camera permission is requested) -->
+            <div id="consent-container" class="cnn-consent-box">
+                <h3 class="cnn-consent-title">
+                    <span>📷</span>
+                    <span>Camera Consent & Privacy Notice</span>
+                </h3>
+                <p style="font-size: 0.875rem; color: var(--color-text-body); margin-bottom: 10px;">
+                    Before enabling your camera, please review how this experimental feature works:
+                </p>
+                <ul class="cnn-consent-list">
+                    <li>
+                        <strong>Live preview only:</strong> A live preview is shown while the page is open, but nothing is recorded or saved.
+                    </li>
+                    <li>
+                        <strong>In-memory processing only:</strong> A single frame is analyzed directly in temporary server memory and immediately discarded. No video, raw frames, photos, or images are ever stored on disk or in any database.
+                    </li>
+                    <li>
+                        <strong>Experimental & non-diagnostic:</strong> The machine learning model provides an approximate estimate that can be wrong, ambiguous, or inaccurate. It does not determine clinical mood or mental state.
+                    </li>
+                </ul>
+                <button id="consent-btn" type="button" class="btn btn-primary btn-block">
+                    <span>I Understand & Agree — Enable Camera</span>
+                    <span>&rarr;</span>
+                </button>
+                <div id="consent-denied-message" class="alert alert-warning mt-md" style="display: none; text-align: left; font-size: 0.85rem;">
+                    <strong>Camera Permission Denied:</strong> Camera access was denied or is unavailable. Camera permission is required for this experimental check-in. No camera feed was accessed and no scan was performed. You can continue using all other MindEase AI features normally.
+                </div>
+            </div>
+
+            <!-- Camera Preview Viewport (Natural display: NO face oval, NO bounding box) -->
+            <div id="camera-container" style="display: none;" class="cnn-viewport-shell">
+                <video id="camera-preview" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+
+                <!-- Natural Lighting Guidance Pill -->
+                <div class="cnn-lighting-pill">
+                    <span>💡</span>
+                    <span>Natural, even lighting recommended</span>
+                </div>
+
+                <div id="camera-loading" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.8); color: white; font-size: 0.9rem;">
+                    Starting camera...
+                </div>
+
+                <div id="camera-error" style="position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; background: var(--color-surface-subtle); color: var(--color-heading); padding: 20px;">
+                    <p style="margin-bottom: 8px; font-weight: 600; font-size: 0.95rem;">Camera unavailable or permission denied.</p>
+                    <p class="text-muted" style="font-size: 0.825rem; margin-bottom: 0;">Please allow camera access in your browser settings to perform a scan.</p>
+                </div>
+            </div>
+
+            <!-- Capture Button (Contract-preserving exact attributes) -->
+            <button id="capture-btn" class="btn btn-primary btn-block mb-md" style="display: none;" disabled>
+                <span>Check Expression</span>
                 <span>&rarr;</span>
             </button>
-            <div id="consent-denied-message" class="alert alert-warning mt-md" style="display: none; text-align: left; font-size: 0.85rem;">
-                <strong>Camera Permission Denied:</strong> Camera access was denied or is unavailable. Camera permission is required for this experimental check-in. No camera feed was accessed and no scan was performed. You can continue using all other MindEase AI features normally.
+
+            <!-- Result Display Container -->
+            <div id="result-container" class="cnn-result-card" style="display: none;">
+                <span class="badge badge-warning mb-xs" style="background-color: #f59e0b; color: #ffffff;">Experimental Result</span>
+                <div id="result-emotion" class="cnn-result-guess">The model's guess: Neutral</div>
+                <div id="result-confidence" class="cnn-result-conf">Confidence: 85%</div>
+
+                <div id="correlation-insight" class="cnn-insight-box">
+                    💡 <strong>Insight:</strong> Facial expressions are micro-signals. It is completely natural for internal feelings and facial expressions to differ.
+                </div>
+            </div>
+
+            <!-- Error Banner -->
+            <div id="api-error" class="alert alert-danger" style="display: none; font-size: 0.85rem; text-align: left;"></div>
+
+            <!-- Action / Return Link -->
+            <div class="flex-between pt-sm mt-sm" style="border-top: 1px solid var(--color-border); font-size: 0.8rem; color: var(--color-text-muted);">
+                <a href="{{ url_for('student.checkin_hub') }}" class="btn btn-secondary btn-sm">
+                    Return to Check-In Hub
+                </a>
+                <span><strong>Disclaimer:</strong> Experimental, non-diagnostic estimate only.</span>
             </div>
         </div>
 
-        <!-- Camera Preview Container (Hidden until explicit consent click) -->
-        <div id="camera-container" style="display: none; background: #0f172a; border-radius: var(--border-radius-lg); overflow: hidden; position: relative; width: 100%; aspect-ratio: 4/3; margin-bottom: var(--spacing-md); border: 2px solid var(--color-border);">
-            <video id="camera-preview" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+        <!-- Right Column: Process Guide & Alternative Sidebar -->
+        <div class="cnn-sidebar">
+            <!-- How It Works Card -->
+            <div class="cnn-info-card">
+                <div class="cnn-info-header">
+                    <span>✨</span>
+                    <span>How It Works in MindEase AI</span>
+                </div>
 
-            <!-- Privacy Indicator Overlay -->
-            <div style="position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); padding: 4px 14px; border-radius: var(--radius-pill); font-size: 0.75rem; color: #ffffff;">
-                🔒 In-memory processing only • Zero video or images saved
-            </div>
-            
-            <div id="camera-loading" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.8); color: white; font-size: 0.9rem;">
-                Starting camera...
-            </div>
-            
-            <div id="camera-error" style="position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; background: var(--color-surface-subtle); color: var(--color-heading); padding: 20px;">
-                <p style="margin-bottom: 8px; font-weight: 600; font-size: 0.95rem;">Camera unavailable or permission denied.</p>
-                <p class="text-muted" style="font-size: 0.825rem; margin-bottom: 0;">Please allow camera access in your browser settings to perform a scan.</p>
-            </div>
-        </div>
+                <div class="cnn-step-list">
+                    <div class="cnn-step-item">
+                        <div class="cnn-step-num">1</div>
+                        <div>
+                            <div class="cnn-step-title">Camera Setup</div>
+                            <p class="cnn-step-text">Position yourself comfortably facing your camera under natural, even lighting.</p>
+                        </div>
+                    </div>
 
-        <button id="capture-btn" class="btn btn-primary btn-block mb-md" style="display: none;" disabled>
-            <span>Check Expression</span>
-            <span>&rarr;</span>
-        </button>
+                    <div class="cnn-step-item">
+                        <div class="cnn-step-num">2</div>
+                        <div>
+                            <div class="cnn-step-title">In-Memory Inference</div>
+                            <p class="cnn-step-text">A single video frame is captured and evaluated in temporary server memory by the local CNN model.</p>
+                        </div>
+                    </div>
 
-        <div id="result-container" class="card mb-md text-center" style="background: var(--color-primary-bg); border-color: var(--color-primary-border); display: none;">
-            <span class="badge badge-warning mb-xs" style="background-color: #f59e0b; color: #ffffff;">Experimental Result</span>
-            <div id="result-emotion" style="font-size: 1.8rem; font-weight: 800; color: var(--color-primary); margin-bottom: 4px;">The model's guess: Neutral</div>
-            <div id="result-confidence" class="text-muted" style="font-size: 0.85rem; margin-bottom: 12px;">Confidence: 85%</div>
-            
-            <div id="correlation-insight" style="font-size: 0.85rem; color: var(--color-text-body); background: #ffffff; padding: 10px 14px; border-radius: var(--border-radius-sm); border: 1px solid var(--color-primary-border);">
-                💡 <strong>Insight:</strong> Facial expressions are micro-signals. It is completely natural for internal feelings and facial expressions to differ.
+                    <div class="cnn-step-item">
+                        <div class="cnn-step-num">3</div>
+                        <div>
+                            <div class="cnn-step-title">Private Reflection</div>
+                            <p class="cnn-step-text">The affect estimation is recorded in your personal history and immediately cleared from memory.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cnn-privacy-box">
+                    <span style="font-size: 1.1rem; flex-shrink: 0;">🛡️</span>
+                    <span><strong>Zero Video Stored:</strong> Camera feeds are processed ephemerally on demand. No video, raw frames, or photos are ever saved.</span>
+                </div>
             </div>
-        </div>
-        
-        <div id="api-error" class="alert alert-danger" style="display: none; font-size: 0.85rem; text-align: left;"></div>
-        
-        <div class="mt-md" style="font-size: 0.75rem; color: var(--color-text-muted); padding-top: var(--spacing-sm); border-top: 1px solid var(--color-border); text-align: left;">
-            <p style="margin-bottom: 0;"><strong>Disclaimer:</strong> Facial expression estimates are experimental, non-diagnostic indicators and do not determine clinical emotional state.</p>
+
+            <!-- Alternative Check-In Option Card -->
+            <div class="cnn-alt-card">
+                <div class="cnn-alt-title">
+                    <span>📝</span>
+                    <span>Alternative Option</span>
+                </div>
+                <p class="cnn-alt-text">
+                    Prefer manual reflection without camera access? You can always use the Quick Mood Log to record your emotional state with guided prompts.
+                </p>
+                <a href="{{ url_for('mood.checkin') }}" class="btn btn-outline btn-block btn-sm" style="font-weight: 600;">
+                    <span>Switch to Mood Log</span>
+                    <span>&rarr;</span>
+                </a>
+            </div>
         </div>
     </div>
 </div>
@@ -103,10 +520,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const consentContainer = document.getElementById('consent-container');
     const consentBtn = document.getElementById('consent-btn');
     const consentDeniedMsg = document.getElementById('consent-denied-message');
-    
+    const statusText = document.getElementById('session-status-text');
+    const statusDot = document.getElementById('status-dot');
+
     const missingModelState = document.getElementById('missing-model-state');
     const apiError = document.getElementById('api-error');
-    
+
     const resultContainer = document.getElementById('result-container');
     const resultEmotion = document.getElementById('result-emotion');
     const resultConfidence = document.getElementById('result-confidence');
@@ -125,6 +544,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentStream = null;
     let isProcessing = false;
 
+    const updateStatus = (text, active = false) => {
+        if (statusText) statusText.textContent = text;
+        if (statusDot) {
+            statusDot.style.backgroundColor = active ? 'var(--color-primary)' : 'var(--color-text-muted)';
+        }
+    };
+
     const stopCameraStream = () => {
         if (currentStream) {
             currentStream.getTracks().forEach(track => {
@@ -142,6 +568,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (cameraState !== CameraState.IDLE) {
             cameraState = CameraState.STOPPED;
         }
+        updateStatus("Camera Inactive", false);
     };
 
     // Lifecycle: Stop all stream tracks on page unload or visibility change
@@ -154,10 +581,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isProcessing) return;
         if (cameraState === CameraState.REQUESTING_PERMISSION || cameraState === CameraState.SCANNING) return;
 
-        // Never reuse stopped stream: clean up existing references first
+        // Clean up existing stream before starting a new one
         stopCameraStream();
 
         cameraState = CameraState.REQUESTING_PERMISSION;
+        updateStatus("Requesting Camera Permission...", true);
         loading.style.display = 'flex';
         loading.textContent = 'Starting camera...';
         cameraError.style.display = 'none';
@@ -174,6 +602,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cameraState = CameraState.STOPPED;
             captureBtn.disabled = false;
             captureBtn.textContent = 'Check Expression';
+            updateStatus("Camera Not Supported", false);
             return;
         }
 
@@ -211,6 +640,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cameraState = CameraState.STREAMING;
             captureBtn.disabled = false;
             captureBtn.textContent = 'Check Expression';
+            updateStatus("Camera Active • Ready to Scan", true);
 
         } catch (err) {
             console.error("Camera access error:", err);
@@ -233,6 +663,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cameraState = CameraState.STOPPED;
             captureBtn.disabled = false;
             captureBtn.textContent = 'Retry Camera';
+            updateStatus("Camera Unavailable", false);
         }
     };
 
@@ -253,6 +684,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         captureBtn.disabled = true;
         captureBtn.textContent = 'Analyzing Expression...';
+        updateStatus("Analyzing Affect In-Memory...", true);
         apiError.style.display = 'none';
         missingModelState.style.display = 'none';
         resultContainer.style.display = 'none';
@@ -266,12 +698,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const targetWidth = 480;
             const targetHeight = 360;
             const targetAspect = targetWidth / targetHeight;
-            
+
             const canvas = document.createElement('canvas');
             canvas.width = targetWidth;
             canvas.height = targetHeight;
             const ctx = canvas.getContext('2d');
-            
+
             let sx = 0, sy = 0, sWidth = video.videoWidth, sHeight = video.videoHeight;
             const srcAspect = sWidth / sHeight;
             if (srcAspect > targetAspect) {
@@ -282,7 +714,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 sy = Math.round((video.videoHeight - sHeight) / 2);
             }
             ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, targetWidth, targetHeight);
-            
+
             const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
 
             const csrfToken = getCsrfToken();
@@ -305,31 +737,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.status === 503 || data.status === 'model_not_initialized' || data.status === 'cascade_missing') {
                 missingModelState.style.display = 'block';
+                updateStatus("Model Unavailable", false);
             } else if (data.status === 'no_face_detected') {
                 apiError.textContent = data.message || 'No face detected in camera frame. Please adjust position and lighting.';
                 apiError.style.display = 'block';
+                updateStatus("No Face Detected", false);
             } else if (!response.ok || data.status === 'error') {
                 apiError.textContent = data.message || data.error || 'Analysis failed. Please check frame lighting and try again.';
                 apiError.style.display = 'block';
+                updateStatus("Analysis Failed", false);
             } else if (data.status === 'low_confidence') {
                 resultEmotion.textContent = "The model's guess: Not sure";
                 const confPercent = Math.round((data.confidence || 0) * 100);
                 resultConfidence.textContent = `Confidence: ${confPercent}% (below threshold — scan not saved)`;
                 resultContainer.style.display = 'block';
+                updateStatus("Scan Complete • Low Confidence", true);
             } else if (data.status === 'success') {
                 resultEmotion.textContent = `The model's guess: ${data.emotion}`;
                 const confPercent = Math.round(data.confidence * 100);
                 resultConfidence.textContent = `Confidence: ${confPercent}%`;
                 resultContainer.style.display = 'block';
+                updateStatus("Scan Complete & Saved to Log", true);
             } else {
                 apiError.textContent = data.message || 'Analysis could not be completed.';
                 apiError.style.display = 'block';
+                updateStatus("Analysis Failed", false);
             }
 
         } catch (err) {
             console.error("Prediction error:", err);
             apiError.textContent = err.message || 'Connection error during analysis. Please try again.';
             apiError.style.display = 'block';
+            updateStatus("Connection Error", false);
         } finally {
             // Stop active camera stream tracks immediately after inference
             stopCameraStream();

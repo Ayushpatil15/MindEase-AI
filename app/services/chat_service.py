@@ -232,14 +232,15 @@ def send_chat_message(
             resolved_user = None
 
     # 4. Resolve API Key & Model
-    resolved_key = api_key
-    if not resolved_key:
-        try:
-            resolved_key = current_app.config.get("GEMINI_API_KEY")
-        except Exception:
-            pass
-    if not resolved_key:
+    if api_key is not None:
+        resolved_key = api_key
+    else:
         resolved_key = os.environ.get("GEMINI_API_KEY")
+        if resolved_key is None:
+            try:
+                resolved_key = current_app.config.get("GEMINI_API_KEY")
+            except Exception:
+                resolved_key = None
 
     if not resolved_key or not resolved_key.strip():
         logger.warning("GEMINI_API_KEY is not configured on the server.")
@@ -561,14 +562,15 @@ def check_gemini_model_reachability(
     3. Queries POST /v1beta/models/{active_model}:generateContent with a minimal ping.
     4. Returns structured diagnostic result with sanitized details.
     """
-    resolved_key = api_key
-    if not resolved_key:
-        try:
-            resolved_key = current_app.config.get("GEMINI_API_KEY")
-        except Exception:
-            pass
-    if not resolved_key:
+    if api_key is not None:
+        resolved_key = api_key
+    else:
         resolved_key = os.environ.get("GEMINI_API_KEY")
+        if resolved_key is None:
+            try:
+                resolved_key = current_app.config.get("GEMINI_API_KEY")
+            except Exception:
+                resolved_key = None
 
     active_model = model_name or get_validated_model_name()
 
@@ -653,14 +655,15 @@ def send_minimal_gemini_diagnostic(
     - Sanitizes all returned strings to ensure zero API key leakage.
     - Never prints, logs, or returns the API key or authorization headers.
     """
-    resolved_key = api_key
-    if not resolved_key:
-        try:
-            resolved_key = current_app.config.get("GEMINI_API_KEY")
-        except Exception:
-            pass
-    if not resolved_key:
+    if api_key is not None:
+        resolved_key = api_key
+    else:
         resolved_key = os.environ.get("GEMINI_API_KEY")
+        if resolved_key is None:
+            try:
+                resolved_key = current_app.config.get("GEMINI_API_KEY")
+            except Exception:
+                resolved_key = None
 
     active_model = (model_name or "").strip() or get_validated_model_name()
 

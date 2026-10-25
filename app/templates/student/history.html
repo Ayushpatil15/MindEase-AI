@@ -5,160 +5,499 @@
 {% block content %}
 <script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}"></script>
 
-<!-- Header & Timeframe Filters -->
-<div class="row-flex flex-between mb-lg flex-wrap gap-md" style="align-items: flex-end;">
-    <div>
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-            <span class="badge badge-purple">Reflect & Understand</span>
+<style>
+/* Scoped styles for Wellness History & Insights (Stitch Reflect Sanctuary Alignment) */
+.hist-sanctuary-wrap {
+    position: relative;
+    max-width: 1140px;
+    margin: 16px auto 48px auto;
+}
+
+/* Ambient glow orbs */
+.hist-ambient-orb-1 {
+    position: absolute;
+    top: -30px;
+    left: -40px;
+    width: 380px;
+    height: 380px;
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgba(149, 248, 167, 0.18) 0%, rgba(220, 252, 231, 0) 70%);
+    filter: blur(52px);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.hist-ambient-orb-2 {
+    position: absolute;
+    top: 240px;
+    right: -40px;
+    width: 340px;
+    height: 340px;
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgba(204, 229, 255, 0.22) 0%, rgba(204, 229, 255, 0) 70%);
+    filter: blur(48px);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Header & Timeframe Bar */
+.hist-header-bar {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+}
+
+.hist-badge-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    background: #f3e8ff;
+    color: #7e0cd5;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.hist-title {
+    font-size: 2.1rem;
+    font-weight: 700;
+    color: #1b1c1a;
+    letter-spacing: -0.025em;
+    margin: 0 0 6px 0;
+    line-height: 1.25;
+}
+
+.hist-subtitle {
+    font-size: 0.96rem;
+    color: #4a5a50;
+    margin: 0;
+    max-width: 680px;
+    line-height: 1.55;
+}
+
+/* Timeframe Filter Pill Container */
+.hist-timeframe-box {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #ffffff;
+    padding: 4px;
+    border-radius: 9999px;
+    border: 1px solid rgba(220, 252, 231, 0.8);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+}
+
+.hist-timeframe-btn {
+    padding: 7px 16px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    text-decoration: none;
+    color: #4a5a50;
+    transition: all 0.2s ease;
+}
+
+.hist-timeframe-btn:hover {
+    color: #15803d;
+    background: #f5f3f0;
+}
+
+.hist-timeframe-btn.active {
+    background: #15803d;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(21, 128, 61, 0.25);
+}
+
+/* 4 Metrics Cards Row */
+.hist-metrics-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 900px) {
+    .hist-metrics-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 540px) {
+    .hist-metrics-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.hist-metric-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 22px 20px;
+    border: 1px solid rgba(220, 252, 231, 0.7);
+    box-shadow: 0 2px 10px -2px rgba(21, 128, 61, 0.04);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.hist-metric-card:hover {
+    transform: translateY(-2px);
+    border-color: #15803d;
+    box-shadow: 0 8px 20px -4px rgba(21, 128, 61, 0.1);
+}
+
+.hist-metric-label {
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #6f7a6e;
+    margin-bottom: 6px;
+}
+
+.hist-metric-val {
+    font-size: 1.85rem;
+    font-weight: 800;
+    margin: 4px 0 8px 0;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+}
+
+.hist-val-green { color: #15803d; }
+.hist-val-purple { color: #7e0cd5; }
+.hist-val-amber { color: #d97706; }
+.hist-val-blue { color: #0284c7; }
+
+/* Pattern Observations Card */
+.hist-observations-card {
+    position: relative;
+    z-index: 1;
+    background: #ffffff;
+    border-radius: 22px;
+    padding: 26px 30px;
+    border: 1px solid rgba(220, 252, 231, 0.85);
+    border-left: 5px solid #15803d;
+    box-shadow: 0 4px 16px -2px rgba(21, 128, 61, 0.05);
+    margin-bottom: 28px;
+}
+
+.hist-observations-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.hist-obs-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    background: #dcfce7;
+    color: #15803d;
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.hist-obs-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1b1c1a;
+    margin: 0 0 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hist-obs-list {
+    margin: 0;
+    padding-left: 20px;
+    color: #3f493f;
+    font-size: 0.93rem;
+    line-height: 1.65;
+}
+
+.hist-obs-list li {
+    margin-bottom: 6px;
+}
+
+/* Interactive Trend Visualization Card */
+.hist-chart-card {
+    position: relative;
+    z-index: 1;
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 28px 30px;
+    border: 1px solid rgba(220, 252, 231, 0.75);
+    box-shadow: 0 4px 20px -2px rgba(21, 128, 61, 0.05);
+    margin-bottom: 28px;
+}
+
+.hist-chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #efeeeb;
+    flex-wrap: wrap;
+}
+
+.hist-chart-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1b1c1a;
+    margin: 0;
+}
+
+.hist-tab-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #faf8f5;
+    padding: 4px;
+    border-radius: 14px;
+    border: 1px solid #eae8e5;
+    flex-wrap: wrap;
+}
+
+.chart-tab {
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    color: #4a5a50;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chart-tab:hover {
+    color: #1b1c1a;
+    background: #efeeeb;
+}
+
+.chart-tab.active {
+    background: #15803d !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(21, 128, 61, 0.25);
+}
+
+.hist-panel-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    font-size: 0.86rem;
+    color: #6f7a6e;
+}
+
+.hist-canvas-wrap {
+    position: relative;
+    height: 310px;
+    width: 100%;
+}
+
+/* Privacy & Wellness Notice Footer Card */
+.hist-privacy-card {
+    position: relative;
+    z-index: 1;
+    background: #faf8f5;
+    border-radius: 16px;
+    padding: 16px 20px;
+    border-left: 4px solid #15803d;
+    border-top: 1px solid #eae8e5;
+    border-right: 1px solid #eae8e5;
+    border-bottom: 1px solid #eae8e5;
+    font-size: 0.86rem;
+    color: #4a5a50;
+    line-height: 1.55;
+}
+</style>
+
+<div class="hist-sanctuary-wrap">
+    <!-- Ambient Lighting -->
+    <div class="hist-ambient-orb-1"></div>
+    <div class="hist-ambient-orb-2"></div>
+
+    <!-- Header & Timeframe Filters -->
+    <header class="hist-header-bar">
+        <div>
+            <div class="hist-badge-pill">
+                <span>Reflect &amp; Understand</span>
+            </div>
+            <h1 class="hist-title">Wellness History &amp; Insights</h1>
+            <p class="hist-subtitle">
+                Private, non-diagnostic overview of your check-in history, activity habits, and personal patterns over time.
+            </p>
         </div>
-        <h1 style="margin-bottom: 2px;">Wellness History & Insights</h1>
-        <p class="text-muted" style="margin-bottom: 0; font-size: 0.95rem;">
-            Private, non-diagnostic overview of your check-in history, activity habits, and personal patterns over time.
+        <div class="hist-timeframe-box">
+            <a href="{{ url_for('student.history', range='7d') }}"
+               class="hist-timeframe-btn {% if history.timeframe.range == '7d' %}active{% endif %}">
+                7 Days
+            </a>
+            <a href="{{ url_for('student.history', range='30d') }}"
+               class="hist-timeframe-btn {% if history.timeframe.range == '30d' %}active{% endif %}">
+                30 Days
+            </a>
+            <a href="{{ url_for('student.history', range='90d') }}"
+               class="hist-timeframe-btn {% if history.timeframe.range == '90d' %}active{% endif %}">
+                90 Days
+            </a>
+        </div>
+    </header>
+
+    <!-- 4 Key Summary Stat Cards -->
+    <section class="hist-metrics-grid">
+        <!-- Metric 1: Consistency -->
+        <div class="hist-metric-card">
+            <span class="hist-metric-label">Consistency</span>
+            <div class="hist-metric-val hist-val-green">
+                {{ history.consistency.active_days }} / {{ history.consistency.total_days }} days
+            </div>
+            <span class="badge badge-primary">{{ history.consistency.percentage }}% Active</span>
+        </div>
+
+        <!-- Metric 2: Mood Check-ins -->
+        <div class="hist-metric-card">
+            <span class="hist-metric-label">Mood Check-Ins</span>
+            <div class="hist-metric-val hist-val-purple">
+                {{ history.mood.count }}
+            </div>
+            <span class="badge badge-purple">Logs Recorded</span>
+        </div>
+
+        <!-- Metric 3: Stress Assessments -->
+        <div class="hist-metric-card">
+            <span class="hist-metric-label">Stress Assessments</span>
+            <div class="hist-metric-val hist-val-amber">
+                {{ history.stress.count }}
+            </div>
+            <span class="badge badge-amber">PSS Assessments</span>
+        </div>
+
+        <!-- Metric 4: Activities Completed -->
+        <div class="hist-metric-card">
+            <span class="hist-metric-label">Activities Completed</span>
+            <div class="hist-metric-val hist-val-blue">
+                {{ history.activities.completed_count }}
+            </div>
+            <span class="badge badge-blue">Sessions Finished</span>
+        </div>
+    </section>
+
+    <!-- Pattern Observations / Deterministic Insights -->
+    <section class="hist-observations-card">
+        <div class="hist-observations-header">
+            <span class="hist-obs-pill">Pattern Observations</span>
+            <span style="font-size: 0.78rem; color: #6f7a6e; font-weight: 500;">Personal Mood &amp; Stress Insights</span>
+        </div>
+        <h2 class="hist-obs-title">
+            <span>💡</span> Key Progress Observations &amp; Insights
+        </h2>
+        <ul class="hist-obs-list">
+            {% for insight in history.insights %}
+                <li>{{ insight }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <!-- Interactive Trend Visualization Card -->
+    <section class="hist-chart-card">
+        <div class="hist-chart-header">
+            <h2 class="hist-chart-title">Interactive Trend Visualization</h2>
+            <div class="hist-tab-group" role="tablist">
+                <button class="chart-tab active" data-target="chart-mood-panel">Mood Valence</button>
+                <button class="chart-tab" data-target="chart-stress-panel">Stress Timeline</button>
+                <button class="chart-tab" data-target="chart-emotion-panel">Facial Expressions</button>
+                <button class="chart-tab" data-target="chart-activity-panel">Guided Activities</button>
+            </div>
+        </div>
+
+        <!-- Chart Panels -->
+        <div id="chart-mood-panel" class="chart-panel" style="display: block;">
+            <div class="hist-panel-meta">
+                <span>Mood Valence Trend (-2 Very Low to +2 Very Good)</span>
+                <span class="badge badge-purple">Valence Scale</span>
+            </div>
+            <div class="hist-canvas-wrap">
+                <canvas id="moodHistoryChart"></canvas>
+                <div id="emptyMoodState" class="empty-state" style="display: none; position: absolute; inset: 0; flex-direction: column; align-items: center; justify-content: center; background: #ffffff; border-radius: 16px;">
+                    <p class="text-muted" style="margin-bottom: 12px; font-size: 0.9rem;">No mood check-ins recorded in this timeframe.</p>
+                    <a href="{{ url_for('mood.checkin') }}" class="btn btn-primary btn-sm">Log Mood Check-In &rarr;</a>
+                </div>
+            </div>
+        </div>
+
+        <div id="chart-stress-panel" class="chart-panel" style="display: none;">
+            <div class="hist-panel-meta">
+                <span>Perceived Stress Score Timeline (PSS Scale 0 to 44)</span>
+                <span class="badge badge-amber">PSS Assessment</span>
+            </div>
+            <div class="hist-canvas-wrap">
+                <canvas id="stressHistoryChart"></canvas>
+                <div id="emptyStressState" class="empty-state" style="display: none; position: absolute; inset: 0; flex-direction: column; align-items: center; justify-content: center; background: #ffffff; border-radius: 16px;">
+                    <p class="text-muted" style="margin-bottom: 12px; font-size: 0.9rem;">No stress assessments recorded in this timeframe.</p>
+                    <a href="{{ url_for('stress.take_assessment') }}" class="btn btn-primary btn-sm">Take Stress Assessment &rarr;</a>
+                </div>
+            </div>
+        </div>
+
+        <div id="chart-emotion-panel" class="chart-panel" style="display: none;">
+            <div class="hist-panel-meta">
+                <span>Facial Expression Scan Distribution</span>
+                <span class="badge badge-primary">Private AI</span>
+            </div>
+            <div class="hist-canvas-wrap">
+                <canvas id="emotionDistributionChart"></canvas>
+                <div id="emptyEmotionState" class="empty-state" style="display: none; position: absolute; inset: 0; flex-direction: column; align-items: center; justify-content: center; background: #ffffff; border-radius: 16px;">
+                    <p class="text-muted" style="margin-bottom: 12px; font-size: 0.9rem;">No expression scans in this timeframe.</p>
+                    <a href="{{ url_for('emotion.checkin') }}" class="btn btn-primary btn-sm">Start Expression Scan &rarr;</a>
+                </div>
+            </div>
+        </div>
+
+        <div id="chart-activity-panel" class="chart-panel" style="display: none;">
+            <div class="hist-panel-meta">
+                <span>Completed Guided Exercises</span>
+                <span class="badge badge-blue">Activities</span>
+            </div>
+            <div class="hist-canvas-wrap">
+                <canvas id="activityProgressChart"></canvas>
+                <div id="emptyActivityState" class="empty-state" style="display: none; position: absolute; inset: 0; flex-direction: column; align-items: center; justify-content: center; background: #ffffff; border-radius: 16px;">
+                    <p class="text-muted" style="margin-bottom: 12px; font-size: 0.9rem;">No completed micro-actions in this timeframe.</p>
+                    <a href="{{ url_for('student.checkin_hub') }}" class="btn btn-primary btn-sm">Complete a Check-In &rarr;</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Non-Clinical Footnote -->
+    <footer class="hist-privacy-card">
+        <p style="margin: 0;">
+            🔒 <strong>Privacy &amp; Wellness Notice:</strong> All reflection records are private and visible exclusively to you. MindEase AI trends display self-reported and camera-assisted check-in records for self-awareness. They do not constitute medical or psychological diagnoses. Visit our <a href="{{ url_for('student.support_center') }}" style="color: #15803d; font-weight: 600; text-decoration: underline;">Support Center</a> anytime for institutional resources.
         </p>
-    </div>
-    <div style="display: flex; gap: 6px; background: var(--color-surface-subtle); padding: 4px; border-radius: var(--radius-pill); border: 1px solid var(--color-border);">
-        <a href="{{ url_for('student.history', range='7d') }}" 
-           class="nav-link {% if history.timeframe.range == '7d' %}active{% endif %}" style="padding: 6px 12px; font-size: 0.8rem;">
-            7 Days
-        </a>
-        <a href="{{ url_for('student.history', range='30d') }}" 
-           class="nav-link {% if history.timeframe.range == '30d' %}active{% endif %}" style="padding: 6px 12px; font-size: 0.8rem;">
-            30 Days
-        </a>
-        <a href="{{ url_for('student.history', range='90d') }}" 
-           class="nav-link {% if history.timeframe.range == '90d' %}active{% endif %}" style="padding: 6px 12px; font-size: 0.8rem;">
-            90 Days
-        </a>
-    </div>
-</div>
-
-<!-- 4 Key Summary Stat Cards -->
-<div class="grid grid-4 mb-lg" style="gap: 16px;">
-    <div class="card card-hover text-center" style="padding: 16px;">
-        <div class="text-muted" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Consistency</div>
-        <div style="font-size: 1.75rem; font-weight: 800; color: var(--color-primary); margin: 4px 0;">
-            {{ history.consistency.active_days }} / {{ history.consistency.total_days }} days
-        </div>
-        <span class="badge badge-primary">{{ history.consistency.percentage }}% Active</span>
-    </div>
-
-    <div class="card card-hover text-center" style="padding: 16px;">
-        <div class="text-muted" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Mood Check-Ins</div>
-        <div style="font-size: 1.75rem; font-weight: 800; color: var(--color-accent-purple); margin: 4px 0;">
-            {{ history.mood.count }}
-        </div>
-        <span class="badge badge-purple">Logs Recorded</span>
-    </div>
-
-    <div class="card card-hover text-center" style="padding: 16px;">
-        <div class="text-muted" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Stress Assessments</div>
-        <div style="font-size: 1.75rem; font-weight: 800; color: var(--color-accent-amber); margin: 4px 0;">
-            {{ history.stress.count }}
-        </div>
-        <span class="badge badge-amber">PSS Assessments</span>
-    </div>
-
-    <div class="card card-hover text-center" style="padding: 16px;">
-        <div class="text-muted" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Activities Completed</div>
-        <div style="font-size: 1.75rem; font-weight: 800; color: var(--color-accent-blue); margin: 4px 0;">
-            {{ history.activities.completed_count }}
-        </div>
-        <span class="badge badge-blue">Sessions Finished</span>
-    </div>
-</div>
-
-<!-- Key Observations / Deterministic Insights -->
-<div class="card card-hover mb-lg" style="border-left: 4px solid var(--color-primary); background: var(--color-primary-bg);">
-    <div class="flex-between mb-xs">
-        <span class="badge badge-primary">Pattern Observations</span>
-        <span class="text-muted" style="font-size: 0.75rem;">Personal Mood & Stress Insights</span>
-    </div>
-    <h2 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 8px;">
-        💡 Key Progress Observations & Insights
-    </h2>
-
-    <ul style="margin: 0; padding-left: 20px; color: var(--color-text-body); font-size: 0.9rem; line-height: 1.6;">
-        {% for insight in history.insights %}
-            <li style="margin-bottom: 4px;">{{ insight }}</li>
-        {% endfor %}
-    </ul>
-</div>
-
-<!-- Single Focused Visualization Section with View Switcher Tabs -->
-<div class="card mb-lg">
-    <div class="flex-between mb-md flex-wrap gap-sm" style="border-bottom: 1px solid var(--color-border); padding-bottom: 12px;">
-        <h2 style="font-size: 1.2rem; margin: 0;">Interactive Trend Visualization</h2>
-        <div style="display: flex; gap: 4px;" role="tablist">
-            <button class="btn btn-secondary btn-sm chart-tab active" data-target="chart-mood-panel">Mood Valence</button>
-            <button class="btn btn-secondary btn-sm chart-tab" data-target="chart-stress-panel">Stress Timeline</button>
-            <button class="btn btn-secondary btn-sm chart-tab" data-target="chart-emotion-panel">Facial Expressions</button>
-            <button class="btn btn-secondary btn-sm chart-tab" data-target="chart-activity-panel">Guided Activities</button>
-        </div>
-    </div>
-
-    <!-- Chart Panels -->
-    <div id="chart-mood-panel" class="chart-panel" style="display: block;">
-        <div class="flex-between mb-sm">
-            <span class="text-muted" style="font-size: 0.85rem;">Mood Valence Trend (-2 Very Low to +2 Very Good)</span>
-            <span class="badge badge-purple">Valence Scale</span>
-        </div>
-        <div style="position: relative; height: 300px; width: 100%;">
-            <canvas id="moodHistoryChart"></canvas>
-            <div id="emptyMoodState" class="empty-state" style="display: none; position: absolute; inset: 0; flex-direction: column; align-items: center; justify-content: center; background: var(--color-surface); border-radius: var(--border-radius);">
-                <p class="text-muted" style="margin-bottom: 12px; font-size: 0.9rem;">No mood check-ins recorded in this timeframe.</p>
-                <a href="{{ url_for('mood.checkin') }}" class="btn btn-primary btn-sm">Log Mood Check-In &rarr;</a>
-            </div>
-        </div>
-    </div>
-
-    <div id="chart-stress-panel" class="chart-panel" style="display: none;">
-        <div class="flex-between mb-sm">
-            <span class="text-muted" style="font-size: 0.85rem;">Perceived Stress Score Timeline (PSS Scale 0 to 44)</span>
-            <span class="badge badge-amber">PSS Assessment</span>
-        </div>
-        <div style="position: relative; height: 300px; width: 100%;">
-            <canvas id="stressHistoryChart"></canvas>
-            <div id="emptyStressState" class="empty-state" style="display: none; position: absolute; inset: 0; flex-direction: column; align-items: center; justify-content: center; background: var(--color-surface); border-radius: var(--border-radius);">
-                <p class="text-muted" style="margin-bottom: 12px; font-size: 0.9rem;">No stress assessments recorded in this timeframe.</p>
-                <a href="{{ url_for('stress.take_assessment') }}" class="btn btn-primary btn-sm">Take Stress Assessment &rarr;</a>
-            </div>
-        </div>
-    </div>
-
-    <div id="chart-emotion-panel" class="chart-panel" style="display: none;">
-        <div class="flex-between mb-sm">
-            <span class="text-muted" style="font-size: 0.85rem;">Facial Expression Scan Distribution</span>
-            <span class="badge badge-primary">Private AI</span>
-        </div>
-        <div style="position: relative; height: 300px; width: 100%;">
-            <canvas id="emotionDistributionChart"></canvas>
-            <div id="emptyEmotionState" class="empty-state" style="display: none; position: absolute; inset: 0; flex-direction: column; align-items: center; justify-content: center; background: var(--color-surface); border-radius: var(--border-radius);">
-                <p class="text-muted" style="margin-bottom: 12px; font-size: 0.9rem;">No expression scans in this timeframe.</p>
-                <a href="{{ url_for('emotion.checkin') }}" class="btn btn-primary btn-sm">Start Expression Scan &rarr;</a>
-            </div>
-        </div>
-    </div>
-
-    <div id="chart-activity-panel" class="chart-panel" style="display: none;">
-        <div class="flex-between mb-sm">
-            <span class="text-muted" style="font-size: 0.85rem;">Completed Guided Exercises</span>
-            <span class="badge badge-blue">Activities</span>
-        </div>
-        <div style="position: relative; height: 300px; width: 100%;">
-            <canvas id="activityProgressChart"></canvas>
-            <div id="emptyActivityState" class="empty-state" style="display: none; position: absolute; inset: 0; flex-direction: column; align-items: center; justify-content: center; background: var(--color-surface); border-radius: var(--border-radius);">
-                <p class="text-muted" style="margin-bottom: 12px; font-size: 0.9rem;">No completed micro-actions in this timeframe.</p>
-                <a href="{{ url_for('student.checkin_hub') }}" class="btn btn-primary btn-sm">Complete a Check-In &rarr;</a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Non-Clinical Footnote -->
-<div class="card" style="background: var(--color-surface-subtle); border-left: 4px solid var(--color-primary); padding: 14px 18px;">
-    <p class="text-muted" style="margin: 0; font-size: 0.85rem; line-height: 1.5;">
-        🔒 <strong>Privacy & Wellness Notice:</strong> All reflection records are private and visible exclusively to you. MindEase AI trends display self-reported and camera-assisted check-in records for self-awareness. They do not constitute medical or psychological diagnoses. Visit our <a href="{{ url_for('student.support_center') }}" style="color: var(--color-primary); text-decoration: underline;">Support Center</a> anytime for institutional resources.
-    </p>
+    </footer>
 </div>
 
 <script>
@@ -173,100 +512,99 @@ document.addEventListener("DOMContentLoaded", function() {
         tab.addEventListener('click', () => {
             tabs.forEach(t => {
                 t.classList.remove('active');
-                t.style.backgroundColor = 'var(--color-surface-subtle)';
-                t.style.color = 'var(--color-heading)';
             });
             panels.forEach(p => p.style.display = 'none');
 
             tab.classList.add('active');
-            tab.style.backgroundColor = 'var(--color-primary)';
-            tab.style.color = '#ffffff';
 
             const targetId = tab.getAttribute('data-target');
-            document.getElementById(targetId).style.display = 'block';
+            const targetPanel = document.getElementById(targetId);
+            if (targetPanel) targetPanel.style.display = 'block';
         });
     });
-
-    // Style active initial tab
-    const initialActive = document.querySelector('.chart-tab.active');
-    if (initialActive) {
-        initialActive.style.backgroundColor = 'var(--color-primary)';
-        initialActive.style.color = '#ffffff';
-    }
 
     // 1. Mood History Chart
     const moodData = history.mood.trend || [];
     const emptyMood = document.getElementById('emptyMoodState');
     if (moodData.length === 0) {
-        emptyMood.style.display = 'flex';
+        if (emptyMood) emptyMood.style.display = 'flex';
     } else {
-        emptyMood.style.display = 'none';
-        new Chart(document.getElementById('moodHistoryChart').getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: moodData.map(d => d.date),
-                datasets: [{
-                    label: 'Valence',
-                    data: moodData.map(d => d.valence),
-                    borderColor: '#7c3aed',
-                    backgroundColor: 'rgba(124, 58, 237, 0.12)',
-                    borderWidth: 2,
-                    pointRadius: 4,
-                    tension: 0.3,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        min: -2, max: 2,
-                        ticks: {
-                            stepSize: 1,
-                            callback: function(v) {
-                                const map = {2: 'Very Good', 1: 'Good', 0: 'Okay', '-1': 'Low', '-2': 'Very Low'};
-                                return map[v] || '';
+        if (emptyMood) emptyMood.style.display = 'none';
+        const ctxMood = document.getElementById('moodHistoryChart');
+        if (ctxMood) {
+            new Chart(ctxMood.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: moodData.map(d => d.date),
+                    datasets: [{
+                        label: 'Valence',
+                        data: moodData.map(d => d.valence),
+                        borderColor: '#7e0cd5',
+                        backgroundColor: 'rgba(126, 12, 213, 0.12)',
+                        borderWidth: 2.5,
+                        pointRadius: 4.5,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#7e0cd5',
+                        pointBorderWidth: 2,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            min: -2, max: 2,
+                            ticks: {
+                                stepSize: 1,
+                                callback: function(v) {
+                                    const map = {2: 'Very Good', 1: 'Good', 0: 'Okay', '-1': 'Low', '-2': 'Very Low'};
+                                    return map[v] || '';
+                                }
                             }
                         }
-                    }
-                },
-                plugins: { legend: { display: false } }
-            }
-        });
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
     }
 
     // 2. Stress History Chart
     const stressData = history.stress.assessments || [];
     const emptyStress = document.getElementById('emptyStressState');
     if (stressData.length === 0) {
-        emptyStress.style.display = 'flex';
+        if (emptyStress) emptyStress.style.display = 'flex';
     } else {
-        emptyStress.style.display = 'none';
-        new Chart(document.getElementById('stressHistoryChart').getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: stressData.map(d => d.date),
-                datasets: [{
-                    label: 'Stress Score (0-44)',
-                    data: stressData.map(d => d.score),
-                    backgroundColor: stressData.map(d => {
-                        if (d.score <= 14) return '#15803d';
-                        if (d.score <= 28) return '#d97706';
-                        return '#dc2626';
-                    }),
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { min: 0, max: 44, ticks: { stepSize: 10 } }
+        if (emptyStress) emptyStress.style.display = 'none';
+        const ctxStress = document.getElementById('stressHistoryChart');
+        if (ctxStress) {
+            new Chart(ctxStress.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: stressData.map(d => d.date),
+                    datasets: [{
+                        label: 'Stress Score (0-44)',
+                        data: stressData.map(d => d.score),
+                        backgroundColor: stressData.map(d => {
+                            if (d.score <= 14) return '#15803d';
+                            if (d.score <= 28) return '#d97706';
+                            return '#dc2626';
+                        }),
+                        borderRadius: 6
+                    }]
                 },
-                plugins: { legend: { display: false } }
-            }
-        });
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { min: 0, max: 44, ticks: { stepSize: 10 } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
     }
 
     // 3. Emotion Distribution Chart
@@ -274,59 +612,64 @@ document.addEventListener("DOMContentLoaded", function() {
     const emotionLabels = Object.keys(emotionDist);
     const emptyEmotion = document.getElementById('emptyEmotionState');
     if (emotionLabels.length === 0) {
-        emptyEmotion.style.display = 'flex';
+        if (emptyEmotion) emptyEmotion.style.display = 'flex';
     } else {
-        emptyEmotion.style.display = 'none';
-        new Chart(document.getElementById('emotionDistributionChart').getContext('2d'), {
-            type: 'doughnut',
-            data: {
-                labels: emotionLabels,
-                datasets: [{
-                    data: Object.values(emotionDist),
-                    backgroundColor: ['#15803d', '#0284c7', '#d97706', '#dc2626', '#7c3aed']
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'right' } }
-            }
-        });
+        if (emptyEmotion) emptyEmotion.style.display = 'none';
+        const ctxEmotion = document.getElementById('emotionDistributionChart');
+        if (ctxEmotion) {
+            new Chart(ctxEmotion.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: emotionLabels,
+                    datasets: [{
+                        data: Object.values(emotionDist),
+                        backgroundColor: ['#15803d', '#0284c7', '#d97706', '#dc2626', '#7e0cd5']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'right' } }
+                }
+            });
+        }
     }
 
     // 4. Activity Progress Chart
     const activities = history.activities.completions || [];
     const emptyActivity = document.getElementById('emptyActivityState');
     if (activities.length === 0) {
-        emptyActivity.style.display = 'flex';
+        if (emptyActivity) emptyActivity.style.display = 'flex';
     } else {
-        emptyActivity.style.display = 'none';
+        if (emptyActivity) emptyActivity.style.display = 'none';
         const actCounts = {};
         activities.forEach(a => {
             const title = a.title || 'Wellness Task';
             actCounts[title] = (actCounts[title] || 0) + 1;
         });
 
-        new Chart(document.getElementById('activityProgressChart').getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: Object.keys(actCounts),
-                datasets: [{
-                    label: 'Completions',
-                    data: Object.values(actCounts),
-                    backgroundColor: '#0284c7',
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: { y: { ticks: { precision: 0 } } },
-                plugins: { legend: { display: false } }
-            }
-        });
+        const ctxActivity = document.getElementById('activityProgressChart');
+        if (ctxActivity) {
+            new Chart(ctxActivity.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(actCounts),
+                    datasets: [{
+                        label: 'Completions',
+                        data: Object.values(actCounts),
+                        backgroundColor: '#0284c7',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { ticks: { precision: 0 } } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
     }
 });
 </script>
 {% endblock %}
-

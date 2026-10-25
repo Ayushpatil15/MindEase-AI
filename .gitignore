@@ -54,3 +54,19 @@ coverage.xml
 
 # Logs
 *.log
+
+# Credentials & Secrets
+*credentials*
+demo_credentials.txt
+scripts/demo_seeded_ids.json
+
+# Design References & Local Artifacts
+MindEase Design References/
+*Design References*/
+
+# Temporary & Demo Scripts
+scripts/diagnose_gemini.py
+scripts/migrate_render_to_neon.py
+scripts/verify_render_gemini.py
+scripts/create_demo_student.py
+scripts/seed_demo_student_wellness.py
