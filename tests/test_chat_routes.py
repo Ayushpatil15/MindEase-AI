@@ -17,6 +17,8 @@ from app.services.chat_service import (
     send_chat_message,
     sanitize_conversation_history,
     get_validated_model_name,
+    check_gemini_model_reachability,
+    send_minimal_gemini_diagnostic,
     DEFAULT_GEMINI_MODEL,
     MAX_MESSAGE_LENGTH,
 )
@@ -371,6 +373,136 @@ class TestChatServiceUnit:
                 assert res["status"] == "quota_exceeded"
                 assert res["error_code"] == 429
                 assert res["error_status"] == "RESOURCE_EXHAUSTED"
+
+    def test_gemini_503_transient_retry_success(self, app):
+        """When Gemini returns transient 503 on first attempt, retry once and succeed."""
+        resp_503 = MagicMock()
+        resp_503.status_code = 503
+        resp_503.content = b'{"error": {"code": 503, "status": "UNAVAILABLE", "message": "The model is overloaded."}}'
+        resp_503.json.return_value = {
+            "error": {"code": 503, "status": "UNAVAILABLE", "message": "The model is overloaded."}
+        }
+
+        resp_200 = MagicMock()
+        resp_200.status_code = 200
+        resp_200.content = b'{"candidates": [{"content": {"parts": [{"text": "Hello, I am here to help."}]}}]}'
+        resp_200.json.return_value = {
+            "candidates": [{"content": {"parts": [{"text": "Hello, I am here to help."}]}}]
+        }
+
+        with app.app_context():
+            with patch('requests.post', side_effect=[resp_503, resp_200]) as mock_post:
+                with patch('time.sleep') as mock_sleep:
+                    res = send_chat_message("Hello", api_key="fake-key")
+                    assert res["status"] == "success"
+                    assert "here to help" in res["reply"]
+                    assert mock_post.call_count == 2
+                    mock_sleep.assert_called_once_with(1.0)
+
+    def test_gemini_503_persistent_fails_after_one_retry(self, app):
+        """When Gemini returns 503 on both attempts, bounded retry stops after 1 retry (2 total calls)."""
+        resp_503 = MagicMock()
+        resp_503.status_code = 503
+        resp_503.content = b'{"error": {"code": 503, "status": "UNAVAILABLE", "message": "The model is overloaded."}}'
+        resp_503.json.return_value = {
+            "error": {"code": 503, "status": "UNAVAILABLE", "message": "The model is overloaded."}
+        }
+
+        with app.app_context():
+            with patch('requests.post', side_effect=[resp_503, resp_503]) as mock_post:
+                with patch('time.sleep') as mock_sleep:
+                    res = send_chat_message("Hello", api_key="fake-key")
+                    assert res["status"] == "error"
+                    assert res["error_code"] == 503
+                    assert res["error_status"] == "UNAVAILABLE"
+                    assert mock_post.call_count == 2
+                    mock_sleep.assert_called_once_with(1.0)
+
+    def test_gemini_429_transient_retry_success(self, app):
+        """When Gemini returns transient 429 on first attempt, retry once and succeed."""
+        resp_429 = MagicMock()
+        resp_429.status_code = 429
+        resp_429.content = b'{"error": {"code": 429, "status": "RESOURCE_EXHAUSTED", "message": "Quota exceeded"}}'
+        resp_429.json.return_value = {
+            "error": {"code": 429, "status": "RESOURCE_EXHAUSTED", "message": "Quota exceeded"}
+        }
+
+        resp_200 = MagicMock()
+        resp_200.status_code = 200
+        resp_200.content = b'{"candidates": [{"content": {"parts": [{"text": "Hello, calm reply."}]}}]}'
+        resp_200.json.return_value = {
+            "candidates": [{"content": {"parts": [{"text": "Hello, calm reply."}]}}]
+        }
+
+        with app.app_context():
+            with patch('requests.post', side_effect=[resp_429, resp_200]) as mock_post:
+                with patch('time.sleep') as mock_sleep:
+                    res = send_chat_message("Hello", api_key="fake-key")
+                    assert res["status"] == "success"
+                    assert mock_post.call_count == 2
+                    mock_sleep.assert_called_once_with(1.0)
+
+    def test_gemini_400_no_retry(self, app):
+        """Client errors (e.g. 400 Bad Request) must NOT trigger a retry."""
+        resp_400 = MagicMock()
+        resp_400.status_code = 400
+        resp_400.content = b'{"error": {"code": 400, "status": "INVALID_ARGUMENT", "message": "Bad request"}}'
+        resp_400.json.return_value = {
+            "error": {"code": 400, "status": "INVALID_ARGUMENT", "message": "Bad request"}
+        }
+
+        with app.app_context():
+            with patch('requests.post', return_value=resp_400) as mock_post:
+                with patch('time.sleep') as mock_sleep:
+                    res = send_chat_message("Hello", api_key="fake-key")
+                    assert res["status"] == "error"
+                    assert mock_post.call_count == 1
+                    mock_sleep.assert_not_called()
+
+    def test_check_gemini_model_reachability_unit(self, app):
+        """Verify check_gemini_model_reachability parses available models and tests ping generation."""
+        # 1. Missing key
+        res_missing = check_gemini_model_reachability(api_key="")
+        assert res_missing["status"] == "missing_api_key"
+        assert res_missing["configured_model_reachable"] is False
+
+        # 2. Key provided with mocked list_models and send_chat_message
+        mock_list_resp = MagicMock()
+        mock_list_resp.status_code = 200
+        mock_list_resp.content = b'{"models": []}'
+        mock_list_resp.json.return_value = {
+            "models": [
+                {"name": "models/gemini-3.5-flash-lite", "supportedGenerationMethods": ["generateContent"]},
+                {"name": "models/gemini-2.0-flash", "supportedGenerationMethods": ["generateContent"]},
+                {"name": "models/text-embedding-004", "supportedGenerationMethods": ["embedContent"]},
+            ]
+        }
+
+        with app.app_context():
+            with patch('requests.get', return_value=mock_list_resp):
+                with patch('app.services.chat_service.send_minimal_gemini_diagnostic', return_value={"status": "success"}):
+                    res = check_gemini_model_reachability(api_key="fake-test-key", model_name="gemini-3.5-flash-lite")
+                    assert res["status"] == "success"
+                    assert res["configured_model_reachable"] is True
+                    assert res["configured_model_in_models_list"] is True
+                    assert "gemini-3.5-flash-lite" in res["available_generate_content_models"]
+                    assert "gemini-2.0-flash" in res["available_generate_content_models"]
+                    assert "text-embedding-004" not in res["available_generate_content_models"]
+
+    def test_gemini_live_diagnostic_test(self, app):
+        """Minimal live diagnostic test: checks if configured model is reachable when GEMINI_API_KEY is present.
+
+        Never prints or exposes the API key. Skips if GEMINI_API_KEY is not set.
+        """
+        import os
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key or not api_key.strip():
+            pytest.skip("GEMINI_API_KEY is not configured in the local environment; skipping live diagnostic.")
+
+        with app.app_context():
+            result = check_gemini_model_reachability(api_key=api_key)
+            assert "configured_model_reachable" in result
+            assert "available_generate_content_models" in result
 
     def test_empty_or_whitespace_user_message(self, app):
         """Empty or whitespace-only messages are rejected without API calls."""
@@ -784,3 +916,192 @@ class TestChatRoutes:
         # 2. Separate 'AI Companion' nav item is removed from primary navigation
         assert '<a href="/chat/" class="nav-link' in html
         assert 'AI Companion</a>' not in html
+
+
+# ==============================================================================
+# 4. Admin Gemini Diagnostic Unit & Route Tests
+# ==============================================================================
+
+class TestGeminiDiagnostic:
+    """Tests for the isolated Gemini diagnostic service and admin-only route."""
+
+    def test_send_minimal_diagnostic_success(self, app):
+        """Minimal diagnostic succeeds on valid HTTP 200 with candidate."""
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.content = b'{"candidates": [{"content": {"parts": [{"text": "pong"}]}}]}'
+        mock_resp.json.return_value = {
+            "candidates": [{"content": {"parts": [{"text": "pong"}]}}]
+        }
+
+        with app.app_context():
+            with patch('requests.post', return_value=mock_resp) as mock_post:
+                res = send_minimal_gemini_diagnostic(api_key="valid-test-key", model_name="gemini-3.5-flash-lite")
+                assert res["status"] == "success"
+                assert res["http_status"] == 200
+                assert res["error_category"] is None
+                assert res["model"] == "gemini-3.5-flash-lite"
+                assert res["candidates_count"] == 1
+                assert "key" not in res
+                mock_post.assert_called_once()
+                call_kwargs = mock_post.call_args[1]
+                assert "params" not in call_kwargs
+                assert call_kwargs["headers"].get("x-goog-api-key") == "valid-test-key"
+                assert "systemInstruction" not in call_kwargs["json"]
+                assert call_kwargs["json"]["contents"][0]["parts"][0]["text"] == "ping"
+
+    def test_send_minimal_diagnostic_503_unavailable(self, app):
+        """Minimal diagnostic classifies 503 UNAVAILABLE as SERVICE_UNAVAILABLE."""
+        mock_resp = MagicMock()
+        mock_resp.status_code = 503
+        mock_resp.content = b'{"error": {"code": 503, "status": "UNAVAILABLE", "message": "High load."}}'
+        mock_resp.json.return_value = {
+            "error": {"code": 503, "status": "UNAVAILABLE", "message": "High load."}
+        }
+
+        with app.app_context():
+            with patch('requests.post', return_value=mock_resp):
+                res = send_minimal_gemini_diagnostic(api_key="valid-test-key")
+                assert res["status"] == "error"
+                assert res["http_status"] == 503
+                assert res["error_category"] == "SERVICE_UNAVAILABLE"
+                assert res["error_status"] == "UNAVAILABLE"
+
+    def test_send_minimal_diagnostic_404_model_not_found(self, app):
+        """Minimal diagnostic classifies 404 NOT_FOUND as MODEL_NOT_FOUND."""
+        mock_resp = MagicMock()
+        mock_resp.status_code = 404
+        mock_resp.content = b'{"error": {"code": 404, "status": "NOT_FOUND", "message": "Model not found."}}'
+        mock_resp.json.return_value = {
+            "error": {"code": 404, "status": "NOT_FOUND", "message": "Model not found."}
+        }
+
+        with app.app_context():
+            with patch('requests.post', return_value=mock_resp):
+                res = send_minimal_gemini_diagnostic(api_key="valid-test-key", model_name="old-model")
+                assert res["status"] == "error"
+                assert res["http_status"] == 404
+                assert res["error_category"] == "MODEL_NOT_FOUND"
+                assert res["error_status"] == "NOT_FOUND"
+
+    def test_send_minimal_diagnostic_403_auth_error(self, app):
+        """Minimal diagnostic classifies 403 PERMISSION_DENIED as AUTHENTICATION_ERROR."""
+        mock_resp = MagicMock()
+        mock_resp.status_code = 403
+        mock_resp.content = b'{"error": {"code": 403, "status": "PERMISSION_DENIED", "message": "Bad API key."}}'
+        mock_resp.json.return_value = {
+            "error": {"code": 403, "status": "PERMISSION_DENIED", "message": "Bad API key."}
+        }
+
+        with app.app_context():
+            with patch('requests.post', return_value=mock_resp):
+                res = send_minimal_gemini_diagnostic(api_key="bad-key")
+                assert res["status"] == "error"
+                assert res["http_status"] == 403
+                assert res["error_category"] == "AUTHENTICATION_ERROR"
+
+    def test_send_minimal_diagnostic_429_rate_limit(self, app):
+        """Minimal diagnostic classifies 429 RESOURCE_EXHAUSTED as RATE_LIMIT_OR_QUOTA_EXCEEDED."""
+        mock_resp = MagicMock()
+        mock_resp.status_code = 429
+        mock_resp.content = b'{"error": {"code": 429, "status": "RESOURCE_EXHAUSTED", "message": "Quota exceeded."}}'
+        mock_resp.json.return_value = {
+            "error": {"code": 429, "status": "RESOURCE_EXHAUSTED", "message": "Quota exceeded."}
+        }
+
+        with app.app_context():
+            with patch('requests.post', return_value=mock_resp):
+                res = send_minimal_gemini_diagnostic(api_key="rate-limited-key")
+                assert res["status"] == "error"
+                assert res["http_status"] == 429
+                assert res["error_category"] == "RATE_LIMIT_OR_QUOTA_EXCEEDED"
+
+    def test_send_minimal_diagnostic_redacts_api_key(self, app):
+        """Minimal diagnostic redacts any API key appearing in error messages."""
+        mock_resp = MagicMock()
+        mock_resp.status_code = 400
+        secret_leak = "Invalid request with key AIzaSyD9876543210zyxwvu and key=AIzaSyD9876543210zyxwvu"
+        mock_resp.content = json.dumps({"error": {"code": 400, "status": "INVALID_ARGUMENT", "message": secret_leak}}).encode()
+        mock_resp.json.return_value = {
+            "error": {"code": 400, "status": "INVALID_ARGUMENT", "message": secret_leak}
+        }
+
+        with app.app_context():
+            with patch('requests.post', return_value=mock_resp):
+                res = send_minimal_gemini_diagnostic(api_key="fake-key")
+                assert "AIzaSyD9876543210zyxwvu" not in res["sanitized_error"]
+                assert "[REDACTED_API_KEY]" in res["sanitized_error"]
+
+    def test_admin_diagnostic_route_unauthenticated_redirects(self, client):
+        """Unauthenticated requests to /admin/diagnostics/gemini are redirected to login."""
+        response = client.get('/admin/diagnostics/gemini')
+        assert response.status_code == 302
+        assert '/auth/login' in response.headers.get('Location', '')
+
+    def test_admin_diagnostic_route_student_forbidden(self, client, db):
+        """Student accounts requesting /admin/diagnostics/gemini receive 403 Forbidden."""
+        create_test_student(db, email='diagstudent@test.com', password='pass')
+        client.post('/auth/login', data={'email': 'diagstudent@test.com', 'password': 'pass'})
+
+        response = client.get('/admin/diagnostics/gemini')
+        assert response.status_code == 403
+
+    def test_admin_diagnostic_route_admin_success(self, client, db):
+        """Authenticated admin account can access /admin/diagnostics/gemini and get sanitized results."""
+        create_test_admin(db, email='diagadmin@test.com', password='pass')
+        client.post('/auth/login', data={'email': 'diagadmin@test.com', 'password': 'pass'})
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.content = b'{"candidates": [{"content": {"parts": [{"text": "pong"}]}}]}'
+        mock_resp.json.return_value = {
+            "candidates": [{"content": {"parts": [{"text": "pong"}]}}]
+        }
+
+        with patch('requests.post', return_value=mock_resp):
+            with patch.dict('os.environ', {'GEMINI_API_KEY': 'live-admin-key'}):
+                response = client.get('/admin/diagnostics/gemini')
+                assert response.status_code == 200
+                data = response.get_json()
+                assert data['status'] == 'success'
+                assert data['http_status'] == 200
+                assert data['model'] == 'gemini-3.5-flash-lite'
+                assert 'live-admin-key' not in str(data)
+
+    def test_admin_diagnostic_route_header_token_auth(self, client, monkeypatch):
+        """When RENDER_DIAGNOSTIC_TOKEN is configured, only X-Diagnostic-Token header is accepted."""
+        monkeypatch.setenv("RENDER_DIAGNOSTIC_TOKEN", "secure-render-token-999")
+        monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.content = b'{"candidates": [{"content": {"parts": [{"text": "pong"}]}}]}'
+        mock_resp.json.return_value = {
+            "candidates": [{"content": {"parts": [{"text": "pong"}]}}]
+        }
+
+        with patch('requests.post', return_value=mock_resp):
+            # 1. Valid token in X-Diagnostic-Token header succeeds
+            res_hdr = client.get('/admin/diagnostics/gemini', headers={'X-Diagnostic-Token': 'secure-render-token-999'})
+            assert res_hdr.status_code == 200
+            assert res_hdr.get_json()['status'] == 'success'
+
+            # 2. Query parameter token is explicitly REJECTED (redirects unauthenticated user to login)
+            res_query = client.get('/admin/diagnostics/gemini?token=secure-render-token-999')
+            assert res_query.status_code == 302
+            assert '/auth/login' in res_query.headers.get('Location', '')
+
+            # 3. Invalid token in header is rejected (redirects unauthenticated user to login)
+            res_bad_hdr = client.get('/admin/diagnostics/gemini', headers={'X-Diagnostic-Token': 'wrong-token'})
+            assert res_bad_hdr.status_code == 302
+            assert '/auth/login' in res_bad_hdr.headers.get('Location', '')
+
+    def test_admin_diagnostic_route_query_string_token_rejected_for_student(self, client, db, monkeypatch):
+        """Query-string tokens must be rejected even when a student user is logged in (returning 403)."""
+        monkeypatch.setenv("RENDER_DIAGNOSTIC_TOKEN", "secure-render-token-999")
+        create_test_student(db, email='diagstudent2@test.com', password='pass')
+        client.post('/auth/login', data={'email': 'diagstudent2@test.com', 'password': 'pass'})
+
+        # Query param ?token= should NOT bypass student role restriction
+        res = client.get('/admin/diagnostics/gemini?token=secure-render-token-999')
+        assert res.status_code == 403
