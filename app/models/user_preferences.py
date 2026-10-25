@@ -50,6 +50,9 @@ class UserPreferences(db.Model):
     # Nullable: existing users default safely to "UTC"
     timezone = db.Column(db.String(50), nullable=True, default='UTC')
 
+    # Transparent personalization toggle: whether companion may store non-sensitive preferences
+    chat_memory_enabled = db.Column(db.Boolean, nullable=False, default=True)
+
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime(timezone=True), nullable=True, onupdate=lambda: datetime.now(timezone.utc))
 

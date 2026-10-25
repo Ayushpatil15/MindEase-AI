@@ -23,6 +23,9 @@
             <a href="{{ url_for('student.support_center') }}" class="btn btn-secondary btn-sm" title="Immediate Human Support">
                 Verified Helplines &amp; Support &rarr;
             </a>
+            <button id="openMemoryPanelBtn" type="button" class="btn btn-secondary btn-sm" title="Review or clear saved companion memory">
+                🧠 Memory (<span id="memoryBadgeCount">0</span>)
+            </button>
             <button id="clearChatBtn" type="button" class="btn btn-secondary btn-sm" title="Clear chat history">
                 Reset Chat
             </button>
@@ -34,6 +37,55 @@
         <p style="margin: 0; line-height: 1.45;">
             <strong>Wellness &amp; Privacy Notice:</strong> MindEase AI is an empathetic peer companion designed to support daily student wellness and self-care. It does not provide medical diagnoses, clinical treatment, or psychiatric care. Chat messages are processed securely via Google's Gemini API to generate responses. If you need urgent assistance, please reach <strong>Tele-MANAS (14416 / 1800-891-4416)</strong> or <strong>Emergency (112)</strong>.
         </p>
+    </div>
+
+    <!-- Chatbot Memory & Personalization Panel (Collapsible) -->
+    <div id="memoryPanel" class="card mb-md" style="display: none; padding: 16px 20px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--border-radius); box-shadow: var(--shadow-sm);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid var(--color-border); padding-bottom: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.25rem;">🧠</span>
+                <h2 style="margin: 0; font-size: 1.05rem; color: var(--color-heading); font-weight: 600;">
+                    Personalization &amp; Memory Settings
+                </h2>
+            </div>
+            <button id="closeMemoryPanelBtn" type="button" class="btn btn-secondary btn-sm" style="padding: 2px 8px; font-size: 0.8rem;">
+                ✕ Close
+            </button>
+        </div>
+
+        <p class="text-muted" style="font-size: 0.85rem; line-height: 1.45; margin-bottom: 12px;">
+            MindEase saves compact, non-sensitive preferences (such as your major, preferred study routines, or everyday habits) so your companion feels like a consistent peer partner. Sensitive mental health disclosures, crisis text, and private journal reflections are <strong>never</strong> stored in memory. Wellness records remain your ground truth and are not duplicated into memory.
+        </p>
+
+        <!-- Memory Toggle -->
+        <div style="display: flex; align-items: center; justify-content: space-between; background: var(--color-surface-subtle); padding: 10px 14px; border-radius: var(--border-radius-sm); margin-bottom: 14px;">
+            <div>
+                <strong style="font-size: 0.9rem; color: var(--color-heading);">Enable Companion Memory</strong>
+                <div style="font-size: 0.775rem; color: var(--color-text-muted);">
+                    When turned off, the companion will not remember your past conversations or recall saved facts.
+                </div>
+            </div>
+            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px; margin: 0;">
+                <input type="checkbox" id="memoryToggleCheckbox" checked style="opacity: 0; width: 0; height: 0;">
+                <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 24px;"></span>
+            </label>
+        </div>
+
+        <!-- Saved Memories List -->
+        <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-weight: 600; font-size: 0.85rem; color: var(--color-heading);">
+                    Saved Facts (<span id="savedMemoriesCount">0</span>/10)
+                </span>
+                <button id="clearAllMemoriesBtn" type="button" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 2px 8px; color: var(--color-error); border-color: var(--color-error-border);" disabled>
+                    Clear All Memories
+                </button>
+            </div>
+
+            <div id="memoriesListContainer" style="display: flex; flex-direction: column; gap: 6px; max-height: 180px; overflow-y: auto;">
+                <div class="text-muted" style="font-size: 0.825rem; font-style: italic;">Loading memories...</div>
+            </div>
+        </div>
     </div>
 
     <!-- Active Crisis Alert Banner (Hidden by default, shown on crisis response) -->
@@ -189,6 +241,24 @@
     border-color: var(--color-primary);
     box-shadow: 0 0 0 2px var(--color-primary-bg);
 }
+
+.slider.round:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+}
+input:checked + .slider {
+    background-color: var(--color-primary) !important;
+}
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
 </style>
 
 <!-- Safe, Self-Contained Chat Script -->
@@ -213,6 +283,14 @@
     const crisisAlertBanner = document.getElementById('crisisAlertBanner');
     const crisisAlertText = document.getElementById('crisisAlertText');
     const quickPromptContainer = document.getElementById('quickPromptContainer');
+    const openMemoryPanelBtn = document.getElementById('openMemoryPanelBtn');
+    const closeMemoryPanelBtn = document.getElementById('closeMemoryPanelBtn');
+    const memoryPanel = document.getElementById('memoryPanel');
+    const memoryBadgeCount = document.getElementById('memoryBadgeCount');
+    const savedMemoriesCount = document.getElementById('savedMemoriesCount');
+    const memoriesListContainer = document.getElementById('memoriesListContainer');
+    const memoryToggleCheckbox = document.getElementById('memoryToggleCheckbox');
+    const clearAllMemoriesBtn = document.getElementById('clearAllMemoriesBtn');
 
     // Retrieve CSRF token from meta or hidden input
     function getCsrfToken() {
@@ -493,6 +571,9 @@
                 if (conversationHistory.length > 10) {
                     conversationHistory = conversationHistory.slice(-10);
                 }
+
+                // Refresh memory badge and list if companion extracted new safe facts
+                loadMemories();
             } else if (data.status === 'empty_response') {
                 // Expected empty response: show as companion message instead of red error box
                 appendAssistantMessage(data.reply || data.message || 'I could not generate a response. Please try rephrasing.', false);
@@ -515,8 +596,120 @@
         }
     });
 
-    // Auto-focus input on page load
+    // Memory Management Functions
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text || '';
+        return div.innerHTML;
+    }
+
+    async function loadMemories() {
+        try {
+            const res = await fetch('/chat/api/memories');
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data.status === 'success') {
+                const memories = data.memories || [];
+                const count = memories.length;
+                if (memoryBadgeCount) memoryBadgeCount.textContent = count;
+                if (savedMemoriesCount) savedMemoriesCount.textContent = count;
+                if (memoryToggleCheckbox) memoryToggleCheckbox.checked = data.memory_enabled !== false;
+                if (clearAllMemoriesBtn) clearAllMemoriesBtn.disabled = count === 0;
+
+                if (!memoriesListContainer) return;
+                if (count === 0) {
+                    memoriesListContainer.innerHTML = '<div class="text-muted" style="font-size: 0.825rem; font-style: italic; padding: 4px 0;">No saved companion memories yet. As you chat about your studies and preferences, non-sensitive facts will appear here.</div>';
+                } else {
+                    memoriesListContainer.innerHTML = memories.map(m => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: var(--color-surface-subtle); padding: 8px 12px; border-radius: 6px; font-size: 0.825rem;">
+                            <div style="flex: 1; padding-right: 8px;">
+                                <span style="font-weight: 500; color: var(--color-text);">${escapeHtml(m.text)}</span>
+                                <span class="badge badge-muted" style="font-size: 0.7rem; margin-left: 6px;">${escapeHtml(m.category || 'general')}</span>
+                            </div>
+                            <button type="button" class="btn btn-secondary btn-sm delete-mem-btn" data-id="${m.id}" style="padding: 2px 8px; font-size: 0.75rem; color: var(--color-error); border-color: var(--color-error-border);" title="Delete this memory">
+                                🗑️ Delete
+                            </button>
+                        </div>
+                    `).join('');
+
+                    memoriesListContainer.querySelectorAll('.delete-mem-btn').forEach(btn => {
+                        btn.addEventListener('click', async function() {
+                            const id = this.getAttribute('data-id');
+                            if (!id) return;
+                            try {
+                                const delRes = await fetch('/chat/api/memories/' + id, {
+                                    method: 'DELETE',
+                                    headers: { 'X-CSRFToken': getCsrfToken() }
+                                });
+                                if (delRes.ok) {
+                                    loadMemories();
+                                }
+                            } catch (e) {
+                                console.error('Failed to delete memory:', e);
+                            }
+                        });
+                    });
+                }
+            }
+        } catch (e) {
+            console.error('Could not load memories:', e);
+        }
+    }
+
+    if (openMemoryPanelBtn) {
+        openMemoryPanelBtn.addEventListener('click', function() {
+            if (memoryPanel.style.display === 'none') {
+                memoryPanel.style.display = 'block';
+                loadMemories();
+            } else {
+                memoryPanel.style.display = 'none';
+            }
+        });
+    }
+
+    if (closeMemoryPanelBtn) {
+        closeMemoryPanelBtn.addEventListener('click', function() {
+            memoryPanel.style.display = 'none';
+        });
+    }
+
+    if (memoryToggleCheckbox) {
+        memoryToggleCheckbox.addEventListener('change', async function() {
+            try {
+                await fetch('/chat/api/memories/toggle', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify({ enabled: this.checked })
+                });
+            } catch (e) {
+                console.error('Could not toggle memory preference:', e);
+            }
+        });
+    }
+
+    if (clearAllMemoriesBtn) {
+        clearAllMemoriesBtn.addEventListener('click', async function() {
+            if (!confirm('Are you sure you want to clear all companion memories? This cannot be undone.')) return;
+            try {
+                const res = await fetch('/chat/api/memories', {
+                    method: 'DELETE',
+                    headers: { 'X-CSRFToken': getCsrfToken() }
+                });
+                if (res.ok) {
+                    loadMemories();
+                }
+            } catch (e) {
+                console.error('Failed to clear memories:', e);
+            }
+        });
+    }
+
+    // Auto-focus input and load initial memory stats on page load
     chatInput.focus();
+    loadMemories();
 })();
 </script>
 {% endblock %}

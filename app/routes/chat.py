@@ -8,8 +8,11 @@ import logging
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
 
-from app.extensions import limiter
+from app.extensions import db, limiter
 from app.utils.decorators import student_required
+from app.models.chat_memory import ChatMemory
+from app.models.user_preferences import UserPreferences
+from app.services.chat_context_service import is_memory_enabled_for_user
 from app.services.chat_service import (
     send_chat_message,
     MAX_MESSAGE_LENGTH,
@@ -82,16 +85,20 @@ def api_message():
     result = send_chat_message(
         user_message=clean_message,
         conversation_history=raw_history,
+        user=current_user,
     )
 
     status = result.get('status')
 
     # 5. Formulate consistent response and HTTP status codes
     if status == 'success':
-        return jsonify({
+        response_payload = {
             'status': 'success',
             'reply': result['reply'],
-        }), 200
+        }
+        if 'duration_seconds' in result:
+            response_payload['duration_seconds'] = result['duration_seconds']
+        return jsonify(response_payload), 200
 
     if status == 'crisis_detected':
         return jsonify({
@@ -137,3 +144,112 @@ def api_message():
         'status': 'error',
         'message': result.get('reply', 'Failed to generate response.'),
     }), 502
+
+
+@chat_bp.route('/api/memories', methods=['GET'])
+@login_required
+@student_required
+def get_memories():
+    """Retrieve the authenticated student's saved chatbot memories and preference status."""
+    memories = (
+        ChatMemory.query.filter_by(user_id=current_user.id)
+        .order_by(ChatMemory.created_at.desc())
+        .all()
+    )
+    memory_enabled = is_memory_enabled_for_user(current_user)
+    return jsonify({
+        'status': 'success',
+        'memory_enabled': memory_enabled,
+        'memories': [
+            {
+                'id': m.id,
+                'text': m.memory_text,
+                'category': m.category,
+                'created_at': m.created_at.isoformat() if m.created_at else None,
+            }
+            for m in memories
+        ],
+    }), 200
+
+
+@chat_bp.route('/api/memories/<int:memory_id>', methods=['DELETE'])
+@login_required
+@student_required
+def delete_memory(memory_id: int):
+    """Delete a specific saved memory owned by the authenticated student."""
+    memory = ChatMemory.query.filter_by(id=memory_id, user_id=current_user.id).first()
+    if not memory:
+        return jsonify({
+            'status': 'error',
+            'message': 'Memory not found or unauthorized.',
+        }), 404
+
+    try:
+        db.session.delete(memory)
+        db.session.commit()
+        return jsonify({
+            'status': 'success',
+            'message': 'Memory deleted.',
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        logger.error("Error deleting memory %s: %s", memory_id, type(e).__name__)
+        return jsonify({
+            'status': 'error',
+            'message': 'Could not delete memory.',
+        }), 500
+
+
+@chat_bp.route('/api/memories', methods=['DELETE'])
+@login_required
+@student_required
+def clear_all_memories():
+    """Clear all saved chatbot memories for the authenticated student."""
+    try:
+        ChatMemory.query.filter_by(user_id=current_user.id).delete()
+        db.session.commit()
+        return jsonify({
+            'status': 'success',
+            'message': 'All chatbot memories cleared.',
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        logger.error("Error clearing memories for user %s: %s", current_user.id, type(e).__name__)
+        return jsonify({
+            'status': 'error',
+            'message': 'Could not clear memories.',
+        }), 500
+
+
+@chat_bp.route('/api/memories/toggle', methods=['POST'])
+@login_required
+@student_required
+def toggle_memory():
+    """Toggle the persistent chatbot memory setting for the authenticated student."""
+    data = request.get_json(silent=True) or {}
+    prefs = current_user.preferences
+    if not prefs:
+        prefs = UserPreferences(user_id=current_user.id)
+        db.session.add(prefs)
+
+    current_val = getattr(prefs, 'chat_memory_enabled', True)
+    if 'enabled' in data and isinstance(data['enabled'], bool):
+        new_val = data['enabled']
+    else:
+        new_val = not current_val
+
+    prefs.chat_memory_enabled = new_val
+    try:
+        db.session.commit()
+        return jsonify({
+            'status': 'success',
+            'memory_enabled': prefs.chat_memory_enabled,
+            'message': 'Chatbot memory updated.',
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        logger.error("Error toggling memory for user %s: %s", current_user.id, type(e).__name__)
+        return jsonify({
+            'status': 'error',
+            'message': 'Could not update memory setting.',
+        }), 500

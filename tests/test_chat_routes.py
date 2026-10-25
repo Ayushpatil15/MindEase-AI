@@ -22,6 +22,15 @@ from app.services.chat_service import (
     DEFAULT_GEMINI_MODEL,
     MAX_MESSAGE_LENGTH,
 )
+from app.models.chat_memory import ChatMemory
+from app.models.mood import MoodEntry
+from app.models.stress import StressAssessment
+from app.models.user_preferences import UserPreferences
+from app.services.chat_context_service import (
+    build_dynamic_system_prompt,
+    is_wellness_relevant,
+    extract_candidate_memory,
+)
 from tests.conftest import create_test_student, create_test_admin
 
 
@@ -97,7 +106,9 @@ class TestChatServiceUnit:
                 assert "systemInstruction" in payload
                 assert "contents" in payload
                 assert payload["contents"][-1]["parts"][0]["text"] == "I'm feeling stressed about my history test tomorrow"
-                assert kwargs["params"]["key"] == "fake-key-12345"
+                assert "params" not in kwargs
+                assert kwargs["headers"]["x-goog-api-key"] == "fake-key-12345"
+                assert "duration_seconds" in res
 
     def test_gemini_quota_exceeded_429(self, app):
         """When Gemini returns HTTP 429, returns quota_exceeded gracefully."""
@@ -1105,3 +1116,233 @@ class TestGeminiDiagnostic:
         # Query param ?token= should NOT bypass student role restriction
         res = client.get('/admin/diagnostics/gemini?token=secure-render-token-999')
         assert res.status_code == 403
+
+
+# ==============================================================================
+# 5. Phase 6: Chatbot Context, Personalization & Memory Tests
+# ==============================================================================
+
+class TestChatbotPersonalizationAndMemory:
+    """Comprehensive test suite for personalized context, wellness awareness, and memory safety."""
+
+    def test_user_profile_name_included_without_fabrication(self, app, db):
+        """1. Authenticated user's actual username is in prompt without fabricated personal fields."""
+        student = create_test_student(db, email='aarav@university.edu', password='pass')
+        student.username = 'AaravSharma'
+        db.session.commit()
+
+        with app.app_context():
+            prompt = build_dynamic_system_prompt(user=student, user_message="Hello!")
+            assert "Student Username: AaravSharma" in prompt
+            assert "Never infer or invent personal details" in prompt
+            # Sensitive or nonexistent credentials/phone/address must never be fabricated
+            assert "password" not in prompt.lower()
+            assert "token" not in prompt.lower()
+            assert "aarav@university.edu" not in prompt
+
+    def test_missing_profile_fields_do_not_produce_fabrications(self, app, db):
+        """2. When profile/preferences are missing, no hallucinated goals or attributes are generated."""
+        student = create_test_student(db, email='barebones@university.edu', password='pass')
+        # Student has no UserPreferences row initially
+        with app.app_context():
+            prompt = build_dynamic_system_prompt(user=student, user_message="What should I do?")
+            assert f"Student Username: {student.username}" in prompt
+            assert "Student Wellness Goals" not in prompt
+            assert "Local Timezone" not in prompt
+
+    def test_relevant_recent_wellness_context_included(self, app, db):
+        """3. Relevant recent wellness check-ins (mood & stress) are included when message relates to wellness."""
+        with app.app_context():
+            student = create_test_student(db, email='wellnessstudent@test.com', password='pass', username='wellness_student')
+            m1 = MoodEntry(user_id=student.id, mood='Low', valence=-1, journal_note='Midterm exam pressure')
+            s1 = StressAssessment(user_id=student.id, score=28, level='High', responses=[2]*11)
+            db.session.add_all([m1, s1])
+            db.session.commit()
+
+            prompt = build_dynamic_system_prompt(
+                user=student,
+                user_message="I'm feeling so anxious about exams and stressed out.",
+            )
+            assert "Recent MindEase Wellness Context" in prompt
+            assert "Low (valence -1)" in prompt
+            assert "High stress (28/44)" in prompt
+            # Private journal reflections must NOT be leaked into system prompt
+            assert "Midterm exam pressure" not in prompt
+
+    def test_irrelevant_casual_messages_suppress_wellness_history(self, app, db):
+        """4. Irrelevant casual/academic queries do not expose or volunteer wellness history."""
+        with app.app_context():
+            student = create_test_student(db, email='casualstudent@test.com', password='pass', username='casual_student')
+            m1 = MoodEntry(user_id=student.id, mood='Low', valence=-2)
+            s1 = StressAssessment(user_id=student.id, score=30, level='High', responses=[3]*11)
+            db.session.add_all([m1, s1])
+            db.session.commit()
+
+            prompt = build_dynamic_system_prompt(
+                user=student,
+                user_message="What is the difference between a stack and a queue in data structures?",
+            )
+            # Must NOT dump wellness records in active context
+            assert "Recent MindEase Wellness Context (User is discussing feelings" not in prompt
+            assert "Wellness Context Directive" in prompt
+            assert "Do NOT volunteer or recite their past check-in scores" in prompt
+
+    def test_existing_conversation_followup_context_preserved(self, app, db):
+        """5. Multi-turn conversation follow-ups are preserved and short follow-ups keep wellness context."""
+        with app.app_context():
+            student = create_test_student(db, email='followup@test.com', password='pass', username='followup_student')
+            m1 = MoodEntry(user_id=student.id, mood='Low', valence=-1)
+            db.session.add(m1)
+            db.session.commit()
+
+            history = [
+                {"role": "user", "parts": [{"text": "I feel so stressed about my biology exam"}]},
+                {"role": "model", "parts": [{"text": "Take a breath. What part feels most difficult?"}]},
+            ]
+
+            # Short follow-up query like "What should I do?"
+            relevant = is_wellness_relevant("What should I do?", history)
+            assert relevant is True
+
+            prompt = build_dynamic_system_prompt(
+                user=student,
+                user_message="What should I do?",
+                conversation_history=history,
+            )
+            assert "Recent MindEase Wellness Context" in prompt
+
+    def test_persistent_memories_extracted_and_retained(self, app, db):
+        """6. Non-sensitive facts are extracted, stored in chat_memories, and retrieved in future prompts."""
+        with app.app_context():
+            student = create_test_student(db, email='memorystudent@test.com', password='pass', username='memory_student')
+
+            # User states their academic major and habit
+            extracted = extract_candidate_memory(student.id, "I am majoring in Computer Science")
+            assert extracted == "Studies Computer Science"
+
+            mem_row = ChatMemory.query.filter_by(user_id=student.id).first()
+            assert mem_row is not None
+            assert mem_row.memory_text == "Studies Computer Science"
+            assert mem_row.category == "academic"
+
+            # In subsequent prompt assembly, memory is loaded
+            prompt = build_dynamic_system_prompt(user=student, user_message="Good morning!")
+            assert "What You Remember About This Student" in prompt
+            assert "Studies Computer Science" in prompt
+
+    def test_clearing_memory_prevents_future_use(self, app, db):
+        """7. Deleting a memory ensures it is immediately excluded from subsequent companion prompts."""
+        with app.app_context():
+            student = create_test_student(db, email='deletemem@test.com', password='pass', username='deletemem_student')
+            mem = ChatMemory(user_id=student.id, memory_text="Prefers to study in the library", category="routine")
+            db.session.add(mem)
+            db.session.commit()
+
+            # Before deletion
+            prompt1 = build_dynamic_system_prompt(user=student, user_message="Hi")
+            assert "Prefers to study in the library" in prompt1
+
+            # Delete memory
+            db.session.delete(mem)
+            db.session.commit()
+
+            # After deletion
+            prompt2 = build_dynamic_system_prompt(user=student, user_message="Hi")
+            assert "Prefers to study in the library" not in prompt2
+
+    def test_cross_user_memory_and_wellness_isolation(self, client, db):
+        """8. Strict user isolation: memories and wellness data of User A never bleed into User B."""
+        user_a = create_test_student(db, email='usera@isolate.com', password='pass', username='user_alpha')
+        user_b = create_test_student(db, email='userb@isolate.com', password='pass', username='user_beta')
+
+        mem_a = ChatMemory(user_id=user_a.id, memory_text="UserA Secret Routine", category="routine")
+        mood_a = MoodEntry(user_id=user_a.id, mood='Low', valence=-2)
+        db.session.add_all([mem_a, mood_a])
+        db.session.commit()
+
+        # Build prompt for User B
+        prompt_b = build_dynamic_system_prompt(user=user_b, user_message="Feeling stressed")
+        assert "UserA Secret Routine" not in prompt_b
+        assert "Secret Routine" not in prompt_b
+
+        # Attempt to delete User A's memory as User B via API (IDOR prevention)
+        login_res = client.post('/auth/login', data={'email': 'userb@isolate.com', 'password': 'pass'})
+        assert login_res.status_code == 302  # redirects to dashboard on successful login
+        del_resp = client.delete(f'/chat/api/memories/{mem_a.id}')
+        assert del_resp.status_code == 404
+        assert db.session.get(ChatMemory, mem_a.id) is not None
+
+    def test_sensitive_disclosures_never_stored_in_persistent_memory(self, app, db):
+        """9. Sensitive mental health disclosures, trauma, crisis, or clinical terms are rejected from memory."""
+        student = create_test_student(db, email='sensitivestudent@test.com', password='pass')
+
+        with app.app_context():
+            sensitive_messages = [
+                "I was diagnosed with severe clinical depression and take medication",
+                "I'm thinking about suicide and self-harm",
+                "My therapist told me I have PTSD and anxiety disorder",
+                "I went to the hospital after an overdose",
+            ]
+            for msg in sensitive_messages:
+                res = extract_candidate_memory(student.id, msg)
+                assert res is None
+
+            # Verify no rows were created in DB
+            count = ChatMemory.query.filter_by(user_id=student.id).count()
+            assert count == 0
+
+    def test_memory_preference_toggle_disables_memory(self, app, db, client):
+        """10. User can opt out of memory via preferences; disabling it prevents extraction and prompt injection."""
+        student = create_test_student(db, email='memoryoptout@test.com', password='pass')
+        prefs = UserPreferences(user_id=student.id, chat_memory_enabled=False)
+        db.session.add(prefs)
+        mem = ChatMemory(user_id=student.id, memory_text="Prefers evening study", category="routine")
+        db.session.add(mem)
+        db.session.commit()
+
+        with app.app_context():
+            # When disabled, candidate extraction returns None
+            extracted = extract_candidate_memory(student.id, "I am majoring in Economics")
+            assert extracted is None
+
+            # When disabled, saved memories are not injected into system prompt
+            prompt = build_dynamic_system_prompt(user=student, user_message="Hello")
+            assert "Prefers evening study" not in prompt
+            assert "What You Remember About This Student" not in prompt
+
+    def test_empty_memory_and_wellness_history_handling(self, app, db):
+        """11. Brand new student with empty memory and zero wellness entries operates cleanly without errors."""
+        new_student = create_test_student(db, email='brandnew@test.com', password='pass')
+
+        with app.app_context():
+            prompt = build_dynamic_system_prompt(user=new_student, user_message="Hello there!")
+            assert "MindEase AI Companion" in prompt
+            assert f"Student Username: {new_student.username}" in prompt
+            assert "Recent MindEase Wellness Context" not in prompt
+            assert "What You Remember About This Student" not in prompt
+
+    def test_chat_memory_api_endpoints_student_required(self, client, db):
+        """12. Chat memory API endpoints require authentication, student role, and support list and clear."""
+        student = create_test_student(db, email='apistudent@test.com', password='pass')
+        mem1 = ChatMemory(user_id=student.id, memory_text="Studies Architecture", category="academic")
+        db.session.add(mem1)
+        db.session.commit()
+
+        # 1. Unauthenticated request to /chat/api/memories redirects to login
+        unauth_res = client.get('/chat/api/memories')
+        assert unauth_res.status_code == 302
+        assert '/auth/login' in unauth_res.headers.get('Location', '')
+
+        # 2. Authenticated student can retrieve memories list
+        client.post('/auth/login', data={'email': 'apistudent@test.com', 'password': 'pass'})
+        res = client.get('/chat/api/memories')
+        assert res.status_code == 200
+        data = res.get_json()
+        assert data['status'] == 'success'
+        assert len(data['memories']) == 1
+        assert data['memories'][0]['text'] == "Studies Architecture"
+
+        # 3. Authenticated student can clear all memories
+        clear_res = client.delete('/chat/api/memories')
+        assert clear_res.status_code == 200
+        assert ChatMemory.query.filter_by(user_id=student.id).count() == 0

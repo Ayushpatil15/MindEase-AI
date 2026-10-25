@@ -11,6 +11,7 @@ from app.models.mood import MoodEntry, MOOD_VALENCE_MAP, VALID_MOODS
 from app.models.emotion import EmotionScan, EMOTION_CLASSES
 from app.models.recommendation import Recommendation, RECOMMENDATION_CATEGORIES
 from app.models.task import WellnessTask
+from app.models.chat_memory import ChatMemory
 
 __all__ = [
     'User',
@@ -25,4 +26,5 @@ __all__ = [
     'Recommendation',
     'RECOMMENDATION_CATEGORIES',
     'WellnessTask',
+    'ChatMemory',
 ]

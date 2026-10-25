@@ -12,11 +12,16 @@ import time
 import logging
 from typing import Dict, Any, List, Optional
 import requests
-from flask import current_app
+from flask import current_app, has_request_context
+from flask_login import current_user
 
 from app.services.safety_service import (
     text_has_crisis_language,
     get_safety_support_card_data,
+)
+from app.services.chat_context_service import (
+    build_dynamic_system_prompt,
+    extract_candidate_memory,
 )
 
 logger = logging.getLogger(__name__)
@@ -158,26 +163,32 @@ def send_chat_message(
     conversation_history: Optional[List[Dict[str, Any]]] = None,
     api_key: Optional[str] = None,
     model_name: Optional[str] = None,
+    user: Optional[Any] = None,
 ) -> Dict[str, Any]:
     """Process a student chat message and retrieve a response from the Gemini API.
 
     1. Validates message content.
     2. Runs safety crisis screening: if crisis detected, returns immediate care resources
        WITHOUT contacting the Gemini API.
-    3. Resolves and checks GEMINI_API_KEY.
-    4. Sends request to Gemini generateContent REST endpoint with strict timeouts.
-    5. Returns structured dictionary response. Never logs private message content.
+    3. Resolves authenticated student context (profile, memories, wellness history).
+    4. Resolves and checks GEMINI_API_KEY.
+    5. Sends request to Gemini generateContent REST endpoint with strict timeouts.
+    6. Returns structured dictionary response with safe latency timing.
+       Never logs private message content or credentials.
 
     Args:
         user_message: Raw text from authenticated student.
         conversation_history: Optional list of previous chat turns.
         api_key: Optional explicit key (defaults to config/env).
         model_name: Optional explicit model (defaults to config/env).
+        user: Optional authenticated user object (defaults to current_user if in request context).
 
     Returns:
         Dict[str, Any] with keys:
           - 'status': 'success' | 'crisis_detected' | 'service_unavailable' | 'quota_exceeded' | 'error' | 'timeout'
           - 'reply': Formatted response string
+          - 'model': Active Gemini model identifier
+          - 'duration_seconds': (Optional) Request roundtrip latency in seconds
           - 'support_resources': (Optional) Dictionary with Tele-MANAS/emergency contacts if crisis detected
     """
     # 1. Validate user message
@@ -211,7 +222,16 @@ def send_chat_message(
             "support_resources": support_card,
         }
 
-    # 3. Resolve API Key & Model
+    # 3. Resolve Authenticated User Context
+    resolved_user = user
+    if resolved_user is None:
+        try:
+            if has_request_context() and current_user and current_user.is_authenticated:
+                resolved_user = current_user
+        except Exception:
+            resolved_user = None
+
+    # 4. Resolve API Key & Model
     resolved_key = api_key
     if not resolved_key:
         try:
@@ -230,9 +250,8 @@ def send_chat_message(
 
     active_model = model_name or get_validated_model_name()
 
-    # 4. Assemble Gemini REST Payload
+    # 5. Assemble Gemini REST Payload with Context-Aware System Instruction
     endpoint_url = f"https://generativelanguage.googleapis.com/v1beta/models/{active_model}:generateContent"
-    params = {"key": resolved_key.strip()}
     headers = {
         "Content-Type": "application/json",
         "x-goog-api-key": resolved_key.strip(),
@@ -246,6 +265,13 @@ def send_chat_message(
         "parts": [{"text": clean_message}]
     })
 
+    # Assemble dynamic system prompt combining persona, profile, memory, and relevant wellness context
+    system_instruction_text = build_dynamic_system_prompt(
+        user=resolved_user,
+        user_message=clean_message,
+        conversation_history=sanitized_history,
+    )
+
     generation_config: Dict[str, Any] = {
         "temperature": 0.7,
         "maxOutputTokens": 1000,
@@ -254,28 +280,30 @@ def send_chat_message(
 
     payload = {
         "systemInstruction": {
-            "parts": [{"text": SYSTEM_INSTRUCTION_TEXT}]
+            "parts": [{"text": system_instruction_text}]
         },
         "contents": contents,
         "generationConfig": generation_config,
     }
 
-    # 5. Execute HTTP Request to Gemini API (with at most one bounded retry for transient 503/429)
+    # 6. Execute HTTP Request to Gemini API (with at most one bounded retry for transient 503/429)
     max_attempts = 2
     data = {}
     status_code = 500
+    req_start = time.perf_counter()
+    duration_seconds = 0.0
 
     for attempt in range(1, max_attempts + 1):
         try:
             response = requests.post(
                 endpoint_url,
-                params=params,
                 headers=headers,
                 json=payload,
                 timeout=REQUEST_TIMEOUT,
             )
 
             status_code = response.status_code
+            duration_seconds = round(time.perf_counter() - req_start, 3)
 
             # Attempt to parse response JSON safely
             try:
@@ -505,10 +533,20 @@ def send_chat_message(
             "reply": "I couldn't generate a reply just now. Please try again or rephrase.",
         }
 
+    # Safely extract non-sensitive candidate memory in background if authenticated
+    try:
+        if resolved_user and hasattr(resolved_user, "id"):
+            extract_candidate_memory(resolved_user.id, clean_message)
+    except Exception as e:
+        logger.warning("Memory extraction failed: %s", type(e).__name__)
+
+    logger.info("Gemini generation completed in %.3fs for model %s", duration_seconds, active_model)
+
     return {
         "status": "success",
         "reply": reply_text,
         "model": active_model,
+        "duration_seconds": duration_seconds,
     }
 
 
