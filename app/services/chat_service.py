@@ -23,8 +23,8 @@ logger = logging.getLogger(__name__)
 # Default model identifier for low-cost prototyping
 DEFAULT_GEMINI_MODEL = "gemini-2.5-flash-lite"
 
-# Safe regex pattern for model identifiers (prevents URL injection)
-MODEL_IDENTIFIER_PATTERN = re.compile(r"^[a-zA-Z0-9._-]+$")
+# Safe regex pattern for model identifiers (prevents URL injection, allows optional models/ prefix)
+MODEL_IDENTIFIER_PATTERN = re.compile(r"^(models/)?[a-zA-Z0-9._-]+$")
 
 # Maximum permitted characters per individual message
 MAX_MESSAGE_LENGTH = 2000
@@ -59,7 +59,7 @@ SYSTEM_INSTRUCTION_TEXT = (
 
 
 def get_validated_model_name() -> str:
-    """Retrieve and validate the configured Gemini model identifier."""
+    """Retrieve and validate the configured Gemini model identifier, normalizing models/ prefix."""
     configured_model = None
     try:
         configured_model = current_app.config.get("GEMINI_MODEL")
@@ -71,6 +71,8 @@ def get_validated_model_name() -> str:
 
     configured_model = str(configured_model).strip()
     if configured_model and MODEL_IDENTIFIER_PATTERN.match(configured_model):
+        if configured_model.startswith("models/"):
+            return configured_model[len("models/"):]
         return configured_model
 
     logger.warning(
@@ -230,7 +232,10 @@ def send_chat_message(
     # 4. Assemble Gemini REST Payload
     endpoint_url = f"https://generativelanguage.googleapis.com/v1beta/models/{active_model}:generateContent"
     params = {"key": resolved_key.strip()}
-    headers = {"Content-Type": "application/json"}
+    headers = {
+        "Content-Type": "application/json",
+        "x-goog-api-key": resolved_key.strip(),
+    }
 
     # Sanitize and prepare contents array
     sanitized_history = sanitize_conversation_history(conversation_history)
@@ -242,16 +247,9 @@ def send_chat_message(
 
     generation_config: Dict[str, Any] = {
         "temperature": 0.7,
-        "maxOutputTokens": 2048,
+        "maxOutputTokens": 1000,
         "topP": 0.95,
     }
-
-    # For Gemini 2.5 Flash / Flash-Lite models, disable internal thinking budget to prevent thinking tokens
-    # from consuming the output token ceiling and leaving zero tokens for candidate text.
-    if "flash" in active_model.lower():
-        generation_config["thinkingConfig"] = {
-            "thinkingBudget": 0
-        }
 
     payload = {
         "systemInstruction": {
@@ -273,32 +271,80 @@ def send_chat_message(
 
         status_code = response.status_code
 
-        # Quota / Rate limit handling
-        if status_code == 429:
-            logger.warning("Gemini API rate limit or quota exceeded (HTTP 429).")
-            return {
-                "status": "quota_exceeded",
-                "reply": "I'm receiving a high volume of requests right now. Please take a deep breath and try again in a moment.",
-            }
+        # Attempt to parse response JSON safely
+        try:
+            data = response.json() if response.content else {}
+        except Exception:
+            data = {}
 
-        # Client error handling (400, 401, 403)
-        if status_code in (400, 401, 403):
-            logger.error("Gemini API request failed with client error status: %d", status_code)
+        # 1. Explicitly detect upstream error object or non-200 HTTP status code
+        error_obj = data.get("error") if isinstance(data, dict) else None
+
+        if error_obj or status_code != 200:
+            err_code = None
+            err_status = "UNKNOWN_ERROR"
+            err_message = "No message provided"
+
+            if isinstance(error_obj, dict):
+                err_code = error_obj.get("code")
+                err_status = str(error_obj.get("status") or "UNKNOWN_ERROR").strip()
+                raw_msg = str(error_obj.get("message") or "").strip()
+                # Sanitize error message (never log API keys, user messages, or credentials)
+                sanitized_msg = re.sub(r'key=[a-zA-Z0-9_\-]+', 'key=[REDACTED]', raw_msg)
+                sanitized_msg = re.sub(r'AIza[a-zA-Z0-9_\-]+', '[REDACTED_API_KEY]', sanitized_msg)
+                if len(sanitized_msg) > 200:
+                    sanitized_msg = sanitized_msg[:200] + "..."
+                err_message = sanitized_msg
+            elif isinstance(response.text, str) and response.text:
+                raw_txt = response.text[:150].strip()
+                raw_txt = re.sub(r'key=[a-zA-Z0-9_\-]+', 'key=[REDACTED]', raw_txt)
+                raw_txt = re.sub(r'AIza[a-zA-Z0-9_\-]+', '[REDACTED_API_KEY]', raw_txt)
+                err_message = raw_txt
+
+            numeric_code = err_code if isinstance(err_code, int) else status_code
+
+            logger.error(
+                "Gemini API returned upstream error. HTTP: %d, code: %s, status: %s, message: %s",
+                status_code,
+                str(numeric_code),
+                err_status,
+                err_message,
+            )
+
+            # Quota exceeded / rate limit (429 / RESOURCE_EXHAUSTED)
+            if numeric_code == 429 or err_status == "RESOURCE_EXHAUSTED":
+                return {
+                    "status": "quota_exceeded",
+                    "reply": "I'm receiving a high volume of requests right now. Please take a deep breath and try again in a moment.",
+                    "error_code": numeric_code,
+                    "error_status": err_status,
+                }
+
+            # Model not found (404 / NOT_FOUND) or permission denied / key invalid (401, 403 / PERMISSION_DENIED)
+            if numeric_code in (401, 403, 404) or err_status in ("NOT_FOUND", "PERMISSION_DENIED"):
+                return {
+                    "status": "service_unavailable",
+                    "reply": "The AI companion is currently unavailable. Please check back shortly.",
+                    "error_code": numeric_code,
+                    "error_status": err_status,
+                }
+
+            # Server error handling (500, 502, 503, 504 / INTERNAL / UNAVAILABLE)
+            if numeric_code >= 500 or err_status in ("INTERNAL", "UNAVAILABLE"):
+                return {
+                    "status": "error",
+                    "reply": "The AI companion service is temporarily experiencing technical difficulties. Please try again in a few moments.",
+                    "error_code": numeric_code,
+                    "error_status": err_status,
+                }
+
+            # Other upstream client errors (400 Bad Request / INVALID_ARGUMENT, etc.)
             return {
                 "status": "error",
                 "reply": "The AI companion could not process this request right now. Please try again shortly.",
+                "error_code": numeric_code,
+                "error_status": err_status,
             }
-
-        # Server error handling (500, 503, 504)
-        if status_code >= 500:
-            logger.error("Gemini API service error status: %d", status_code)
-            return {
-                "status": "error",
-                "reply": "The AI companion service is temporarily experiencing technical difficulties. Please try again in a few moments.",
-            }
-
-        # Successful HTTP response (200)
-        data = response.json() if response.content else {}
 
         # Safe diagnostic extraction (zero message contents or secret credentials logged)
         prompt_feedback = data.get("promptFeedback") or {}
@@ -342,7 +388,8 @@ def send_chat_message(
         candidates = data.get("candidates")
         if not candidates or not isinstance(candidates, list) or len(candidates) == 0:
             logger.warning(
-                "Gemini API returned 200 with empty candidates. response_keys: %s, prompt_feedback: %s, usage: %s",
+                "Gemini API response contained no candidates. HTTP: %d, response_keys: %s, prompt_feedback: %s, usage: %s",
+                status_code,
                 list(data.keys()),
                 prompt_feedback,
                 usage_summary,

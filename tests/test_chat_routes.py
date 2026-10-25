@@ -251,8 +251,8 @@ class TestChatServiceUnit:
                 assert "Analyzing" not in res["reply"]
                 assert "calm study schedule" in res["reply"]
 
-    def test_gemini_thinking_budget_zero_for_flash(self, app):
-        """Verify thinkingConfig with thinkingBudget: 0 is included for Flash models."""
+    def test_gemini_standard_generation_config(self, app):
+        """Verify standard generationConfig (temperature, maxOutputTokens, topP) without invalid thinkingConfig."""
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.content = b'{"candidates": [{"content": {"parts": [{"text": "Hello!"}]}}]}'
@@ -270,9 +270,107 @@ class TestChatServiceUnit:
                 args, kwargs = mock_post.call_args
                 payload = kwargs["json"]
                 gen_config = payload["generationConfig"]
-                assert "thinkingConfig" in gen_config
-                assert gen_config["thinkingConfig"]["thinkingBudget"] == 0
-                assert gen_config["maxOutputTokens"] == 2048
+                assert gen_config["temperature"] == 0.7
+                assert gen_config["maxOutputTokens"] == 1000
+                assert gen_config["topP"] == 0.95
+                assert "thinkingConfig" not in gen_config
+
+    def test_gemini_response_error_object_with_http_200_returns_controlled_error(self, app):
+        """When Gemini returns HTTP 200 with an error object, detect error and return controlled error (NOT empty_response)."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.content = b'{"error": {"code": 400, "status": "INVALID_ARGUMENT", "message": "API key not valid."}}'
+        mock_response.json.return_value = {
+            "error": {
+                "code": 400,
+                "status": "INVALID_ARGUMENT",
+                "message": "API key not valid.",
+            }
+        }
+
+        with app.app_context():
+            with patch('requests.post', return_value=mock_response):
+                res = send_chat_message(
+                    user_message="Hello",
+                    api_key="fake-key",
+                )
+                assert res["status"] == "error"
+                assert res["status"] != "empty_response"
+                assert res["error_code"] == 400
+                assert res["error_status"] == "INVALID_ARGUMENT"
+
+    def test_gemini_response_error_object_with_http_404_returns_service_unavailable(self, app):
+        """When Gemini returns HTTP 404 model not found, return service_unavailable (NOT empty_response)."""
+        mock_response = MagicMock()
+        mock_response.status_code = 404
+        mock_response.content = b'{"error": {"code": 404, "status": "NOT_FOUND", "message": "models/xyz is not found"}}'
+        mock_response.json.return_value = {
+            "error": {
+                "code": 404,
+                "status": "NOT_FOUND",
+                "message": "models/xyz is not found",
+            }
+        }
+
+        with app.app_context():
+            with patch('requests.post', return_value=mock_response):
+                res = send_chat_message(
+                    user_message="Hello",
+                    api_key="fake-key",
+                )
+                assert res["status"] == "service_unavailable"
+                assert res["status"] != "empty_response"
+                assert res["error_code"] == 404
+                assert res["error_status"] == "NOT_FOUND"
+
+    def test_gemini_error_logging_redacts_api_key(self, app, caplog):
+        """When Gemini returns an error message with an API key, the logged message must redact the key."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.content = b'{"error": {"code": 400, "status": "INVALID_ARGUMENT", "message": "Invalid API key provided: key=AIzaSyD1234567890abcdef."}}'
+        mock_response.json.return_value = {
+            "error": {
+                "code": 400,
+                "status": "INVALID_ARGUMENT",
+                "message": "Invalid API key provided: key=AIzaSyD1234567890abcdef.",
+            }
+        }
+
+        with app.app_context():
+            import logging
+            with caplog.at_level(logging.ERROR):
+                with patch('requests.post', return_value=mock_response):
+                    res = send_chat_message(
+                        user_message="Hello",
+                        api_key="fake-key",
+                    )
+                    assert res["status"] == "error"
+                    log_text = caplog.text
+                    assert "AIzaSyD1234567890abcdef" not in log_text
+                    assert "[REDACTED" in log_text or "REDACTED" in log_text
+
+    def test_gemini_response_error_object_with_http_429_returns_quota_exceeded(self, app):
+        """When Gemini returns HTTP 429 with error object, return quota_exceeded."""
+        mock_response = MagicMock()
+        mock_response.status_code = 429
+        mock_response.content = b'{"error": {"code": 429, "status": "RESOURCE_EXHAUSTED", "message": "Resource has been exhausted"}}'
+        mock_response.json.return_value = {
+            "error": {
+                "code": 429,
+                "status": "RESOURCE_EXHAUSTED",
+                "message": "Resource has been exhausted",
+            }
+        }
+
+        with app.app_context():
+            with patch('requests.post', return_value=mock_response):
+                res = send_chat_message(
+                    user_message="Hello",
+                    api_key="fake-key",
+                )
+                assert res["status"] == "quota_exceeded"
+                assert res["error_code"] == 429
+                assert res["error_status"] == "RESOURCE_EXHAUSTED"
 
     def test_empty_or_whitespace_user_message(self, app):
         """Empty or whitespace-only messages are rejected without API calls."""
@@ -493,6 +591,32 @@ class TestChatRoutes:
 
         mock_resp = MagicMock()
         mock_resp.status_code = 500
+
+        with patch('requests.post', return_value=mock_resp):
+            with patch.dict('os.environ', {'GEMINI_API_KEY': 'valid-test-key'}):
+                response = client.post(
+                    '/chat/api/message',
+                    json={'message': 'Hello there'}
+                )
+                assert response.status_code == 502
+                data = response.get_json()
+                assert data['status'] == 'error'
+
+    def test_post_api_message_upstream_error_object_in_200_returns_502(self, client, db):
+        """When Gemini returns HTTP 200 with an error object, route returns HTTP 502 (NOT 200 empty_response)."""
+        create_test_student(db, email='studentupstreamerr200@test.com', password='pass')
+        client.post('/auth/login', data={'email': 'studentupstreamerr200@test.com', 'password': 'pass'})
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.content = b'{"error": {"code": 400, "status": "INVALID_ARGUMENT", "message": "API key not valid"}}'
+        mock_resp.json.return_value = {
+            "error": {
+                "code": 400,
+                "status": "INVALID_ARGUMENT",
+                "message": "API key not valid",
+            }
+        }
 
         with patch('requests.post', return_value=mock_resp):
             with patch.dict('os.environ', {'GEMINI_API_KEY': 'valid-test-key'}):
