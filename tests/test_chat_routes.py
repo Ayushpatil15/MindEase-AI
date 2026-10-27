@@ -19,7 +19,10 @@ from app.services.chat_service import (
     get_validated_model_name,
     check_gemini_model_reachability,
     send_minimal_gemini_diagnostic,
+    get_request_timeout,
     DEFAULT_GEMINI_MODEL,
+    DEFAULT_CONNECT_TIMEOUT,
+    DEFAULT_READ_TIMEOUT,
     MAX_MESSAGE_LENGTH,
 )
 from app.models.chat_memory import ChatMemory
@@ -152,7 +155,7 @@ class TestChatServiceUnit:
                 assert "technical difficulties" in res["reply"].lower()
 
     def test_gemini_timeout(self, app):
-        """When Gemini request times out, returns timeout status."""
+        """When Gemini request times out, returns timeout status with user-friendly retry message."""
         with app.app_context():
             with patch('requests.post', side_effect=requests.exceptions.Timeout("Read timed out")):
                 res = send_chat_message(
@@ -161,6 +164,47 @@ class TestChatServiceUnit:
                 )
                 assert res["status"] == "timeout"
                 assert "timed out" in res["reply"].lower()
+                assert "gentle breath" in res["reply"].lower()
+
+    def test_gemini_read_timeout_distinction(self, app):
+        """Distinguishes ReadTimeout, returning timeout_type='response' and friendly message."""
+        with app.app_context():
+            with patch('requests.post', side_effect=requests.exceptions.ReadTimeout("Read timed out")):
+                res = send_chat_message(
+                    user_message="Hello",
+                    api_key="fake-key",
+                )
+                assert res["status"] == "timeout"
+                assert res.get("timeout_type") == "response"
+                assert "timed out" in res["reply"].lower()
+
+    def test_gemini_connect_timeout_distinction(self, app):
+        """Distinguishes ConnectTimeout, returning timeout_type='connection' and friendly message."""
+        with app.app_context():
+            with patch('requests.post', side_effect=requests.exceptions.ConnectTimeout("Connect timed out")):
+                res = send_chat_message(
+                    user_message="Hello",
+                    api_key="fake-key",
+                )
+                assert res["status"] == "timeout"
+                assert res.get("timeout_type") == "connection"
+                assert "timed out" in res["reply"].lower()
+
+    def test_get_request_timeout_env_and_defaults(self, app):
+        """Verifies get_request_timeout resolves default bounds and respects environment overrides."""
+        # Defaults
+        with patch.dict('os.environ', {}, clear=True):
+            with app.app_context():
+                app.config.pop('GEMINI_CONNECT_TIMEOUT', None)
+                app.config.pop('GEMINI_READ_TIMEOUT', None)
+                assert get_request_timeout() == (DEFAULT_CONNECT_TIMEOUT, DEFAULT_READ_TIMEOUT)
+
+        # Configured via environment variables
+        with patch.dict('os.environ', {'GEMINI_CONNECT_TIMEOUT': '8.0', 'GEMINI_READ_TIMEOUT': '28.0'}):
+            with app.app_context():
+                app.config['GEMINI_CONNECT_TIMEOUT'] = 8.0
+                app.config['GEMINI_READ_TIMEOUT'] = 28.0
+                assert get_request_timeout() == (8.0, 28.0)
 
     def test_gemini_network_error(self, app):
         """When network connection drops, returns connection error."""

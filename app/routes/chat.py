@@ -122,7 +122,10 @@ def api_message():
     if status == 'timeout':
         return jsonify({
             'status': 'timeout',
-            'message': result.get('reply', 'Request timed out.'),
+            'message': result.get(
+                'reply',
+                'The response timed out while waiting for the AI companion. Please try again in a moment.'
+            ),
         }), 504
 
     if status == 'blocked':

@@ -38,8 +38,47 @@ MAX_MESSAGE_LENGTH = 2000
 # Maximum permitted history turns (5 exchanges: 5 user + 5 model)
 MAX_HISTORY_TURNS = 10
 
-# Request timeouts: 5s connection, 15s read
-REQUEST_TIMEOUT = (5.0, 15.0)
+# Request timeouts: 5s connection, 25s read (default tuned for LLM generation within 30s hosting worker limits)
+DEFAULT_CONNECT_TIMEOUT = 5.0
+DEFAULT_READ_TIMEOUT = 25.0
+DEFAULT_REQUEST_TIMEOUT = (DEFAULT_CONNECT_TIMEOUT, DEFAULT_READ_TIMEOUT)
+REQUEST_TIMEOUT = DEFAULT_REQUEST_TIMEOUT
+
+
+def get_request_timeout() -> tuple:
+    """Retrieve the active Gemini API connection and read timeout tuple.
+
+    Priority order:
+    1. Direct override of module-level REQUEST_TIMEOUT (e.g. during test patching)
+    2. Flask current_app configuration (GEMINI_CONNECT_TIMEOUT, GEMINI_READ_TIMEOUT)
+    3. Environment variables (GEMINI_CONNECT_TIMEOUT, GEMINI_READ_TIMEOUT)
+    4. Fallback defaults: (5.0, 25.0) seconds
+    """
+    if REQUEST_TIMEOUT != DEFAULT_REQUEST_TIMEOUT:
+        return REQUEST_TIMEOUT
+
+    connect_t = DEFAULT_CONNECT_TIMEOUT
+    read_t = DEFAULT_READ_TIMEOUT
+
+    try:
+        if has_request_context() and current_app:
+            connect_t = float(current_app.config.get("GEMINI_CONNECT_TIMEOUT", DEFAULT_CONNECT_TIMEOUT))
+            read_t = float(current_app.config.get("GEMINI_READ_TIMEOUT", DEFAULT_READ_TIMEOUT))
+        else:
+            if "GEMINI_CONNECT_TIMEOUT" in os.environ:
+                connect_t = float(os.environ["GEMINI_CONNECT_TIMEOUT"])
+            if "GEMINI_READ_TIMEOUT" in os.environ:
+                read_t = float(os.environ["GEMINI_READ_TIMEOUT"])
+    except Exception:
+        connect_t = DEFAULT_CONNECT_TIMEOUT
+        read_t = DEFAULT_READ_TIMEOUT
+
+    if connect_t <= 0 or connect_t > 30.0:
+        connect_t = DEFAULT_CONNECT_TIMEOUT
+    if read_t <= 0 or read_t > 60.0:
+        read_t = DEFAULT_READ_TIMEOUT
+
+    return (connect_t, read_t)
 
 # System instruction defining MindEase as a supportive student wellness companion
 SYSTEM_INSTRUCTION_TEXT = (
@@ -294,13 +333,15 @@ def send_chat_message(
     req_start = time.perf_counter()
     duration_seconds = 0.0
 
+    active_timeout = get_request_timeout()
+
     for attempt in range(1, max_attempts + 1):
         try:
             response = requests.post(
                 endpoint_url,
                 headers=headers,
                 json=payload,
-                timeout=REQUEST_TIMEOUT,
+                timeout=active_timeout,
             )
 
             status_code = response.status_code
@@ -398,11 +439,22 @@ def send_chat_message(
             # Response is successful (HTTP 200 and no error object), break out of retry loop
             break
 
-        except requests.exceptions.Timeout:
-            logger.warning("Gemini API request timed out after %s seconds.", REQUEST_TIMEOUT)
+        except requests.exceptions.Timeout as e:
+            is_connect = isinstance(e, requests.exceptions.ConnectTimeout)
+            timeout_kind = "connection" if is_connect else "response"
+            logger.warning(
+                "Gemini API %s timed out after %s seconds (model=%s).",
+                timeout_kind,
+                active_timeout,
+                active_model,
+            )
             return {
                 "status": "timeout",
-                "reply": "The connection timed out while waiting for a response. Please check your connection and try again.",
+                "reply": (
+                    "The response timed out while waiting for the AI companion. "
+                    "Please take a gentle breath and try sending your message again in a moment."
+                ),
+                "timeout_type": timeout_kind,
             }
 
         except requests.exceptions.RequestException as e:

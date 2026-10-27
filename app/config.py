@@ -55,6 +55,11 @@ class Config:
     # Google Gemini Chatbot Configuration (REST API)
     GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
     GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-3.5-flash-lite')
+    # Request timeouts in seconds (connect: 5s, read: 25s)
+    # 25s read timeout accommodates multi-paragraph LLM generation while staying safely
+    # within Render / Gunicorn's default 30s worker bounds.
+    GEMINI_CONNECT_TIMEOUT = float(os.environ.get('GEMINI_CONNECT_TIMEOUT', '5.0'))
+    GEMINI_READ_TIMEOUT = float(os.environ.get('GEMINI_READ_TIMEOUT', '25.0'))
 
 
 def _normalize_database_url(url, default):
